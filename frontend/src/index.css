@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0A1322] text-[#F8FAFC] min-h-screen flex flex-col antialiased selection:bg-[#4FD1C5] selection:text-[#0A1322] font-sans;
+  }
+}
+
+/* Custom 2027 Deep Navy & Turquoise Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A1322;
+}
+::-webkit-scrollbar-thumb {
+  background: #23426A;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4FD1C5;
+}

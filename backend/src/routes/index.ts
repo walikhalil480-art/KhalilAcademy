@@ -1,0 +1,44 @@
+import { Router } from 'express';
+import authRoutes from './auth.routes';
+import userRoutes from './user.routes';
+import courseRoutes from './course.routes';
+import categoryRoutes from './category.routes';
+import moduleRoutes from './module.routes';
+import lessonRoutes from './lesson.routes';
+import progressRoutes from './progress.routes';
+import quizRoutes from './quiz.routes';
+import assignmentRoutes from './assignment.routes';
+import paymentRoutes from './payment.routes';
+import certificateRoutes from './certificate.routes';
+import * as certController from '../controllers/certificate.controller';
+import { authenticate } from '../middlewares/auth';
+import adminRoutes from './admin.routes';
+import reviewRoutes from './review.routes';
+import notificationRoutes from './notification.routes';
+import uploadRoutes from './upload.routes';
+import statsRoutes from './stats.routes';
+import { streamVideo } from '../controllers/stream.controller';
+
+const router = Router();
+
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/courses', courseRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/modules', moduleRoutes);
+router.use('/lessons', lessonRoutes);
+router.use('/progress', progressRoutes);
+router.use('/quizzes', quizRoutes);
+router.use('/assignments', assignmentRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/certificates', certificateRoutes);
+router.get('/me/certificates', authenticate, certController.getUserCertificates);
+router.get('/verify/certificate/:id', certController.verifyCertificate);
+router.use('/admin', adminRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/upload', uploadRoutes);
+router.use('/stats', statsRoutes);
+router.get('/stream/videos/*', streamVideo);
+
+export default router;

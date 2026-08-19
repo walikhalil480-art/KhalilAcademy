@@ -1,0 +1,17 @@
+﻿{
+  "name": "Khalil Academy",
+  "short_name": "Khalil Academy",
+  "description": "Professional Career Development & Cloud Tech LMS",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1A365D",
+  "background_color": "#0A1322"
+}
