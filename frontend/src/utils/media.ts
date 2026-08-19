@@ -19,5 +19,5 @@ export const resolveMediaUrl = (url?: string | null, fallback: string = DEFAULT_
   }
 
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `http://localhost:5000${cleanPath}`;
+  return `http://localhost:5001${cleanPath}`;
 };

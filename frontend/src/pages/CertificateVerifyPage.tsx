@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Certificate } from '../types';
 import { ShieldCheck, CheckCircle2, AlertOctagon, Award, Calendar, User, BookOpen, ExternalLink, ArrowLeft } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export const CertificateVerifyPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

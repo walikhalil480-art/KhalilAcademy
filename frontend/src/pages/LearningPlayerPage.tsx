@@ -811,7 +811,7 @@ export const LearningPlayerPage: React.FC = () => {
                           </div>
                         </div>
                         <a
-                          href={res.fileUrl.startsWith('http') ? res.fileUrl : `http://localhost:5000${res.fileUrl}`}
+                          href={res.fileUrl.startsWith('http') ? res.fileUrl : `http://localhost:5001${res.fileUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2 text-[#94A3B8] hover:text-white rounded-lg hover:bg-[#1A365D] transition"

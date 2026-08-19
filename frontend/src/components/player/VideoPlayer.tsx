@@ -92,7 +92,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const resolvedUploadUrl = isExplicitUpload && cleanUrl
     ? cleanUrl.startsWith('http')
       ? cleanUrl
-      : `http://localhost:5000${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`
+      : `http://localhost:5001${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`
     : '';
 
   // Sync saved playback speed to localStorage
