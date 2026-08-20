@@ -201,7 +201,7 @@ export const LandingPage: React.FC = () => {
                 <div className="flex items-center justify-between pt-2">
                   <div>
                     <span className="text-2xl font-black text-[#F8FAFC]">
-                      {featuredCourse.isFree || featuredCourse.price === 0 ? 'FREE' : `$${featuredCourse.price}`}
+                      {featuredCourse.isFree || featuredCourse.price === 0 ? 'FREE' : `${featuredCourse.price.toLocaleString()} KSH`}
                     </span>
                   </div>
 

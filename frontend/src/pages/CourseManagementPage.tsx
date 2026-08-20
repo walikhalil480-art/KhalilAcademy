@@ -877,7 +877,7 @@ export const CourseManagementPage: React.FC = () => {
               <div className="space-y-3 border-t border-[#23426A] pt-4 text-xs">
                 <div className="flex justify-between">
                   <span className="text-[#94A3B8] font-medium">Pricing Mode</span>
-                  <span className="font-extrabold text-[#22C55E]">{course.isFree ? 'FREE' : `$${course.price.toFixed(2)}`}</span>
+                  <span className="font-extrabold text-[#22C55E]">{course.isFree ? 'FREE' : `${course.price.toFixed(0)} KSH`}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#94A3B8] font-medium">Total Modules</span>
@@ -976,7 +976,7 @@ export const CourseManagementPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">Pricing ($ USD)</label>
+                    <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">Pricing (KSH)</label>
                     <div className="flex items-center space-x-2">
                       <label className="flex items-center space-x-1.5 text-xs text-[#CBD5E1]">
                         <input

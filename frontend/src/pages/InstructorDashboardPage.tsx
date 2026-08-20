@@ -280,7 +280,7 @@ export const InstructorDashboardPage: React.FC = () => {
               <DollarSign className="w-4 h-4 text-[#22C55E]" />
             </div>
             <div className="text-2xl font-extrabold text-[#22C55E]">
-              ${courses.reduce((sum, c) => sum + (c.isFree ? 0 : (c.price * (c._count?.enrollments || 0))), 0).toFixed(2)}
+              {courses.reduce((sum, c) => sum + (c.isFree ? 0 : (c.price * (c._count?.enrollments || 0))), 0).toFixed(0)} KSH
             </div>
             <span className="text-[10px] text-[#CBD5E1]">Platform earnings</span>
           </div>
@@ -369,7 +369,7 @@ export const InstructorDashboardPage: React.FC = () => {
                         <span>{c._count?.enrollments || 0} students enrolled</span>
                         <span>•</span>
                         <span className="font-bold text-[#F8FAFC]">
-                          {c.isFree || c.price === 0 ? 'Free' : `$${c.price.toFixed(2)}`}
+                          {c.isFree || c.price === 0 ? 'Free' : `${c.price.toFixed(0)} KSH`}
                         </span>
                       </div>
                     </div>
@@ -558,7 +558,7 @@ export const InstructorDashboardPage: React.FC = () => {
                     {!isFree && (
                       <div>
                         <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
-                          Tuition Price ($ USD)
+                          Tuition Price (KSH)
                         </label>
                         <input
                           type="number"
