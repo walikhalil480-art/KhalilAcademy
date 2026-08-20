@@ -408,15 +408,17 @@ model Order {
 model Payment {
   id                    String          @id @default(uuid())
   orderId               String
-  paymentProvider       PaymentProvider @default(MOCK_PAYMENT)
+  paymentProvider       PaymentProvider @default(PAYSTACK)
   providerTransactionId String?         @unique
   transactionId         String          @unique
   status                PaymentStatus   @default(PENDING)
   amount                Float
-  currency              String          @default("USD")
+  currency              String          @default("KES")
   rawWebhookPayload     String?
   metadata              String?
+  paidAt                DateTime?
   createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @default(now()) @updatedAt
 
   order Order @relation(fields: [orderId], references: [id])
 }

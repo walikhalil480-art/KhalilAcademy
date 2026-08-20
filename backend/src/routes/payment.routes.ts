@@ -4,20 +4,23 @@ import { authenticate } from '../middlewares/auth';
 
 const router = Router();
 
+// Coupons and Free Enrollment
 router.post('/validate-coupon', authenticate, paymentController.validateCoupon);
 router.post('/courses/:id/enroll', authenticate, paymentController.enrollFree);
 
-// PAYSTACK
+// Standard & Paystack-Specific Checkout Initialization
+router.post('/initialize', authenticate, paymentController.initializePaystackCheckout);
 router.post('/paystack/initialize', authenticate, paymentController.initializePaystackCheckout);
+
+// Standard & Paystack-Specific Payment Verification
+router.get('/verify/:reference', authenticate, paymentController.verifyPaystackCheckout);
 router.get('/paystack/verify/:reference', authenticate, paymentController.verifyPaystackCheckout);
+
+// Standard & Paystack-Specific Webhooks (Signature verified inside controller)
+router.post('/webhook', paymentController.handlePaystackWebhook);
 router.post('/paystack/webhook', paymentController.handlePaystackWebhook);
 
-// STRIPE
-router.post('/stripe/initialize', authenticate, paymentController.initializeStripeCheckout);
-router.get('/stripe/verify/:reference', authenticate, paymentController.verifyStripeCheckout);
-
-// History
+// Student Payment History
 router.get('/history', authenticate, paymentController.getUserPaymentHistory);
 
 export default router;
-

@@ -242,11 +242,11 @@ export const CourseDetailPage: React.FC = () => {
                 <span className="text-[10px] uppercase font-bold text-[#94A3B8] tracking-wider">Tuition & Enrollment</span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-[#F8FAFC]">
-                    {course.isFree || course.price === 0 ? 'FREE' : `$${course.discountPrice !== null && course.discountPrice !== undefined ? course.discountPrice.toFixed(2) : course.price.toFixed(2)}`}
+                    {course.isFree || course.price === 0 ? 'FREE' : `${(course.discountPrice !== null && course.discountPrice !== undefined ? course.discountPrice : course.price).toLocaleString()} KSH`}
                   </span>
                   {course.discountPrice !== null && course.discountPrice !== undefined && course.discountPrice < course.price && (
                     <span className="text-sm text-[#94A3B8] line-through">
-                      ${course.price.toFixed(2)}
+                      {course.price.toLocaleString()} KSH
                     </span>
                   )}
                 </div>

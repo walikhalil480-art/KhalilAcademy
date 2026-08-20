@@ -13,8 +13,12 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  PAYMENT_PROVIDER: z.string().default('MOCK_PAYMENT'),
-  PAYMENT_WEBHOOK_SECRET: z.string().default('whsec_khalil_academy_mock_webhook_secret_9988'),
+  PAYMENT_PROVIDER: z.string().default('PAYSTACK'),
+  PAYMENT_WEBHOOK_SECRET: z.string().default(''),
+  PAYSTACK_SECRET_KEY: z.string().default(process.env.PAYSTACK_SECRET_KEY || ''),
+  PAYSTACK_PUBLIC_KEY: z.string().default(process.env.PAYSTACK_PUBLIC_KEY || ''),
+  PAYSTACK_WEBHOOK_SECRET: z.string().default(process.env.PAYSTACK_WEBHOOK_SECRET || ''),
+  PAYSTACK_CALLBACK_URL: z.string().default(process.env.PAYSTACK_CALLBACK_URL || ''),
   
   // Mail & SMTP Configuration (Supports both Laravel & Node standard env variables)
   MAIL_MAILER: z.string().default('smtp'),

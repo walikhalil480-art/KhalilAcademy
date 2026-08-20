@@ -1,24 +1,75 @@
 import request from 'supertest';
 import { app } from '../app';
+import { prisma } from '../config/database';
 import { generateAccessToken } from '../utils/jwt';
 
 describe('Role-Based Access Control (RBAC) Security Tests', () => {
-  const studentToken = generateAccessToken({
-    userId: 'student-id-123',
-    email: 'student@example.com',
-    role: 'STUDENT',
+  const timestamp = Date.now();
+  const studentId = `student_rbac_${timestamp}`;
+  const instructorId = `instructor_rbac_${timestamp}`;
+  const adminId = `admin_rbac_${timestamp}`;
+
+  let studentToken: string;
+  let instructorToken: string;
+  let adminToken: string;
+
+  beforeAll(async () => {
+    await prisma.user.createMany({
+      data: [
+        {
+          id: studentId,
+          email: `student_${timestamp}@khalilacademy.com`,
+          name: 'Student RBAC User',
+          passwordHash: '$2a$10$abcdefghijklmnopqrstuv',
+          role: 'STUDENT',
+          status: 'ACTIVE',
+        },
+        {
+          id: instructorId,
+          email: `instructor_${timestamp}@khalilacademy.com`,
+          name: 'Instructor RBAC User',
+          passwordHash: '$2a$10$abcdefghijklmnopqrstuv',
+          role: 'INSTRUCTOR',
+          status: 'ACTIVE',
+        },
+        {
+          id: adminId,
+          email: `admin_${timestamp}@khalilacademy.com`,
+          name: 'Admin RBAC User',
+          passwordHash: '$2a$10$abcdefghijklmnopqrstuv',
+          role: 'ADMIN',
+          status: 'ACTIVE',
+        },
+      ],
+      skipDuplicates: true,
+    });
+
+    studentToken = generateAccessToken({
+      userId: studentId,
+      email: `student_${timestamp}@khalilacademy.com`,
+      role: 'STUDENT',
+    });
+
+    instructorToken = generateAccessToken({
+      userId: instructorId,
+      email: `instructor_${timestamp}@khalilacademy.com`,
+      role: 'INSTRUCTOR',
+    });
+
+    adminToken = generateAccessToken({
+      userId: adminId,
+      email: `admin_${timestamp}@khalilacademy.com`,
+      role: 'ADMIN',
+    });
   });
 
-  const instructorToken = generateAccessToken({
-    userId: 'instructor-id-123',
-    email: 'instructor@example.com',
-    role: 'INSTRUCTOR',
-  });
-
-  const adminToken = generateAccessToken({
-    userId: 'admin-id-123',
-    email: 'admin@example.com',
-    role: 'ADMIN',
+  afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: {
+        id: { in: [studentId, instructorId, adminId] },
+      },
+    });
+    await prisma.$disconnect();
   });
 
   it('should block unauthenticated access to protected routes', async () => {

@@ -4,18 +4,25 @@ import { prisma } from '../config/database';
 import bcrypt from 'bcryptjs';
 
 describe('Authentication & User Management API Tests', () => {
-  const testEmail = `testuser_${Date.now()}@example.com`;
+  const testEmail = `student_authtest_${Date.now()}@khalilacademy.com`;
+  const mismatchEmail = `mismatch_authtest_${Date.now()}@khalilacademy.com`;
   const testPassword = 'Password123!';
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { email: { contains: 'testuser_' } } });
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: [testEmail.toLowerCase(), mismatchEmail.toLowerCase()],
+        },
+      },
+    });
     await prisma.$disconnect();
   });
 
   describe('POST /api/auth/register', () => {
     it('should register a new student account successfully', async () => {
       const res = await request(app).post('/api/auth/register').send({
-        name: 'Test Student',
+        name: 'Ahmad Khalil',
         email: testEmail,
         password: testPassword,
         confirmPassword: testPassword,
@@ -30,7 +37,7 @@ describe('Authentication & User Management API Tests', () => {
 
     it('should reject registration with duplicate email', async () => {
       const res = await request(app).post('/api/auth/register').send({
-        name: 'Test Student Duplicate',
+        name: 'Ahmad Duplicate',
         email: testEmail,
         password: testPassword,
       });
@@ -42,8 +49,8 @@ describe('Authentication & User Management API Tests', () => {
 
     it('should reject registration when passwords do not match', async () => {
       const res = await request(app).post('/api/auth/register').send({
-        name: 'Test Student Mismatch',
-        email: `mismatch_${Date.now()}@example.com`,
+        name: 'Ahmad Mismatch',
+        email: mismatchEmail,
         password: testPassword,
         confirmPassword: 'DifferentPassword123!',
       });

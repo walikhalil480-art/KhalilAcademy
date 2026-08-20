@@ -104,3 +104,11 @@ export const formatLessonDuration = (durationMinutes?: number | null, durationSe
 
   return 'Duration unavailable';
 };
+
+export const formatPrice = (price?: number | null, isFree?: boolean, currency: string = 'KSH'): string => {
+  if (isFree || price === 0 || price === null || price === undefined) {
+    return 'FREE';
+  }
+  const currLabel = currency === 'KES' || currency === 'KSH' ? 'KSH' : currency;
+  return `${price} ${currLabel}`;
+};

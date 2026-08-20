@@ -172,7 +172,7 @@ export const AdminDashboardPage: React.FC = () => {
                 <DollarSign className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#22C55E]">${metrics.totalRevenue || 0}</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#22C55E]">{metrics.totalRevenue || 0} KSH</div>
                 <div className="text-[11px] text-[#94A3B8] font-semibold uppercase tracking-wider mt-0.5">Total Gross Revenue</div>
               </div>
             </div>
@@ -294,7 +294,7 @@ export const AdminDashboardPage: React.FC = () => {
                         <span className="text-[11px] text-[#94A3B8] block">{p.user?.email}</span>
                       </div>
                       <div className="text-right">
-                        <span className="font-extrabold text-[#22C55E] text-sm block">${p.finalPrice || p.amount || 0}</span>
+                        <span className="font-extrabold text-[#22C55E] text-sm block">{p.finalPrice || p.amount || 0} KSH</span>
                         <span className="text-[10px] text-[#22C55E] uppercase font-bold">Confirmed</span>
                       </div>
                     </div>

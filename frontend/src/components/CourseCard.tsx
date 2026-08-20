@@ -116,11 +116,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             ) : (
               <div className="flex items-baseline gap-1.5">
                 <span className="text-lg font-extrabold text-[#F8FAFC]">
-                  ${course.discountPrice !== null && course.discountPrice !== undefined ? course.discountPrice : course.price}
+                  {(course.discountPrice !== null && course.discountPrice !== undefined ? course.discountPrice : course.price).toLocaleString()} KSH
                 </span>
                 {course.discountPrice !== null && course.discountPrice !== undefined && course.discountPrice < course.price && (
                   <span className="text-xs text-[#94A3B8] line-through">
-                    ${course.price}
+                    {course.price.toLocaleString()} KSH
                   </span>
                 )}
               </div>
