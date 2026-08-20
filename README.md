@@ -1,5 +1,6 @@
 # Khalil Academy LMS Platform
-2030
+
+2031
 
 [![CI/CD DevSecOps Pipeline](https://github.com/khalilacademy/lms/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/khalilacademy/lms/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -13,22 +14,26 @@
 ## 🌟 Key Platform Features
 
 ### 🔐 1. Authentication & Security (RBAC)
+
 - **Role-Based Access Control**: 4 granular roles (`SUPER_ADMIN`, `ADMIN`, `INSTRUCTOR`, `STUDENT`).
 - **Security Protections**: Dual JWT token rotation (Short-lived Access Token + HTTP-Only Refresh Cookie), password hashing with bcrypt, account lockouts after 5 failed login attempts (15-min lockout), email verification, and password reset.
 - **Role Scoping**: Admins cannot modify or demote Super Admin accounts. Instructors can only edit their own courses.
 
 ### 📚 2. Course Hierarchy & Learning Engine
+
 - Structured as: `Course → Modules → Lessons → Quizzes → Assignments`.
 - Lesson types: Video, Text, PDF, and Link resources.
 - Real-time progress engine tracking lesson completion percentage and last watched video position.
 
 ### 💳 3. Pluggable Payment & Webhook Verification
+
 - Pluggable `IPaymentProvider` abstraction (Mock Gateway included, easily switchable to Stripe or regional providers via environment variables).
 - Cryptographic HMAC Webhook verification (`/api/payments/webhook`).
 - Backend-enforced paid enrollment: Paid courses are never unlocked via frontend confirmation alone.
 - Coupon engine supporting percentage and fixed value discounts with minimum order thresholds and expiration dates.
 
 ### 📜 4. Automated Certificate Engine & Public Verification
+
 - Automatic certificate issuance upon meeting configurable course completion criteria (All lessons completed + All quizzes passed + Assignments graded).
 - Unique ID generation (e.g. `KHA-2026-000001`).
 - Public verification endpoint (`/certificates/verify/:id` and `/certificates/:id`).
@@ -36,6 +41,7 @@
 - Administrative revocation capability with public revocation badges.
 
 ### 📊 5. Instructor & Admin Dashboards
+
 - **Instructor Studio**: Create courses, build modules/lessons/quizzes/assignments, monitor student enrollments, grade submitted assignments.
 - **Admin Console**: Platform analytics (Revenue, Enrollments, Users, Certificates), user role management, account suspension/activation, password reset, and full Audit Log viewer.
 
@@ -43,13 +49,13 @@
 
 ## 🛠️ Technology Stack
 
-| Component | Technologies |
-|---|---|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Redux Toolkit, Axios, Lucide Icons, Canvas-Confetti |
-| **Backend** | Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, Zod, JWT, Bcrypt, PDFKit, Winston, Prom-Client |
-| **Database** | PostgreSQL with 23 interconnected relational Prisma models |
-| **DevOps** | Docker, Docker Compose, Nginx, Kubernetes Manifests (`k8s/`), Helm-ready, Prometheus `/metrics` |
-| **DevSecOps** | GitHub Actions CI/CD, Trivy container vulnerability scanner, Dependabot security scanning |
+| Component     | Technologies                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------------- |
+| **Frontend**  | React 18, TypeScript, Vite, Tailwind CSS, Redux Toolkit, Axios, Lucide Icons, Canvas-Confetti        |
+| **Backend**   | Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, Zod, JWT, Bcrypt, PDFKit, Winston, Prom-Client |
+| **Database**  | PostgreSQL with 23 interconnected relational Prisma models                                           |
+| **DevOps**    | Docker, Docker Compose, Nginx, Kubernetes Manifests (`k8s/`), Helm-ready, Prometheus `/metrics`      |
+| **DevSecOps** | GitHub Actions CI/CD, Trivy container vulnerability scanner, Dependabot security scanning            |
 
 ---
 
@@ -91,6 +97,7 @@ KhalilAcademy/
 ## 🚀 Quick Start & Local Setup
 
 ### Prerequisites
+
 - Node.js >= 20.x
 - npm >= 10.x
 - Docker & Docker Compose (Optional for container setup)
@@ -119,6 +126,7 @@ npm run dev
 ```
 
 The application will be accessible at:
+
 - **Frontend App**: `http://localhost:5173`
 - **Backend API**: `http://localhost:5000/api`
 - **API Health Check**: `http://localhost:5000/health`
@@ -128,15 +136,15 @@ The application will be accessible at:
 
 ## 🔑 Default Seed Development Accounts
 
-*(Password for all default seed accounts: `Password123!`)*
+_(Password for all default seed accounts: `Password123!`)_
 
-| Role | Email | Access Permissions |
-|---|---|---|
-| **SUPER_ADMIN** | `superadmin@khalilacademy.com` | Full platform control, manage admins, audit logs |
-| **ADMIN** | `admin@khalilacademy.com` | User management, course review, payment review, cert revocation |
-| **INSTRUCTOR** | `alex.cloud@khalilacademy.com` | Create courses, modules, quizzes, grade student submissions |
-| **INSTRUCTOR** | `elena.sec@khalilacademy.com` | Security track course author |
-| **STUDENT** | `john.student@example.com` | Enrolled student account for testing learning flow |
+| Role            | Email                          | Access Permissions                                              |
+| --------------- | ------------------------------ | --------------------------------------------------------------- |
+| **SUPER_ADMIN** | `superadmin@khalilacademy.com` | Full platform control, manage admins, audit logs                |
+| **ADMIN**       | `admin@khalilacademy.com`      | User management, course review, payment review, cert revocation |
+| **INSTRUCTOR**  | `alex.cloud@khalilacademy.com` | Create courses, modules, quizzes, grade student submissions     |
+| **INSTRUCTOR**  | `elena.sec@khalilacademy.com`  | Security track course author                                    |
+| **STUDENT**     | `john.student@example.com`     | Enrolled student account for testing learning flow              |
 
 ---
 
@@ -149,6 +157,7 @@ docker compose up -d
 ```
 
 Verify container health:
+
 ```bash
 docker compose ps
 ```
@@ -178,6 +187,7 @@ npm test
 ```
 
 ### End-to-End Verification Workflow
+
 1. Log in as **Student** (`john.student@example.com` / `Password123!`).
 2. Browse courses or checkout paid course using Coupon `WELCOME20`.
 3. Simulate payment webhook success.
@@ -191,4 +201,5 @@ npm test
 ---
 
 ## 📄 License
+
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
