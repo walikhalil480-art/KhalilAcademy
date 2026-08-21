@@ -27,6 +27,10 @@ import { StudentCertificatesPage } from './pages/StudentCertificatesPage';
 import { InstructorDashboardPage } from './pages/InstructorDashboardPage';
 import { CourseManagementPage } from './pages/CourseManagementPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { LiveClassesPage } from './pages/LiveClassesPage';
+import { LiveSessionDetailPage } from './pages/LiveSessionDetailPage';
+import { MyLiveClassesPage } from './pages/MyLiveClassesPage';
+import { InstructorLiveClassesPage } from './pages/InstructorLiveClassesPage';
 
 export const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -70,6 +74,8 @@ export const App: React.FC = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/courses" element={<CourseCatalogPage />} />
           <Route path="/courses/:slug" element={<CourseDetailPage />} />
+          <Route path="/live-classes" element={<LiveClassesPage />} />
+          <Route path="/live-classes/:id" element={<LiveSessionDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -85,6 +91,7 @@ export const App: React.FC = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/dashboard" element={<StudentDashboardPage />} />
             <Route path="/my-learning" element={<StudentDashboardPage />} />
+            <Route path="/my-live-classes" element={<MyLiveClassesPage />} />
             <Route path="/student/certificates" element={<StudentCertificatesPage />} />
             <Route path="/certificates" element={<StudentCertificatesPage />} />
             <Route path="/courses/:slug/learn" element={<LearningPlayerPage />} />
@@ -96,6 +103,7 @@ export const App: React.FC = () => {
           {/* Instructor Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={['INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN']} />}>
             <Route path="/instructor/dashboard" element={<InstructorDashboardPage />} />
+            <Route path="/instructor/live-classes" element={<InstructorLiveClassesPage />} />
             <Route path="/instructor/courses/:courseId/manage" element={<CourseManagementPage />} />
           </Route>
 

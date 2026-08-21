@@ -65,6 +65,18 @@ export const CourseManagementPage: React.FC = () => {
   const [savingCourseInfo, setSavingCourseInfo] = useState(false);
   const [courseInfoSavedSuccess, setCourseInfoSavedSuccess] = useState(false);
 
+  // Course Completion & Certification Requirements State
+  const [certificateEnabled, setCertificateEnabled] = useState(true);
+  const [requireAllLessons, setRequireAllLessons] = useState(true);
+  const [requireQuizzes, setRequireQuizzes] = useState(false);
+  const [quizPassingScore, setQuizPassingScore] = useState(70);
+  const [requireAssignments, setRequireAssignments] = useState(false);
+  const [assignmentPassingScore, setAssignmentPassingScore] = useState(70);
+  const [requireFinalAssessment, setRequireFinalAssessment] = useState(false);
+  const [finalAssessmentPassingScore, setFinalAssessmentPassingScore] = useState(70);
+  const [finalAssessmentQuizId, setFinalAssessmentQuizId] = useState('');
+  const [minimumProgressPercentage, setMinimumProgressPercentage] = useState(100);
+
   // Delete Course State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingCourse, setDeletingCourse] = useState(false);
@@ -93,6 +105,7 @@ export const CourseManagementPage: React.FC = () => {
   const [uploadedFileSize, setUploadedFileSize] = useState(0);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
+  const [isRequiredLesson, setIsRequiredLesson] = useState(true);
   const [durationMinutes, setDurationMinutes] = useState(15);
   const [lessonTab, setLessonTab] = useState<'video' | 'overview' | 'notes' | 'transcript'>('video');
 
@@ -151,6 +164,18 @@ export const CourseManagementPage: React.FC = () => {
       setObjectives(Array.isArray(fetched.learningObjectives) ? fetched.learningObjectives : []);
       setRequirements(Array.isArray(fetched.requirements) ? fetched.requirements : []);
       setAudiences(Array.isArray(fetched.targetAudience) ? fetched.targetAudience : []);
+
+      // Populate completion & certification state
+      setCertificateEnabled(fetched.certificateEnabled !== false);
+      setRequireAllLessons(fetched.requireAllLessons !== false);
+      setRequireQuizzes(fetched.requireQuizzes || false);
+      setQuizPassingScore(fetched.quizPassingScore || 70);
+      setRequireAssignments(fetched.requireAssignments || false);
+      setAssignmentPassingScore(fetched.assignmentPassingScore || 70);
+      setRequireFinalAssessment(fetched.requireFinalAssessment || false);
+      setFinalAssessmentPassingScore(fetched.finalAssessmentPassingScore || 70);
+      setFinalAssessmentQuizId(fetched.finalAssessmentQuizId || '');
+      setMinimumProgressPercentage(fetched.minimumProgressPercentage || 100);
     } catch (err: any) {
       setError(err.response?.data?.message || 'You do not have permission to manage this course.');
     } finally {
@@ -197,6 +222,16 @@ export const CourseManagementPage: React.FC = () => {
         learningObjectives: objectives,
         requirements: requirements,
         targetAudience: audiences,
+        certificateEnabled,
+        requireAllLessons,
+        requireQuizzes,
+        quizPassingScore: parseFloat(String(quizPassingScore)),
+        requireAssignments,
+        assignmentPassingScore: parseFloat(String(assignmentPassingScore)),
+        requireFinalAssessment,
+        finalAssessmentPassingScore: parseFloat(String(finalAssessmentPassingScore)),
+        finalAssessmentQuizId: finalAssessmentQuizId || null,
+        minimumProgressPercentage: parseFloat(String(minimumProgressPercentage)),
       });
 
       setCourseInfoSavedSuccess(true);
@@ -339,6 +374,7 @@ export const CourseManagementPage: React.FC = () => {
     setUploadedFileName('');
     setUploadedFileSize(0);
     setIsPreview(false);
+    setIsRequiredLesson(true);
     setDurationMinutes(0);
     setLessonTab('video');
   };
@@ -356,6 +392,7 @@ export const CourseManagementPage: React.FC = () => {
     setUploadedFileName(lesson.fileName || '');
     setUploadedFileSize(lesson.fileSize || 0);
     setIsPreview(lesson.isPreview || false);
+    setIsRequiredLesson(lesson.isRequired !== false);
     setDurationMinutes(lesson.durationMinutes || 0);
     setLessonTab('video');
   };
@@ -428,6 +465,7 @@ export const CourseManagementPage: React.FC = () => {
         fileSize: videoSource === 'UPLOAD' ? (uploadedFileSize || undefined) : undefined,
         durationMinutes: !isNaN(durMin) && durMin > 0 ? durMin : undefined,
         isPreview,
+        isRequired: isRequiredLesson,
       };
 
       if (editingLesson) {
@@ -1161,6 +1199,193 @@ export const CourseManagementPage: React.FC = () => {
               </div>
             </div>
 
+            {/* 5. Course Completion & Certification Requirements */}
+            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+              <div>
+                <h3 className="text-base font-extrabold text-[#F8FAFC] flex items-center gap-2">
+                  <Award className="w-5 h-5 text-[#F59E0B]" />
+                  <span>Course Completion & Certificate Validation Criteria</span>
+                </h3>
+                <p className="text-xs text-[#94A3B8] mt-1">
+                  Configure server-enforced requirements that students must verifiably complete to earn their official course certificate.
+                </p>
+              </div>
+
+              <div className="space-y-4 divide-y divide-[#23426A]/60">
+                {/* Certificate Issuance Enablement */}
+                <div className="pt-2 flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-[#F8FAFC] block">Certificate Issuance</label>
+                    <p className="text-[11px] text-[#CBD5E1]">Enable digital verifiable certificate generation upon course completion.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={certificateEnabled}
+                      onChange={(e) => setCertificateEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-[#0E1D33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4FD1C5]"></div>
+                  </label>
+                </div>
+
+                {/* Lesson Watch Progress Requirement */}
+                <div className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-[#F8FAFC] block">Require Required Lessons</label>
+                      <p className="text-[11px] text-[#CBD5E1]">Students must complete all required lessons (minimum 60% watch time per video).</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={requireAllLessons}
+                        onChange={(e) => setRequireAllLessons(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#0E1D33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4FD1C5]"></div>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#CBD5E1] uppercase mb-1">Minimum Course Progress %</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={minimumProgressPercentage}
+                        onChange={(e) => setMinimumProgressPercentage(parseFloat(e.target.value) || 100)}
+                        className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quizzes Requirement */}
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-[#F8FAFC] block">Require Quizzes</label>
+                      <p className="text-[11px] text-[#CBD5E1]">Students must pass all required module quizzes to qualify for certification.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={requireQuizzes}
+                        onChange={(e) => setRequireQuizzes(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#0E1D33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4FD1C5]"></div>
+                    </label>
+                  </div>
+
+                  {requireQuizzes && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2 border-l-2 border-[#4FD1C5]/40">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#CBD5E1] uppercase mb-1">Default Quiz Passing Score %</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={quizPassingScore}
+                          onChange={(e) => setQuizPassingScore(parseFloat(e.target.value) || 70)}
+                          className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Assignments Requirement */}
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-[#F8FAFC] block">Require Assignments</label>
+                      <p className="text-[11px] text-[#CBD5E1]">Students must submit required projects and receive instructor approval.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={requireAssignments}
+                        onChange={(e) => setRequireAssignments(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#0E1D33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4FD1C5]"></div>
+                    </label>
+                  </div>
+
+                  {requireAssignments && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2 border-l-2 border-[#4FD1C5]/40">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#CBD5E1] uppercase mb-1">Assignment Passing Score %</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={assignmentPassingScore}
+                          onChange={(e) => setAssignmentPassingScore(parseFloat(e.target.value) || 70)}
+                          className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Final Assessment Requirement */}
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-[#F8FAFC] block">Require Comprehensive Final Exam</label>
+                      <p className="text-[11px] text-[#CBD5E1]">Require passing a designated capstone exam before unlocking certificate.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={requireFinalAssessment}
+                        onChange={(e) => setRequireFinalAssessment(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#0E1D33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4FD1C5]"></div>
+                    </label>
+                  </div>
+
+                  {requireFinalAssessment && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2 border-l-2 border-[#4FD1C5]/40">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#CBD5E1] uppercase mb-1">Final Exam Passing Score %</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={finalAssessmentPassingScore}
+                          onChange={(e) => setFinalAssessmentPassingScore(parseFloat(e.target.value) || 70)}
+                          className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#CBD5E1] uppercase mb-1">Final Exam Quiz</label>
+                        <select
+                          value={finalAssessmentQuizId}
+                          onChange={(e) => setFinalAssessmentQuizId(e.target.value)}
+                          className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        >
+                          <option value="">Select Designated Quiz</option>
+                          {(course?.modules || [])
+                            .flatMap((m) => m.quizzes || [])
+                            .map((q) => (
+                              <option key={q.id} value={q.id}>
+                                {q.title} (Pass: {q.passingScore}%)
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Save Button */}
             <div className="flex items-center justify-between pt-4">
               {courseInfoSavedSuccess && (
@@ -1363,7 +1588,7 @@ export const CourseManagementPage: React.FC = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">Duration (Minutes)</label>
                         <input
@@ -1374,7 +1599,7 @@ export const CourseManagementPage: React.FC = () => {
                           className="w-full px-4 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
                         />
                       </div>
-                      <div className="flex items-center pt-6">
+                      <div className="flex items-center pt-2 sm:pt-6">
                         <label className="flex items-center space-x-2 text-xs text-[#CBD5E1] cursor-pointer">
                           <input
                             type="checkbox"
@@ -1383,6 +1608,17 @@ export const CourseManagementPage: React.FC = () => {
                             className="accent-[#4FD1C5]"
                           />
                           <span>Allow Free Preview</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center pt-2 sm:pt-6">
+                        <label className="flex items-center space-x-2 text-xs text-[#4FD1C5] font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isRequiredLesson}
+                            onChange={(e) => setIsRequiredLesson(e.target.checked)}
+                            className="accent-[#4FD1C5]"
+                          />
+                          <span>Required for Certificate</span>
                         </label>
                       </div>
                     </div>

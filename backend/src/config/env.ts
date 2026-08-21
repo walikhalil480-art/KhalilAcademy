@@ -33,6 +33,17 @@ const envSchema = z.object({
   STORAGE_PROVIDER: z.string().default('LOCAL'),
   UPLOAD_DIR: z.string().default('./uploads'),
   APP_URL: z.string().default('http://localhost:5173'),
+
+  // AI Learning Assistant Configuration
+  AI_API_KEY: z.string().default(process.env.AI_API_KEY || process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || ''),
+  OPENAI_API_KEY: z.string().default(process.env.OPENAI_API_KEY || ''),
+  GEMINI_API_KEY: z.string().default(process.env.GEMINI_API_KEY || ''),
+  GROQ_API_KEY: z.string().default(process.env.GROQ_API_KEY || ''),
+  AI_MODEL: z.string().default(process.env.AI_MODEL || 'gpt-4o-mini'),
+  AI_PROVIDER: z.string().default(process.env.AI_PROVIDER || 'openai'),
+  AI_BASE_URL: z.string().default(process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || ''),
+  AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().default(20),
+  AI_MAX_CONTEXT_TOKENS: z.coerce.number().default(4000),
 });
 
 export const env = envSchema.parse(process.env);

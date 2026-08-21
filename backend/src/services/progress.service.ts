@@ -120,8 +120,6 @@ export const recordLessonPlayback = async (userId: string, lessonId: string, dat
     where: { id: enrollment.id },
     data: {
       progressPercentage: courseProgressPercentage,
-      status: is100Percent ? EnrollmentStatus.COMPLETED : enrollment.status,
-      completedAt: is100Percent ? (enrollment.completedAt || now) : enrollment.completedAt,
     },
   });
 
@@ -137,7 +135,7 @@ export const recordLessonPlayback = async (userId: string, lessonId: string, dat
       totalLessons,
       progressPercentage: courseProgressPercentage,
     },
-    courseCompleted: is100Percent,
+    courseCompleted: completionResult?.completed || false,
     certificate: completionResult?.certificate || null,
   };
 };
@@ -258,7 +256,7 @@ export const updateLessonProgress = async (userId: string, lessonId: string, dat
       totalLessons,
       progressPercentage,
     },
-    courseCompleted: is100Percent,
+    courseCompleted: completionResult?.completed || false,
     certificate: completionResult?.certificate || null,
   };
 };

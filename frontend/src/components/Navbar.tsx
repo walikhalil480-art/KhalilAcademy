@@ -18,7 +18,9 @@ import {
   Award,
   ChevronDown,
   Layers,
-  Sparkles
+  Sparkles,
+  Video,
+  Radio
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -126,6 +128,18 @@ export const Navbar: React.FC = () => {
               Explore Courses
             </Link>
 
+            <Link
+              to="/live-classes"
+              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                location.pathname.startsWith('/live-classes')
+                  ? 'text-[#0A1322] bg-[#4FD1C5] shadow-md shadow-[#4FD1C5]/25 font-extrabold'
+                  : 'text-[#CBD5E1] hover:text-[#4FD1C5] hover:bg-[#0E1D33]'
+              }`}
+            >
+              <Video className="w-3.5 h-3.5" />
+              Live Classes
+            </Link>
+
             {isAuthenticated && user && (
               <Link
                 to="/dashboard"
@@ -224,14 +238,30 @@ export const Navbar: React.FC = () => {
                           <BookOpen className="w-4 h-4 text-[#4FD1C5]" />
                           <span>Student Dashboard</span>
                         </Link>
+                        <Link
+                          to="/my-live-classes"
+                          className="flex items-center gap-2.5 px-4 py-2 text-[#CBD5E1] hover:bg-[#1A365D] hover:text-[#4FD1C5] transition font-medium"
+                        >
+                          <Video className="w-4 h-4 text-[#4FD1C5]" />
+                          <span>My Live Classes</span>
+                        </Link>
                         {(user.role === 'INSTRUCTOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
-                          <Link
-                            to="/instructor/dashboard"
-                            className="flex items-center gap-2.5 px-4 py-2 text-[#CBD5E1] hover:bg-[#1A365D] hover:text-[#4FD1C5] transition font-medium"
-                          >
-                            <Layers className="w-4 h-4 text-[#4FD1C5]" />
-                            <span>Instructor Studio</span>
-                          </Link>
+                          <>
+                            <Link
+                              to="/instructor/dashboard"
+                              className="flex items-center gap-2.5 px-4 py-2 text-[#CBD5E1] hover:bg-[#1A365D] hover:text-[#4FD1C5] transition font-medium"
+                            >
+                              <Layers className="w-4 h-4 text-[#4FD1C5]" />
+                              <span>Instructor Studio</span>
+                            </Link>
+                            <Link
+                              to="/instructor/live-classes"
+                              className="flex items-center gap-2.5 px-4 py-2 text-[#CBD5E1] hover:bg-[#1A365D] hover:text-[#4FD1C5] transition font-medium"
+                            >
+                              <Radio className="w-4 h-4 text-[#EF4444]" />
+                              <span>Live Sessions Manager</span>
+                            </Link>
+                          </>
                         )}
                         {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                           <Link
@@ -319,6 +349,14 @@ export const Navbar: React.FC = () => {
             <Link to="/courses" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">
               Explore Courses
             </Link>
+            <Link to="/live-classes" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">
+              Live Classes
+            </Link>
+            {isAuthenticated && (
+              <Link to="/my-live-classes" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">
+                My Live Classes
+              </Link>
+            )}
             {isAuthenticated && user ? (
               <>
                 <Link to="/dashboard" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">

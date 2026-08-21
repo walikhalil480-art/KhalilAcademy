@@ -64,6 +64,9 @@ describe('Role-Based Access Control (RBAC) Security Tests', () => {
   });
 
   afterAll(async () => {
+    await prisma.course.deleteMany({
+      where: { instructorId },
+    });
     await prisma.user.deleteMany({
       where: {
         id: { in: [studentId, instructorId, adminId] },

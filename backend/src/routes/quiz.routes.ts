@@ -9,5 +9,6 @@ router.get('/:id', authenticate, quizController.getQuiz);
 router.post('/:id/attempt', authenticate, quizController.submitAttempt);
 router.get('/:id/results', authenticate, quizController.getHistory);
 router.post('/', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.createQuiz);
+router.patch('/:id', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.updateQuiz);
 
 export default router;

@@ -44,6 +44,9 @@ export const getMailTransporter = (): nodemailer.Transporter | null => {
 };
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
   try {
     const mailer = getMailTransporter();
     const fromHeader = `"${env.MAIL_FROM_NAME}" <${env.MAIL_FROM_ADDRESS}>`;

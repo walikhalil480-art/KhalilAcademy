@@ -32,7 +32,8 @@ export const getCourse = async (req: Request, res: Response, next: NextFunction)
   try {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;
-    const course = await courseService.getCourseBySlug(req.params.slug, userId);
+    const userRole = authReq.user?.role;
+    const course = await courseService.getCourseBySlug(req.params.slug, userId, userRole);
     res.json({ success: true, course });
   } catch (error) {
     next(error);

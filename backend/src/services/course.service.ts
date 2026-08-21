@@ -141,7 +141,7 @@ export const getCourses = async (filters: CourseQueryFilters, isPublic = true, u
   };
 };
 
-export const getCourseBySlug = async (slug: string, userId?: string) => {
+export const getCourseBySlug = async (slug: string, userId?: string, userRole?: string) => {
   const course = await prisma.course.findUnique({
     where: { slug },
     include: {
@@ -179,12 +179,13 @@ export const getCourseBySlug = async (slug: string, userId?: string) => {
               durationMinutes: true,
               order: true,
               isPreview: true,
+              isRequired: true,
               isPublished: true,
               resources: true,
             },
           },
-          quizzes: { select: { id: true, title: true, timeLimitMinutes: true, passingScore: true } },
-          assignments: { select: { id: true, title: true, maxScore: true } },
+          quizzes: { select: { id: true, title: true, timeLimitMinutes: true, passingScore: true, isRequired: true, isFinalAssessment: true } },
+          assignments: { select: { id: true, title: true, maxScore: true, passingScore: true, isRequired: true } },
         },
       },
     },
@@ -194,7 +195,7 @@ export const getCourseBySlug = async (slug: string, userId?: string) => {
     throw new AppError('Course not found.', 404);
   }
 
-  // 1. Is Enrolled check
+  // 1. Is Enrolled & Access check
   let isEnrolled = false;
   if (userId) {
     const enrollment = await prisma.enrollment.findUnique({
@@ -202,6 +203,9 @@ export const getCourseBySlug = async (slug: string, userId?: string) => {
     });
     isEnrolled = !!(enrollment && (enrollment.status === 'ACTIVE' || enrollment.status === 'COMPLETED'));
   }
+
+  const isPrivileged = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || (userRole === 'INSTRUCTOR' && course.instructorId === userId);
+  const hasFullAccess = isEnrolled || isPrivileged;
 
   // 2. Real Student Count
   const studentCount = await prisma.enrollment.count({
@@ -219,9 +223,10 @@ export const getCourseBySlug = async (slug: string, userId?: string) => {
   const averageRating = reviewCount > 0 ? parseFloat((reviewAgg._avg.rating || 0).toFixed(1)) : 0;
 
   // 4. Calculate total lessons and total duration
-  const allLessons = course.modules.flatMap((m) => m.lessons.filter((l) => l.isPublished));
-  const lessonCount = allLessons.length;
-  const totalDurationMinutes = allLessons.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
+  const allPublishedLessons = course.modules.flatMap((m) => m.lessons.filter((l) => l.isPublished));
+  const lessonCount = allPublishedLessons.length;
+  const totalDurationMinutes = allPublishedLessons.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
+  const firstLessonId = allPublishedLessons.length > 0 ? allPublishedLessons[0].id : null;
 
   // 5. Calculate Instructor Metrics across all instructor courses
   const [instructorCourseCount, instructorStudentCount, instructorReviewAgg] = await Promise.all([
@@ -241,9 +246,47 @@ export const getCourseBySlug = async (slug: string, userId?: string) => {
   const instructorReviewCount = instructorReviewAgg._count._all || 0;
   const instructorAverageRating = instructorReviewCount > 0 ? parseFloat((instructorReviewAgg._avg.rating || 0).toFixed(1)) : 0;
 
-  // 6. Format modules with calculated lesson counts and durations
+  // 6. Format modules with strict access control: ONLY the first published lesson is previewable for unenrolled students
   const formattedModules = course.modules.map((m) => {
-    const moduleLessons = m.lessons.filter((l) => l.isPublished);
+    const moduleLessons = m.lessons.filter((l) => l.isPublished).map((l) => {
+      const isFirstLesson = l.id === firstLessonId;
+      const canAccessLesson = hasFullAccess || isFirstLesson;
+
+      if (canAccessLesson) {
+        return {
+          ...l,
+          isLocked: false,
+          isPreview: isFirstLesson,
+        };
+      }
+
+      // Redact video URLs, storage keys, notes, and resources for locked lessons
+      return {
+        id: l.id,
+        title: l.title,
+        description: l.description,
+        contentType: l.contentType,
+        videoSource: l.videoSource,
+        durationMinutes: l.durationMinutes,
+        order: l.order,
+        isRequired: l.isRequired,
+        isPublished: l.isPublished,
+        isPreview: false,
+        isLocked: true,
+        youtubeVideoId: null,
+        videoUrl: null,
+        storageKey: null,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        textContent: null,
+        notes: null,
+        transcript: null,
+        resourceUrl: null,
+        resources: [],
+      };
+    });
+
     const moduleDuration = moduleLessons.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
     return {
       ...m,
@@ -305,6 +348,19 @@ export const createCourse = async (instructorId: string, data: any) => {
   const existingSlug = await prisma.course.findFirst({ where: { slug: baseSlug } });
   const slug = existingSlug ? `${baseSlug}-${Date.now().toString(36)}` : baseSlug;
 
+  let targetCategoryId = data.categoryId;
+  if (!targetCategoryId) {
+    const firstCat = await prisma.category.findFirst();
+    if (firstCat) {
+      targetCategoryId = firstCat.id;
+    } else {
+      const newCat = await prisma.category.create({
+        data: { name: 'General', slug: 'general' },
+      });
+      targetCategoryId = newCat.id;
+    }
+  }
+
   return prisma.course.create({
     data: {
       title: trimmedTitle,
@@ -312,7 +368,7 @@ export const createCourse = async (instructorId: string, data: any) => {
       description: data.description || '',
       thumbnail: data.thumbnail,
       instructorId,
-      categoryId: data.categoryId,
+      categoryId: targetCategoryId,
       level: data.level || 'BEGINNER',
       price: data.price !== undefined ? parseFloat(data.price) : 0,
       discountPrice: data.discountPrice ? parseFloat(data.discountPrice) : null,
@@ -321,6 +377,16 @@ export const createCourse = async (instructorId: string, data: any) => {
       requirements: Array.isArray(data.requirements) ? data.requirements : [],
       targetAudience: Array.isArray(data.targetAudience) ? data.targetAudience : [],
       status: data.status || CourseStatus.DRAFT,
+      certificateEnabled: data.certificateEnabled !== undefined ? !!data.certificateEnabled : true,
+      requireAllLessons: data.requireAllLessons !== undefined ? !!data.requireAllLessons : true,
+      requireQuizzes: data.requireQuizzes !== undefined ? !!data.requireQuizzes : false,
+      quizPassingScore: data.quizPassingScore !== undefined ? parseFloat(data.quizPassingScore) : 70.0,
+      requireAssignments: data.requireAssignments !== undefined ? !!data.requireAssignments : false,
+      assignmentPassingScore: data.assignmentPassingScore !== undefined ? parseFloat(data.assignmentPassingScore) : 70.0,
+      requireFinalAssessment: data.requireFinalAssessment !== undefined ? !!data.requireFinalAssessment : false,
+      finalAssessmentPassingScore: data.finalAssessmentPassingScore !== undefined ? parseFloat(data.finalAssessmentPassingScore) : 70.0,
+      finalAssessmentQuizId: data.finalAssessmentQuizId || null,
+      minimumProgressPercentage: data.minimumProgressPercentage !== undefined ? parseFloat(data.minimumProgressPercentage) : 100.0,
     },
   });
 };
@@ -361,6 +427,16 @@ export const updateCourse = async (courseId: string, data: any) => {
   if (data.requirements !== undefined) updateData.requirements = Array.isArray(data.requirements) ? data.requirements : [];
   if (data.targetAudience !== undefined) updateData.targetAudience = Array.isArray(data.targetAudience) ? data.targetAudience : [];
   if (data.status !== undefined) updateData.status = data.status;
+  if (data.certificateEnabled !== undefined) updateData.certificateEnabled = !!data.certificateEnabled;
+  if (data.requireAllLessons !== undefined) updateData.requireAllLessons = !!data.requireAllLessons;
+  if (data.requireQuizzes !== undefined) updateData.requireQuizzes = !!data.requireQuizzes;
+  if (data.quizPassingScore !== undefined) updateData.quizPassingScore = parseFloat(data.quizPassingScore) || 70.0;
+  if (data.requireAssignments !== undefined) updateData.requireAssignments = !!data.requireAssignments;
+  if (data.assignmentPassingScore !== undefined) updateData.assignmentPassingScore = parseFloat(data.assignmentPassingScore) || 70.0;
+  if (data.requireFinalAssessment !== undefined) updateData.requireFinalAssessment = !!data.requireFinalAssessment;
+  if (data.finalAssessmentPassingScore !== undefined) updateData.finalAssessmentPassingScore = parseFloat(data.finalAssessmentPassingScore) || 70.0;
+  if (data.finalAssessmentQuizId !== undefined) updateData.finalAssessmentQuizId = data.finalAssessmentQuizId || null;
+  if (data.minimumProgressPercentage !== undefined) updateData.minimumProgressPercentage = parseFloat(data.minimumProgressPercentage) || 100.0;
 
   return prisma.course.update({
     where: { id: courseId },

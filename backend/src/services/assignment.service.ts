@@ -11,29 +11,39 @@ export const submitAssignment = async (
 ) => {
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
+    include: { course: true },
   });
 
   if (!assignment) throw new AppError('Assignment not found.', 404);
 
-  // Upsert submission
-  const submission = await prisma.assignmentSubmission.upsert({
-    where: {
-      id: (await prisma.assignmentSubmission.findFirst({ where: { assignmentId, userId } }))?.id || 'non-existent-id',
-    },
-    update: {
-      submissionText: data.submissionText,
-      fileUrl: data.fileUrl,
-      status: SubmissionStatus.SUBMITTED,
-      submittedAt: new Date(),
-    },
-    create: {
-      assignmentId,
-      userId,
-      submissionText: data.submissionText,
-      fileUrl: data.fileUrl,
-      status: SubmissionStatus.SUBMITTED,
-    },
+  const existing = await prisma.assignmentSubmission.findFirst({
+    where: { assignmentId, userId },
   });
+
+  let submission;
+  if (existing) {
+    submission = await prisma.assignmentSubmission.update({
+      where: { id: existing.id },
+      data: {
+        submissionText: data.submissionText,
+        fileUrl: data.fileUrl,
+        status: SubmissionStatus.SUBMITTED,
+        submittedAt: new Date(),
+        submissionAttempts: { increment: 1 },
+      },
+    });
+  } else {
+    submission = await prisma.assignmentSubmission.create({
+      data: {
+        assignmentId,
+        userId,
+        submissionText: data.submissionText,
+        fileUrl: data.fileUrl,
+        status: SubmissionStatus.SUBMITTED,
+        submissionAttempts: 1,
+      },
+    });
+  }
 
   return submission;
 };
@@ -41,7 +51,7 @@ export const submitAssignment = async (
 export const gradeAssignmentSubmission = async (
   instructorUserId: string,
   submissionId: string,
-  data: { score: number; feedback?: string; status?: SubmissionStatus }
+  data: { score?: number; feedback?: string; status?: SubmissionStatus }
 ) => {
   const submission = await prisma.assignmentSubmission.findUnique({
     where: { id: submissionId },
@@ -53,29 +63,50 @@ export const gradeAssignmentSubmission = async (
 
   if (!submission) throw new AppError('Submission not found.', 404);
 
-  const gradedStatus = data.status || SubmissionStatus.GRADED;
+  const passingScore = submission.assignment.passingScore || 70.0;
+  let gradedStatus = data.status || SubmissionStatus.GRADED;
+
+  if (data.score !== undefined && !data.status) {
+    const percentage = submission.assignment.maxScore > 0 ? (data.score / submission.assignment.maxScore) * 100 : 100;
+    gradedStatus = percentage >= passingScore ? SubmissionStatus.PASSED : SubmissionStatus.GRADED;
+  }
 
   const updated = await prisma.assignmentSubmission.update({
     where: { id: submissionId },
     data: {
-      score: data.score,
-      feedback: data.feedback,
+      score: data.score !== undefined ? data.score : submission.score,
+      feedback: data.feedback !== undefined ? data.feedback : submission.feedback,
       status: gradedStatus,
       gradedAt: new Date(),
       gradedByUserId: instructorUserId,
     },
   });
 
-  // Notify student
+  // Notify student based on status
+  let notifTitle = `Assignment Evaluated: ${submission.assignment.title}`;
+  let notifMessage = `Your submission for "${submission.assignment.title}" was evaluated.`;
+  let notifType: any = 'ASSIGNMENT_GRADED';
+
+  if (gradedStatus === SubmissionStatus.PASSED) {
+    notifTitle = `🎉 Assignment Passed: ${submission.assignment.title}`;
+    notifMessage = `Congratulations! Your submission for "${submission.assignment.title}" has been approved and passed.`;
+  } else if (gradedStatus === SubmissionStatus.NEEDS_REVISION) {
+    notifTitle = `⚠️ Revision Requested: ${submission.assignment.title}`;
+    notifMessage = `Your instructor requested revisions on "${submission.assignment.title}": ${data.feedback || 'Please check feedback and resubmit.'}`;
+    notifType = 'ASSIGNMENT_NEEDS_REVISION';
+  } else if (data.score !== undefined) {
+    notifMessage = `Your submission for "${submission.assignment.title}" in "${submission.assignment.course.title}" was scored ${data.score}/${submission.assignment.maxScore}.`;
+  }
+
   await createNotification({
     userId: submission.userId,
-    title: `Assignment Graded: ${submission.assignment.title}`,
-    message: `Your submission for "${submission.assignment.title}" in course "${submission.assignment.course.title}" was graded. Score: ${data.score}/${submission.assignment.maxScore}.`,
-    type: 'ASSIGNMENT_GRADED',
+    title: notifTitle,
+    message: notifMessage,
+    type: notifType,
     linkUrl: `/courses/${submission.assignment.course.slug}/learn`,
   });
 
-  // Trigger course completion check
+  // Trigger course completion evaluation
   await checkAndProcessCourseCompletion(submission.userId, submission.assignment.courseId);
 
   return updated;

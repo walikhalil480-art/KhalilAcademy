@@ -6,6 +6,7 @@ import { env } from '../config/env';
 import { createNotification } from './notification.service';
 import { recordAuditLog } from './auditLog.service';
 import { EnrollmentStatus } from '@prisma/client';
+import { CertificateEligibilityService } from './certificateEligibility.service';
 
 export const checkAndProcessCourseCompletion = async (userId: string, courseId: string) => {
   const enrollment = await prisma.enrollment.findUnique({
@@ -14,28 +15,28 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
   });
 
   if (!enrollment) {
-    return { completed: false, certificate: null };
+    return { completed: false, certificate: null, eligibility: null };
   }
 
-  // Check 1: All published lessons completed
-  const totalLessons = await prisma.lesson.count({
-    where: { module: { courseId }, isPublished: true },
-  });
+  // Authoritative server-side evaluation of all course completion requirements
+  const eligibility = await CertificateEligibilityService.evaluateEligibility(userId, courseId);
 
-  const completedLessons = await prisma.lessonProgress.count({
-    where: {
-      userId,
-      isCompleted: true,
-      lesson: { module: { courseId }, isPublished: true },
-    },
-  });
+  // Update enrollment progress percentage based on actual lesson progress
+  const updatedProgress = eligibility.learningProgressPercentage;
 
-  if (totalLessons === 0 || completedLessons < totalLessons) {
-    return { completed: false, certificate: null };
+  if (enrollment.progressPercentage !== updatedProgress && !eligibility.eligible) {
+    await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: { progressPercentage: updatedProgress },
+    });
   }
 
-  // All published lessons completed! Update enrollment status if active
-  if (enrollment.status !== EnrollmentStatus.COMPLETED || (enrollment.progressPercentage || 0) < 100) {
+  if (!eligibility.eligible) {
+    return { completed: false, certificate: null, eligibility };
+  }
+
+  // All requirements satisfied! Update enrollment status to COMPLETED
+  if (enrollment.status !== EnrollmentStatus.COMPLETED || enrollment.progressPercentage !== 100) {
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
@@ -48,11 +49,11 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
 
   // Check course level setting: certificateEnabled (default: true)
   if (enrollment.course.certificateEnabled === false) {
-    return { completed: true, certificate: null };
+    return { completed: true, certificate: null, eligibility };
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return { completed: true, certificate: null };
+  if (!user) return { completed: true, certificate: null, eligibility };
 
   // Issue Certificate if not already issued (Idempotent lookup & unique constraint safety)
   let cert = await prisma.certificate.findFirst({
@@ -61,11 +62,12 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
 
   if (!cert) {
     const currentYear = new Date().getFullYear();
-    const courseCode = (enrollment.course.slug || 'COURSE')
-      .replace(/[^a-zA-Z]/g, '')
-      .toUpperCase()
-      .slice(0, 4) || 'KHA';
-    
+    const courseCode =
+      (enrollment.course.slug || 'COURSE')
+        .replace(/[^a-zA-Z]/g, '')
+        .toUpperCase()
+        .slice(0, 4) || 'KHA';
+
     let certNum = '';
     let isUnique = false;
     let attempts = 0;
@@ -94,7 +96,7 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
       await createNotification({
         userId,
         title: `Congratulations! Course Completed: ${enrollment.course.title}`,
-        message: `You have completed 100% of "${enrollment.course.title}". Your official Certificate ${cert.certificateNumber} has been issued!`,
+        message: `You have completed all requirements for "${enrollment.course.title}". Your official Certificate ${cert.certificateNumber} has been issued!`,
         type: 'CERTIFICATE_ISSUED',
         linkUrl: `/certificates/${cert.certificateNumber}`,
       });
@@ -129,73 +131,21 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
           issueDate: cert.issueDate,
         }
       : null,
+    eligibility,
   };
 };
 
 export const verifyCertificateEligibility = async (userId: string, courseIdOrSlug: string) => {
-  const course = await prisma.course.findFirst({
-    where: { OR: [{ id: courseIdOrSlug }, { slug: courseIdOrSlug }] },
-    select: { id: true, title: true, certificateEnabled: true },
-  });
+  const eligibility = await CertificateEligibilityService.evaluateEligibility(userId, courseIdOrSlug);
 
-  if (!course) throw new AppError('Course not found.', 404);
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: course.id } },
-  });
-
-  if (!enrollment) {
-    throw new AppError('You are not enrolled in this course.', 403);
+  if (!eligibility.eligible) {
+    const mainBlocker =
+      eligibility.missingRequirements[0] ||
+      'You are not yet eligible for this certificate. Complete all required lessons and assessments first.';
+    throw new AppError(mainBlocker, 403);
   }
 
-  if (course.certificateEnabled === false) {
-    throw new AppError('Certificates are disabled for this course.', 400);
-  }
-
-  // Check 1: All published lessons completed
-  const totalLessons = await prisma.lesson.count({
-    where: { module: { courseId: course.id }, isPublished: true },
-  });
-
-  const completedLessons = await prisma.lessonProgress.count({
-    where: {
-      userId,
-      isCompleted: true,
-      lesson: { module: { courseId: course.id }, isPublished: true },
-    },
-  });
-
-  if (totalLessons === 0 || completedLessons < totalLessons) {
-    throw new AppError(
-      `You are not yet eligible for this certificate. Completed ${completedLessons}/${totalLessons} required lessons. Complete all required lessons and assessments first.`,
-      403
-    );
-  }
-
-  // Check 2: All required quizzes in course passed
-  const quizzes = await prisma.quiz.findMany({
-    where: { courseId: course.id },
-    select: { id: true, title: true, passingScore: true },
-  });
-
-  for (const q of quizzes) {
-    const passedAttempt = await prisma.quizAttempt.findFirst({
-      where: {
-        userId,
-        quizId: q.id,
-        passed: true,
-      },
-    });
-
-    if (!passedAttempt) {
-      throw new AppError(
-        `You are not yet eligible for this certificate. Required quiz "${q.title}" must be passed first.`,
-        403
-      );
-    }
-  }
-
-  return { eligible: true, courseId: course.id, totalLessons, completedLessons };
+  return eligibility;
 };
 
 export const syncUserCertificates = async (userId: string) => {
@@ -206,23 +156,8 @@ export const syncUserCertificates = async (userId: string) => {
     });
 
     for (const e of enrollments) {
-      const totalLessons = await prisma.lesson.count({
-        where: { module: { courseId: e.courseId }, isPublished: true },
-      });
-
-      const completedLessons = await prisma.lessonProgress.count({
-        where: {
-          userId,
-          isCompleted: true,
-          lesson: { module: { courseId: e.courseId }, isPublished: true },
-        },
-      });
-
-      if (
-        (totalLessons > 0 && completedLessons >= totalLessons) ||
-        e.status === EnrollmentStatus.COMPLETED ||
-        (e.progressPercentage || 0) >= 100
-      ) {
+      const eligibility = await CertificateEligibilityService.evaluateEligibility(userId, e.courseId);
+      if (eligibility.eligible) {
         await checkAndProcessCourseCompletion(userId, e.courseId);
       }
     }

@@ -4,7 +4,14 @@ export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 export type ContentType = 'VIDEO' | 'TEXT' | 'PDF' | 'LINK';
 export type VideoSource = 'YOUTUBE' | 'UPLOAD';
-export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'GRADED' | 'RETURNED';
+export type SubmissionStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'GRADED'
+  | 'PASSED'
+  | 'NEEDS_REVISION'
+  | 'RETURNED';
 export type EnrollmentStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type OrderStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 export type PaymentStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
@@ -58,6 +65,8 @@ export interface Lesson {
   transcript?: string;
   resourceUrl?: string;
   isPreview: boolean;
+  isLocked?: boolean;
+  isRequired?: boolean;
   durationMinutes: number;
   order: number;
   isPublished: boolean;
@@ -93,6 +102,8 @@ export interface Quiz {
   passingScore: number;
   timeLimitMinutes: number;
   maxAttempts: number;
+  isRequired?: boolean;
+  isFinalAssessment?: boolean;
   questions?: QuizQuestion[];
   userAttemptsCount?: number;
   remainingAttempts?: number;
@@ -105,6 +116,8 @@ export interface Assignment {
   instructions: string;
   dueDate?: string;
   maxScore: number;
+  passingScore?: number;
+  isRequired?: boolean;
   allowedFileTypes?: string[];
   maxFileSizeBytes?: number;
 }
@@ -118,6 +131,7 @@ export interface AssignmentSubmission {
   status: SubmissionStatus;
   score?: number;
   feedback?: string;
+  submissionAttempts?: number;
   submittedAt: string;
   gradedAt?: string;
   assignment?: Assignment;
@@ -162,6 +176,16 @@ export interface Course {
   requirements: string[];
   targetAudience: string[];
   status: CourseStatus;
+  certificateEnabled?: boolean;
+  requireAllLessons?: boolean;
+  requireQuizzes?: boolean;
+  quizPassingScore?: number;
+  requireAssignments?: boolean;
+  assignmentPassingScore?: number;
+  requireFinalAssessment?: boolean;
+  finalAssessmentPassingScore?: number;
+  finalAssessmentQuizId?: string | null;
+  minimumProgressPercentage?: number;
   modules?: Module[];
   averageRating?: number;
   reviewCount?: number;
@@ -180,6 +204,86 @@ export interface Course {
   };
   _count?: { enrollments?: number; modules?: number; quizzes?: number; assignments?: number };
   createdAt?: string;
+}
+
+export interface CourseEligibilityResult {
+  eligible: boolean;
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  certificateEnabled: boolean;
+  learningProgressPercentage: number;
+  certificationProgressPercentage: number;
+  requirements: {
+    lessons: {
+      required: boolean;
+      satisfied: boolean;
+      completed: number;
+      total: number;
+      requiredCompleted: number;
+      requiredTotal: number;
+    };
+    quizzes: {
+      required: boolean;
+      satisfied: boolean;
+      passed: number;
+      total: number;
+      requiredPassed: number;
+      requiredTotal: number;
+      items: Array<{
+        id: string;
+        title: string;
+        isRequired: boolean;
+        passingScore: number;
+        passed: boolean;
+        bestScore: number | null;
+        attemptsCount: number;
+        remainingAttempts: number;
+      }>;
+    };
+    assignments: {
+      required: boolean;
+      satisfied: boolean;
+      passed: number;
+      total: number;
+      requiredPassed: number;
+      requiredTotal: number;
+      items: Array<{
+        id: string;
+        title: string;
+        isRequired: boolean;
+        passingScore: number;
+        status: string;
+        score: number | null;
+        maxScore: number;
+        feedback: string | null;
+        passed: boolean;
+      }>;
+    };
+    finalAssessment: {
+      required: boolean;
+      satisfied: boolean;
+      quizId: string | null;
+      quizTitle: string | null;
+      passingScore: number;
+      passed: boolean;
+      bestScore: number | null;
+      attemptsCount: number;
+      remainingAttempts: number;
+    };
+    minimumProgress: {
+      required: number;
+      current: number;
+      satisfied: boolean;
+    };
+  };
+  missingRequirements: string[];
+  certificate: {
+    id: string;
+    certificateNumber: string;
+    issueDate: string;
+    verificationUrl: string;
+  } | null;
 }
 
 export interface AcademyStats {
