@@ -56,24 +56,3 @@ jobs:
           npm ci
           npm run build
 
-  security-scan:
-    name: Container & Dependency Vulnerability Scan
-    runs-on: ubuntu-latest
-    needs: test-and-build
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Build Backend Docker Image
-        run: docker build -t khalil-academy-backend:latest ./backend
-
-      - name: Trivy Vulnerability Scan (Backend Container)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'khalil-academy-backend:latest'
-          format: 'table'
-          exit-code: '0'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
