@@ -40,9 +40,9 @@ export const errorHandler = (
     });
   }
 
-  // Fallback production-safe response
-  return res.status(500).json({
+  // Fallback response with informative message
+  return res.status(err.statusCode || 500).json({
     success: false,
-    message: 'An unexpected internal server error occurred.',
+    message: err.message || 'An unexpected internal server error occurred.',
   });
 };

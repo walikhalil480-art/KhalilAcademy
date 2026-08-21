@@ -98,34 +98,57 @@ export const verifyLessonAccessPermission = async (userId?: string, userRole?: s
   if (!lessonId) return true;
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
-    include: { module: { select: { courseId: true } } },
+    include: {
+      module: {
+        include: {
+          course: {
+            include: {
+              modules: {
+                orderBy: { order: 'asc' },
+                include: {
+                  lessons: {
+                    where: { isPublished: true },
+                    orderBy: { order: 'asc' },
+                    select: { id: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!lesson) throw new AppError('Lesson not found.', 404);
 
-  // If lesson is marked as Free Preview, allow access to everyone
-  if (lesson.isPreview) {
+  const course = lesson.module.course;
+
+  // Admins & Course Instructors always have access
+  if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || (userRole === 'INSTRUCTOR' && course.instructorId === userId)) {
     return true;
   }
 
-  // Admins & Instructors always have access
-  if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'INSTRUCTOR') {
+  // If user is enrolled with ACTIVE or COMPLETED status: allow access
+  if (userId) {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: course.id } },
+    });
+
+    if (enrollment && enrollment.status !== EnrollmentStatus.CANCELLED) {
+      return true;
+    }
+  }
+
+  // If NOT enrolled: Only allow the first published lesson across the entire course as Free Preview
+  const allPublishedLessons = course.modules.flatMap((m) => m.lessons);
+  const firstLessonId = allPublishedLessons.length > 0 ? allPublishedLessons[0].id : null;
+
+  if (firstLessonId && lesson.id === firstLessonId) {
     return true;
   }
 
-  if (!userId) {
-    throw new AppError('Authentication required to access this lesson.', 401);
-  }
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: lesson.module.courseId } },
-  });
-
-  if (!enrollment || enrollment.status === EnrollmentStatus.CANCELLED) {
-    throw new AppError('Course locked. Please enroll or purchase this course to continue learning.', 403);
-  }
-
-  return true;
+  throw new AppError('Course locked. Only the first video is available as a free preview. Please enroll in this course to continue watching.', 403);
 };
 
 export const createCheckoutOrder = async (userId: string, courseId: string, couponCode?: string) => {

@@ -17,6 +17,9 @@ import reviewRoutes from './review.routes';
 import notificationRoutes from './notification.routes';
 import uploadRoutes from './upload.routes';
 import statsRoutes from './stats.routes';
+import aiRoutes from './ai.routes';
+import liveSessionRoutes from './liveSession.routes';
+import atRiskStudentRoutes from './atRiskStudent.routes';
 import { streamVideo } from '../controllers/stream.controller';
 
 const router = Router();
@@ -39,6 +42,9 @@ router.use('/reviews', reviewRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/stats', statsRoutes);
+router.use('/ai', aiRoutes);
+router.use('/live-sessions', liveSessionRoutes);
+router.use('/at-risk-students', atRiskStudentRoutes);
 router.get('/stream/videos/*', streamVideo);
 
 export default router;

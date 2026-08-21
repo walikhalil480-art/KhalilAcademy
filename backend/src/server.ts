@@ -1,9 +1,15 @@
 import { app } from './app';
 import { env } from './config/env';
 import { logger } from './config/logger';
+import { LiveSessionReminderService } from './services/liveSessionReminder.service';
+import { AtRiskStudentService } from './services/atRiskStudent.service';
 
 const server = app.listen(env.PORT, () => {
   logger.info(`Khalil Academy LMS Server listening on port ${env.PORT} in ${env.NODE_ENV} mode.`);
+  // Start background reminder worker for live classes
+  LiveSessionReminderService.startScheduler();
+  // Start background at-risk student detection scanner
+  AtRiskStudentService.startScheduler();
 });
 
 process.on('unhandledRejection', (reason, promise) => {

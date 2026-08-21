@@ -17,8 +17,15 @@ import {
   AlertCircle, 
   RefreshCw,
   Layers,
-  GraduationCap
+  GraduationCap,
+  Compass,
+  HelpCircle,
+  Code2,
+  MessageSquare,
+  Zap,
 } from 'lucide-react';
+import { AskKhalilAIDrawer } from '../components/ai/AskKhalilAIDrawer';
+import { AIActionType } from '../types/ai';
 
 export interface LearningCourseItem {
   enrollmentId: string;
@@ -43,6 +50,15 @@ export const StudentDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
+
+  // AI Assistant Drawer state
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [aiInitialAction, setAiInitialAction] = useState<AIActionType>('GENERAL');
+
+  const openAIWithAction = (action: AIActionType = 'GENERAL') => {
+    setAiInitialAction(action);
+    setAiDrawerOpen(true);
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -196,6 +212,56 @@ export const StudentDashboardPage: React.FC = () => {
               <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Certificates</p>
             </div>
           </Link>
+        </div>
+
+        {/* AI Learning Companion & Study Hub Card */}
+        <div className="bg-gradient-to-r from-[#102342] via-[#132742] to-[#1A365D] border border-[#23426A] rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A365D] border border-[#4FD1C5]/40 text-[#4FD1C5] text-xs font-extrabold">
+              <Sparkles className="w-3.5 h-3.5 text-[#4FD1C5] animate-pulse" />
+              <span>Ask Khalil AI — Personal Learning Companion</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-[#F8FAFC]">
+              Accelerate Your Learning with Grounded AI
+            </h2>
+            <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed">
+              Ask questions about any enrolled course, generate personalized study roadmaps, practice technical quizzes, or troubleshoot code errors directly with your AI tutor.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <button
+                onClick={() => openAIWithAction('STUDY_PLAN')}
+                className="px-4 py-2 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-black text-xs rounded-xl shadow-lg shadow-[#4FD1C5]/20 transition flex items-center gap-2"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Create My Study Plan</span>
+              </button>
+
+              <button
+                onClick={() => openAIWithAction('RECOMMENDATION')}
+                className="px-4 py-2 bg-[#0E1D33] hover:bg-[#1A365D] border border-[#23426A] hover:border-[#4FD1C5]/40 text-[#F8FAFC] font-extrabold text-xs rounded-xl transition flex items-center gap-2 shadow-sm"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#4FD1C5]" />
+                <span>Smart Next Steps</span>
+              </button>
+
+              <button
+                onClick={() => openAIWithAction('GENERAL')}
+                className="px-4 py-2 bg-[#0E1D33] hover:bg-[#1A365D] border border-[#23426A] hover:border-[#4FD1C5]/40 text-[#CBD5E1] hover:text-[#F8FAFC] font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-[#4FD1C5]" />
+                <span>Ask Anything</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex flex-col items-center justify-center p-6 bg-[#0A1322]/60 rounded-2xl border border-[#23426A] text-center space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#1A365D] border border-[#4FD1C5]/40 text-[#4FD1C5] flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 animate-pulse text-[#4FD1C5]" />
+            </div>
+            <span className="text-xs font-bold text-[#F8FAFC]">100% Course Grounded</span>
+            <span className="text-[11px] text-[#94A3B8]">Grounded in Khalil Academy Curriculum</span>
+          </div>
         </div>
 
         {/* Continue Learning Spotlight Hero Card */}
@@ -356,6 +422,13 @@ export const StudentDashboardPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Ask Khalil AI Learning Assistant Drawer */}
+      <AskKhalilAIDrawer
+        isOpen={aiDrawerOpen}
+        onClose={() => setAiDrawerOpen(false)}
+        initialAction={aiInitialAction}
+      />
     </div>
   );
 };

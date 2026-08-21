@@ -88,21 +88,91 @@ export const AssignmentSubmitPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Graded Result View (If graded) */}
-      {submission && submission.status === 'GRADED' && (
-        <div className="p-6 rounded-2xl bg-[#22C55E]/10 border border-[#22C55E]/30 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-[#22C55E] uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4" /> Evaluated & Graded
-            </span>
-            <span className="text-lg font-extrabold text-[#F8FAFC]">
-              Score: {submission.score} / {assignment.maxScore}
-            </span>
-          </div>
-          {submission.feedback && (
-            <div className="p-3 rounded-xl bg-[#0E1D33] text-xs text-[#CBD5E1] border border-[#23426A]">
-              <strong className="text-[#F8FAFC] block mb-1">Instructor Feedback:</strong>
-              <p>{submission.feedback}</p>
+      {/* Workflow Status Banners */}
+      {submission && (
+        <div className="space-y-4">
+          {submission.status === 'PASSED' && (
+            <div className="p-6 rounded-2xl bg-[#22C55E]/15 border border-[#22C55E]/40 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black text-[#22C55E] uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> Passed & Approved
+                </span>
+                <span className="text-sm font-extrabold text-[#F8FAFC]">
+                  {submission.score !== undefined && submission.score !== null
+                    ? `Score: ${submission.score} / ${assignment.maxScore}`
+                    : 'Approved'}
+                </span>
+              </div>
+              <p className="text-xs text-[#CBD5E1]">
+                Your submission meets all course requirements for this assignment.
+              </p>
+              {submission.feedback && (
+                <div className="p-3.5 rounded-xl bg-[#0E1D33] text-xs text-[#CBD5E1] border border-[#23426A]">
+                  <strong className="text-[#22C55E] block mb-1 text-[11px] uppercase tracking-wider">
+                    Instructor Feedback:
+                  </strong>
+                  <p className="leading-relaxed">{submission.feedback}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {submission.status === 'NEEDS_REVISION' && (
+            <div className="p-6 rounded-2xl bg-[#EF4444]/15 border border-[#EF4444]/40 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black text-[#EF4444] uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> Revision Requested
+                </span>
+                <span className="text-xs font-bold text-[#F8FAFC]">
+                  Attempt #{submission.submissionAttempts || 1}
+                </span>
+              </div>
+              <p className="text-xs text-[#CBD5E1]">
+                Your instructor reviewed this assignment and requested updates. Please read the feedback below and submit your revision.
+              </p>
+              {submission.feedback && (
+                <div className="p-3.5 rounded-xl bg-[#0E1D33] text-xs text-[#CBD5E1] border border-[#EF4444]/30">
+                  <strong className="text-[#EF4444] block mb-1 text-[11px] uppercase tracking-wider">
+                    Instructor Feedback / Action Items:
+                  </strong>
+                  <p className="leading-relaxed whitespace-pre-wrap">{submission.feedback}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {(submission.status === 'SUBMITTED' || submission.status === 'UNDER_REVIEW') && (
+            <div className="p-6 rounded-2xl bg-[#3B82F6]/15 border border-[#3B82F6]/40 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black text-[#60A5FA] uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> Submitted & Under Review
+                </span>
+                <span className="text-xs text-[#CBD5E1]">
+                  Submitted on {new Date(submission.submittedAt).toLocaleDateString()}
+                </span>
+              </div>
+              <p className="text-xs text-[#CBD5E1]">
+                Your work has been submitted to the instructor for evaluation. You will receive a notification once grading is complete.
+              </p>
+            </div>
+          )}
+
+          {submission.status === 'GRADED' && (
+            <div className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-[#CBD5E1] uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#4FD1C5]" /> Graded
+                </span>
+                <span className="text-lg font-extrabold text-[#F8FAFC]">
+                  Score: {submission.score} / {assignment.maxScore}
+                </span>
+              </div>
+              {submission.feedback && (
+                <div className="p-3 rounded-xl bg-[#0E1D33] text-xs text-[#CBD5E1] border border-[#23426A]">
+                  <strong className="text-[#F8FAFC] block mb-1">Instructor Feedback:</strong>
+                  <p>{submission.feedback}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -110,7 +180,16 @@ export const AssignmentSubmitPage: React.FC = () => {
 
       {/* Submission Form */}
       <form onSubmit={handleSubmit} className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] space-y-5 shadow-xl">
-        <h3 className="text-sm font-bold text-[#F8FAFC] uppercase tracking-wider">Your Work Submission</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-sm font-bold text-[#F8FAFC] uppercase tracking-wider">
+            {submission ? 'Update / Resubmit Your Work' : 'Your Work Submission'}
+          </h3>
+          {submission?.submissionAttempts && submission.submissionAttempts > 1 && (
+            <span className="text-[11px] text-[#94A3B8] font-mono">
+              Submission #{submission.submissionAttempts}
+            </span>
+          )}
+        </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-[#CBD5E1]">Written Explanation / Summary</label>
@@ -140,7 +219,7 @@ export const AssignmentSubmitPage: React.FC = () => {
             disabled={submitting}
             className="px-6 py-2.5 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-extrabold text-xs rounded-xl shadow-lg shadow-[#4FD1C5]/20 transition disabled:opacity-50 flex items-center gap-2"
           >
-            <Upload className="w-4 h-4" /> {submitting ? 'Submitting Work...' : 'Submit Assignment'}
+            <Upload className="w-4 h-4" /> {submitting ? 'Submitting Work...' : submission ? 'Resubmit Assignment' : 'Submit Assignment'}
           </button>
         </div>
       </form>

@@ -46,7 +46,10 @@ enum VideoSource {
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
+  UNDER_REVIEW
   GRADED
+  PASSED
+  NEEDS_REVISION
   RETURNED
 }
 
@@ -90,11 +93,40 @@ enum NotificationType {
   PAYMENT_SUCCESS
   PAYMENT_FAILED
   ASSIGNMENT_GRADED
+  ASSIGNMENT_NEEDS_REVISION
   QUIZ_COMPLETED
+  QUIZ_FAILED_SUPPORT
   COURSE_COMPLETED
+  CERTIFICATE_ELIGIBLE
   CERTIFICATE_ISSUED
   ACCOUNT_VERIFICATION
   PASSWORD_RESET
+  LIVE_CLASS_REMINDER_24H
+  LIVE_CLASS_REMINDER_1H
+  LIVE_CLASS_STARTING
+  LIVE_CLASS_RECORDING_AVAILABLE
+  LIVE_CLASS_CANCELLED
+  STUDENT_SUPPORT_REMINDER
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum LiveMeetingProvider {
+  ZOOM
+  GOOGLE_MEET
+  EXTERNAL
+}
+
+enum LiveAttendanceStatus {
+  REGISTERED
+  PRESENT
+  PARTIAL
+  ABSENT
 }
 
 model User {
@@ -127,6 +159,12 @@ model User {
   reviews               Review[]
   notifications         Notification[]
   auditLogs             AuditLog[]
+  aiConversations       AIConversation[]
+  instructorLiveSessions LiveSession[]             @relation("InstructorLiveSessions")
+  liveRegistrations      LiveSessionRegistration[]
+  liveAttendances        LiveSessionAttendance[]
+  liveQuestions          LiveSessionQuestion[]
+  riskRecords            StudentRiskRecord[]
 }
 
 model RefreshToken {
@@ -169,11 +207,20 @@ model Course {
   learningObjectives String[]
   requirements       String[]
   targetAudience     String[]
-  status             CourseStatus @default(DRAFT)
-  completionCriteria String?      @default("REQUIRED_LESSONS_AND_QUIZZES")
-  certificateEnabled Boolean      @default(true)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  status                      CourseStatus @default(DRAFT)
+  completionCriteria          String?      @default("REQUIRED_LESSONS_AND_QUIZZES")
+  certificateEnabled          Boolean      @default(true)
+  requireAllLessons           Boolean      @default(true)
+  requireQuizzes              Boolean      @default(false)
+  quizPassingScore            Float        @default(70.0)
+  requireAssignments          Boolean      @default(false)
+  assignmentPassingScore      Float        @default(70.0)
+  requireFinalAssessment      Boolean      @default(false)
+  finalAssessmentPassingScore Float        @default(70.0)
+  finalAssessmentQuizId       String?
+  minimumProgressPercentage   Float        @default(100.0)
+  createdAt                   DateTime     @default(now())
+  updatedAt                   DateTime     @updatedAt
 
   instructor   User          @relation("InstructorCourses", fields: [instructorId], references: [id])
   category     Category      @relation(fields: [categoryId], references: [id])
@@ -184,6 +231,9 @@ model Course {
   orders       Order[]
   certificates Certificate[]
   reviews      Review[]
+  aiConversations AIConversation[]
+  liveSessions LiveSession[]
+  riskRecords  StudentRiskRecord[]
 }
 
 model Module {
@@ -218,6 +268,7 @@ model Lesson {
   transcript          String?
   resourceUrl         String?
   isPreview           Boolean     @default(false)
+  isRequired          Boolean     @default(true)
   durationMinutes     Int         @default(0)
   order               Int
   isPublished         Boolean     @default(true)
@@ -228,6 +279,7 @@ model Lesson {
   module     Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progresses LessonProgress[]
   resources  LessonResource[]
+  aiConversations AIConversation[]
 }
 
 model LessonResource {
@@ -265,21 +317,24 @@ model LessonProgress {
 }
 
 model Quiz {
-  id               String   @id @default(uuid())
-  title            String
-  description      String?
-  passingScore     Float    @default(70.0)
-  timeLimitMinutes Int      @default(30)
-  maxAttempts      Int      @default(3)
-  moduleId         String
-  courseId         String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(uuid())
+  title             String
+  description       String?
+  passingScore      Float    @default(70.0)
+  timeLimitMinutes  Int      @default(30)
+  maxAttempts       Int      @default(3)
+  isRequired        Boolean  @default(true)
+  isFinalAssessment Boolean  @default(false)
+  moduleId          String
+  courseId          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  module   Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions QuizQuestion[]
-  attempts QuizAttempt[]
+  module      Module              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  course      Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+  riskRecords StudentRiskRecord[]
 }
 
 model QuizQuestion {
@@ -337,35 +392,39 @@ model QuizAnswer {
 }
 
 model Assignment {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   title            String
   instructions     String
   dueDate          DateTime?
-  maxScore         Float    @default(100.0)
-  allowedFileTypes String[] @default(["pdf", "zip", "docx", "txt"])
-  maxFileSizeBytes Int      @default(10485760) // 10 MB
+  maxScore         Float     @default(100.0)
+  passingScore     Float     @default(70.0)
+  isRequired       Boolean   @default(true)
+  allowedFileTypes String[]  @default(["pdf", "zip", "docx", "txt"])
+  maxFileSizeBytes Int       @default(10485760) // 10 MB
   moduleId         String
   courseId         String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   module      Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions AssignmentSubmission[]
+  riskRecords StudentRiskRecord[]
 }
 
 model AssignmentSubmission {
-  id             String           @id @default(uuid())
-  assignmentId   String
-  userId         String
-  submissionText String?
-  fileUrl        String?
-  status         SubmissionStatus @default(SUBMITTED)
-  score          Float?
-  feedback       String?
-  submittedAt    DateTime         @default(now())
-  gradedAt       DateTime?
-  gradedByUserId String?
+  id                 String           @id @default(uuid())
+  assignmentId       String
+  userId             String
+  submissionText     String?
+  fileUrl            String?
+  status             SubmissionStatus @default(SUBMITTED)
+  score              Float?
+  feedback           String?
+  submissionAttempts Int              @default(1)
+  submittedAt        DateTime         @default(now())
+  gradedAt           DateTime?
+  gradedByUserId     String?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user       User       @relation("StudentSubmissions", fields: [userId], references: [id], onDelete: Cascade)
@@ -497,3 +556,198 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
+
+enum AIMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model AIConversation {
+  id        String      @id @default(uuid())
+  userId    String
+  courseId  String?
+  lessonId  String?
+  title     String      @default("New Chat")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson    Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  messages  AIMessage[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([lessonId])
+}
+
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  role           AIMessageRole  @default(USER)
+  content        String
+  actionType     String?        // EXPLAIN, SIMPLIFY, SUMMARY, QUIZ, CODE_HELP, STUDY_PLAN, RECOMMENDATION, GENERAL
+  contextMeta    String?        // JSON string metadata for code, topic, score etc.
+  createdAt      DateTime       @default(now())
+
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+model LiveSession {
+  id                         String              @id @default(uuid())
+  title                      String
+  description                String?
+  courseId                   String
+  instructorId               String
+  startTime                  DateTime
+  endTime                    DateTime
+  timezone                   String              @default("UTC")
+  maxParticipants            Int                 @default(50)
+  meetingProvider            LiveMeetingProvider @default(EXTERNAL)
+  meetingUrl                 String?             // Sensitive: returned only to registered/authorized users
+  meetingId                  String?
+  meetingPasscode            String?
+  status                     LiveSessionStatus   @default(SCHEDULED)
+  attendanceThresholdPercent Int                 @default(70)
+  joinBufferMinutes          Int                 @default(15)
+  recordingUrl               String?
+  recordingTitle             String?
+  recordingDurationMinutes   Int?
+  recordingUploadedAt        DateTime?
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+
+  course        Course                    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructor    User                      @relation("InstructorLiveSessions", fields: [instructorId], references: [id], onDelete: Cascade)
+  registrations LiveSessionRegistration[]
+  attendances   LiveSessionAttendance[]
+  questions     LiveSessionQuestion[]
+
+  @@index([courseId])
+  @@index([instructorId])
+  @@index([status])
+  @@index([startTime])
+}
+
+model LiveSessionRegistration {
+  id                   String      @id @default(uuid())
+  sessionId            String
+  userId               String
+  registeredAt         DateTime    @default(now())
+  reminder24hSent      Boolean     @default(false)
+  reminder1hSent       Boolean     @default(false)
+  reminderStartingSent Boolean     @default(false)
+  status               String      @default("REGISTERED")
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model LiveSessionAttendance {
+  id              String               @id @default(uuid())
+  sessionId       String
+  userId          String
+  joinedAt        DateTime             @default(now())
+  leftAt          DateTime?
+  durationMinutes Int                  @default(0)
+  status          LiveAttendanceStatus @default(REGISTERED)
+  markedBy        String?              // "SYSTEM" or instructor userId
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model LiveSessionQuestion {
+  id             String      @id @default(uuid())
+  sessionId      String
+  userId         String
+  question       String
+  answer         String?
+  answeredBy     String?     // Instructor name or user ID
+  answeredAt     DateTime?
+  isAnswered     Boolean     @default(false)
+  isPinned       Boolean     @default(false)
+  upvotes        Int         @default(0)
+  upvotedUserIds String[]    @default([])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  session LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([isPinned])
+}
+
+enum StudentRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum StudentRiskStatus {
+  ACTIVE
+  RESOLVED
+  DISMISSED
+}
+
+enum StudentRiskReason {
+  INACTIVE_10_DAYS
+  COURSE_PROGRESS_STALLED
+  QUIZ_FAILED_3_TIMES
+  ASSIGNMENT_OVERDUE
+  LOW_RECENT_PERFORMANCE
+  MULTIPLE_RISK_FACTORS
+}
+
+model StudentRiskRecord {
+  id                String            @id @default(uuid())
+  userId            String
+  courseId          String?
+  quizId            String?
+  assignmentId      String?
+  riskLevel         StudentRiskLevel
+  riskReason        StudentRiskReason
+  title             String
+  details           String
+  metricValue       Float?
+  status            StudentRiskStatus @default(ACTIVE)
+  detectedAt        DateTime          @default(now())
+  resolvedAt        DateTime?
+  resolutionReason  String?
+  lastNotifiedAt    DateTime?
+  notificationCount Int               @default(0)
+  recommendedAction String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quiz       Quiz?       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  assignment Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([riskLevel])
+  @@index([status])
+  @@index([courseId])
+  @@index([detectedAt])
+}
+
+
+
