@@ -10,6 +10,7 @@ import { createNotification } from './notification.service';
 import { sendEmail } from './email.service';
 import { recordAuditLog } from './auditLog.service';
 import { logger } from '../config/logger';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export interface StudentRiskSignal {
   riskReason: StudentRiskReason;
@@ -489,24 +490,17 @@ export class AtRiskStudentService {
         linkUrl: '/dashboard',
       });
 
-      // Optionally send friendly email
+      // Emit friendly inactive reminder event
       if (student.email) {
-        sendEmail({
-          to: student.email,
-          subject: title,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #071326; color: #F8FAFC; padding: 24px; border-radius: 12px;">
-              <h2 style="color: #4FD1C5; margin-bottom: 12px;">${title}</h2>
-              <p style="font-size: 15px; line-height: 1.6; color: #CBD5E1;">${message}</p>
-              <div style="margin: 24px 0;">
-                <a href="${process.env.APP_URL || 'https://khalilacademy.com'}/dashboard" style="background: #0284C7; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">
-                  Continue Learning
-                </a>
-              </div>
-              <p style="font-size: 12px; color: #64748B;">Khalil Academy — Empowering Your Software Engineering Journey</p>
-            </div>
-          `,
-        }).catch(() => {});
+        appEventBus.emitEvent(AcademyEvent.INACTIVE_STUDENT_REMINDER, {
+          userId: student.id,
+          email: student.email,
+          name: student.name,
+          courseId: activeRecord.courseId || '',
+          courseTitle: activeRecord.title || 'Your Course',
+          lastActiveDays: 7,
+          progressPercentage: 25,
+        });
       }
 
       // Update notification timestamp and counter

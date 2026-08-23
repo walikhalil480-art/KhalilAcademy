@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { CourseStatus, Level, ContentType } from '@prisma/client';
 import { AppError } from '../middlewares/errorHandler';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export interface CourseQueryFilters {
   search?: string;
@@ -229,7 +230,7 @@ export const getCourseBySlug = async (slug: string, userId?: string, userRole?: 
   const firstLessonId = allPublishedLessons.length > 0 ? allPublishedLessons[0].id : null;
 
   // 5. Calculate Instructor Metrics across all instructor courses
-  const [instructorCourseCount, instructorStudentCount, instructorReviewAgg] = await Promise.all([
+  const [instructorCourseCount, instructorStudentCount, instructorReviewAgg, userCompletedProgresses] = await Promise.all([
     prisma.course.count({
       where: { instructorId: course.instructorId, status: 'PUBLISHED' },
     }),
@@ -241,22 +242,62 @@ export const getCourseBySlug = async (slug: string, userId?: string, userRole?: 
       _avg: { rating: true },
       _count: { _all: true },
     }),
+    (userId && isEnrolled)
+      ? prisma.lessonProgress.findMany({
+          where: {
+            userId,
+            lesson: { module: { courseId: course.id } },
+            isCompleted: true,
+          },
+          select: { lessonId: true },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const completedLessonIdSet = new Set(userCompletedProgresses.map((p) => p.lessonId));
+  const isPrivilegedStaff = isPrivileged;
 
   const instructorReviewCount = instructorReviewAgg._count._all || 0;
   const instructorAverageRating = instructorReviewCount > 0 ? parseFloat((instructorReviewAgg._avg.rating || 0).toFixed(1)) : 0;
 
-  // 6. Format modules with strict access control: ONLY the first published lesson is previewable for unenrolled students
+  // 6. Format modules with strict sequential access control:
+  // - Unenrolled students: ONLY the first published lesson is previewable
+  // - Enrolled students: Must complete preceding lessons to unlock subsequent lessons
+  // - Admins/Instructors: All lessons unlocked
+  const flatPublishedLessons = course.modules.flatMap((m) => m.lessons.filter((l) => l.isPublished));
+  let runningPrereqsMet = true;
+
+  const lessonLockMap = new Map<string, boolean>();
+  flatPublishedLessons.forEach((l, idx) => {
+    if (isPrivilegedStaff) {
+      lessonLockMap.set(l.id, false);
+    } else if (!isEnrolled) {
+      lessonLockMap.set(l.id, idx !== 0);
+    } else {
+      // First lesson is always unlocked for enrolled students
+      if (idx === 0) {
+        lessonLockMap.set(l.id, false);
+      } else {
+        lessonLockMap.set(l.id, !runningPrereqsMet);
+      }
+      // If this lesson is NOT completed, subsequent lessons cannot be unlocked yet
+      if (!completedLessonIdSet.has(l.id)) {
+        runningPrereqsMet = false;
+      }
+    }
+  });
+
   const formattedModules = course.modules.map((m) => {
     const moduleLessons = m.lessons.filter((l) => l.isPublished).map((l) => {
       const isFirstLesson = l.id === firstLessonId;
-      const canAccessLesson = hasFullAccess || isFirstLesson;
+      const isLocked = lessonLockMap.get(l.id) ?? true;
+      const canAccessLesson = !isLocked;
 
       if (canAccessLesson) {
         return {
           ...l,
           isLocked: false,
-          isPreview: isFirstLesson,
+          isPreview: isFirstLesson && !isEnrolled,
         };
       }
 
@@ -370,6 +411,7 @@ export const createCourse = async (instructorId: string, data: any) => {
       instructorId,
       categoryId: targetCategoryId,
       level: data.level || 'BEGINNER',
+      currency: data.currency ? (data.currency === 'USD' || data.currency === 'KSH' ? 'KES' : data.currency) : 'KES',
       price: data.price !== undefined ? parseFloat(data.price) : 0,
       discountPrice: data.discountPrice ? parseFloat(data.discountPrice) : null,
       durationHours: data.durationHours ? parseFloat(data.durationHours) : 0,
@@ -419,6 +461,7 @@ export const updateCourse = async (courseId: string, data: any) => {
   if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
   if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
   if (data.level !== undefined) updateData.level = data.level;
+  if (data.currency !== undefined) updateData.currency = data.currency === 'USD' || data.currency === 'KSH' ? 'KES' : data.currency;
   if (data.isFree !== undefined) updateData.isFree = !!data.isFree;
   if (data.price !== undefined) updateData.price = parseFloat(data.price) || 0;
   if (data.discountPrice !== undefined) updateData.discountPrice = data.discountPrice ? parseFloat(data.discountPrice) : null;
@@ -479,10 +522,70 @@ export const setCoursePublishStatus = async (courseId: string, status: CourseSta
     }
   }
 
-  return prisma.course.update({
+  const updatedCourse = await prisma.course.update({
     where: { id: courseId },
     data: { status },
+    include: {
+      category: true,
+      instructor: true,
+    },
   });
+
+  // If newly published, broadcast new course announcement
+  if (status === CourseStatus.PUBLISHED) {
+    const students = await prisma.user.findMany({
+      where: { role: 'STUDENT', emailVerified: true },
+      select: { email: true },
+      take: 200,
+    });
+    const studentEmails = students.map((s) => s.email).filter(Boolean);
+
+    if (studentEmails.length > 0) {
+      appEventBus.emitEvent(AcademyEvent.NEW_COURSE_ANNOUNCEMENT, {
+        studentEmails,
+        courseId: updatedCourse.id,
+        courseTitle: updatedCourse.title,
+        courseSlug: updatedCourse.slug,
+        category: updatedCourse.category?.name || 'Technology',
+        description: updatedCourse.description || 'Check out our new curriculum at Khalil Academy.',
+        instructorName: updatedCourse.instructor?.name || 'Khalil Academy Instructor',
+      });
+    }
+  }
+
+  return updatedCourse;
+};
+
+export const broadcastCourseAnnouncement = async (
+  courseId: string,
+  instructorUserId: string,
+  data: { title: string; message: string }
+) => {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    include: {
+      instructor: true,
+      enrollments: {
+        where: { status: 'ACTIVE' },
+        include: { user: { select: { email: true } } },
+      },
+    },
+  });
+
+  if (!course) throw new AppError('Course not found.', 404);
+
+  const studentEmails = course.enrollments.map((e) => e.user.email).filter(Boolean);
+
+  appEventBus.emitEvent(AcademyEvent.INSTRUCTOR_ANNOUNCEMENT, {
+    studentEmails,
+    courseId: course.id,
+    courseTitle: course.title,
+    instructorName: course.instructor?.name || 'Your Instructor',
+    title: data.title,
+    message: data.message,
+  });
+
+  return { success: true, count: studentEmails.length };
 };
 
 export const deleteCourseCascade = async (courseId: string) => {

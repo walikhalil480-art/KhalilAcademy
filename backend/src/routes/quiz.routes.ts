@@ -8,6 +8,8 @@ const router = Router();
 router.get('/:id', authenticate, quizController.getQuiz);
 router.post('/:id/attempt', authenticate, quizController.submitAttempt);
 router.get('/:id/results', authenticate, quizController.getHistory);
+router.get('/:id/submissions', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.getInstructorSubmissions);
+router.post('/:id/reset-attempts', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.resetAttempts);
 router.post('/', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.createQuiz);
 router.patch('/:id', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.updateQuiz);
 

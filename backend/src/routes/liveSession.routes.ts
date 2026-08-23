@@ -47,6 +47,13 @@ router.post(
   liveCtrl.cancelSession
 );
 
+router.post(
+  '/:id/end',
+  authenticate,
+  authorize(Role.INSTRUCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  liveCtrl.endSession
+);
+
 router.delete(
   '/:id',
   authenticate,

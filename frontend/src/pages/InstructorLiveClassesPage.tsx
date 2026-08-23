@@ -22,6 +22,7 @@ import {
   Settings,
   ExternalLink,
   ChevronRight,
+  Square,
 } from 'lucide-react';
 
 export const InstructorLiveClassesPage: React.FC = () => {
@@ -168,6 +169,18 @@ export const InstructorLiveClassesPage: React.FC = () => {
       await loadData();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to cancel session.');
+    }
+  };
+
+  const handleEndSession = async (sess: LiveSession) => {
+    if (!window.confirm(`Are you sure you want to conclude and end "${sess.title}" for all students?`))
+      return;
+    try {
+      await liveSessionApi.endSession(sess.id);
+      setSuccessMessage(`Live class "${sess.title}" has been concluded.`);
+      await loadData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to end live class.');
     }
   };
 
@@ -372,11 +385,21 @@ export const InstructorLiveClassesPage: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               to={`/live-classes/${sess.id}`}
-                              title="View Virtual Classroom"
+                              title="Enter In-Screen Virtual Classroom"
                               className="p-1.5 rounded-lg bg-[#071326] text-[#94A3B8] hover:text-[#4FD1C5] transition-colors"
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
+
+                            {sess.dynamicStatus === 'LIVE' && (
+                              <button
+                                onClick={() => handleEndSession(sess)}
+                                title="End Live Class Session"
+                                className="p-1.5 rounded-lg bg-[#EF4444]/20 text-[#EF4444] hover:bg-[#EF4444] hover:text-white transition-colors"
+                              >
+                                <Square className="w-4 h-4 fill-current" />
+                              </button>
+                            )}
 
                             <button
                               onClick={() => handleOpenAttendance(sess)}
@@ -544,27 +567,46 @@ export const InstructorLiveClassesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1">Meeting Provider</label>
+                  <label className="block text-white font-semibold mb-1">Meeting Platform</label>
                   <select
                     value={formData.meetingProvider}
-                    onChange={(e) => setFormData({ ...formData, meetingProvider: e.target.value })}
+                    onChange={(e) => {
+                      const provider = e.target.value;
+                      let updatedUrl = formData.meetingUrl;
+                      if (provider === 'EXTERNAL' && !formData.meetingUrl) {
+                        updatedUrl = `https://meet.jit.si/KhalilAcademy-Live-${Math.random().toString(36).substring(2, 9)}`;
+                      }
+                      setFormData({ ...formData, meetingProvider: provider, meetingUrl: updatedUrl });
+                    }}
                     className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
                   >
-                    <option value="EXTERNAL">External Virtual Link</option>
+                    <option value="EXTERNAL">Khalil Academy Built-In Virtual Room (In-Screen)</option>
+                    <option value="GOOGLE_MEET">Google Meet (Companion Stage)</option>
                     <option value="ZOOM">Zoom</option>
-                    <option value="GOOGLE_MEET">Google Meet</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-white font-semibold mb-1">
-                  Meeting URL (Google Meet / Zoom / Classroom Link) *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-white font-semibold">
+                    Meeting URL *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const randomRoom = `https://meet.guifi.net/KhalilAcademy-Live-${Math.random().toString(36).substring(2, 9)}`;
+                      setFormData({ ...formData, meetingUrl: randomRoom, meetingProvider: 'EXTERNAL' });
+                    }}
+                    className="text-[11px] text-[#4FD1C5] hover:underline font-bold"
+                  >
+                    + Auto-Generate Built-In In-Screen Room
+                  </button>
+                </div>
                 <input
                   type="text"
                   required
-                  placeholder="https://meet.google.com/xyz or https://zoom.us/j/..."
+                  placeholder="https://meet.jit.si/room-name or https://meet.google.com/xyz or https://zoom.us/j/..."
                   value={formData.meetingUrl}
                   onChange={(e) => {
                     let val = e.target.value.trim();
@@ -575,8 +617,8 @@ export const InstructorLiveClassesPage: React.FC = () => {
                   }}
                   className="w-full p-2.5 bg-[#071326] border border-[#23426A] focus:border-[#4FD1C5] rounded-xl text-white focus:outline-none font-mono text-xs"
                 />
-                <span className="text-[10px] text-[#4FD1C5] mt-1 block">
-                  🔒 Securely encrypted: Students can only access this URL 15 minutes before session start.
+                <span className="text-[10px] text-[#94A3B8] mt-1 block">
+                  💡 Tip: URLs with <strong>meet.jit.si</strong>, <strong>YouTube Live</strong>, or <strong>Vimeo</strong> embed directly inside the screen. <strong>Google Meet</strong> and <strong>Zoom</strong> run in synchronized companion mode with active in-app Q&A, chat, and attendance.
                 </span>
               </div>
 

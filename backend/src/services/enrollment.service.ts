@@ -4,8 +4,9 @@ import { AppError } from '../middlewares/errorHandler';
 import { getPaymentProviderInstance } from './payment.service';
 import { createNotification } from './notification.service';
 import { recordAuditLog } from './auditLog.service';
-import { enrollmentsCounter, paymentFailuresCounter } from '../utils/metrics';
+import { paymentFailuresCounter } from '../utils/metrics';
 import { OrderStatus, PaymentStatus, EnrollmentStatus, PaymentProvider } from '@prisma/client';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export const validateCouponCode = async (code: string, originalPrice: number) => {
   const coupon = await prisma.coupon.findUnique({
@@ -71,9 +72,22 @@ export const enrollFreeCourse = async (userId: string, courseIdOrSlug: string) =
       courseId: course.id,
       status: EnrollmentStatus.ACTIVE,
     },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      course: { select: { id: true, title: true, slug: true, instructor: { select: { name: true } } } },
+    },
   });
 
-  enrollmentsCounter.inc();
+  // Emit event to trigger enrollment confirmation email
+  appEventBus.emitEvent(AcademyEvent.COURSE_ENROLLED, {
+    userId: enrollment.user.id,
+    email: enrollment.user.email,
+    name: enrollment.user.name,
+    courseId: enrollment.course.id,
+    courseTitle: enrollment.course.title,
+    courseSlug: enrollment.course.slug,
+    instructorName: enrollment.course.instructor?.name,
+  });
 
   await createNotification({
     userId,
@@ -136,6 +150,21 @@ export const verifyLessonAccessPermission = async (userId?: string, userRole?: s
     });
 
     if (enrollment && enrollment.status !== EnrollmentStatus.CANCELLED) {
+      const allPublishedLessons = course.modules.flatMap((m) => m.lessons);
+      const targetIndex = allPublishedLessons.findIndex((l) => l.id === lessonId);
+      if (targetIndex > 0) {
+        const precedingIds = allPublishedLessons.slice(0, targetIndex).map((l) => l.id);
+        const completedCount = await prisma.lessonProgress.count({
+          where: {
+            userId,
+            lessonId: { in: precedingIds },
+            isCompleted: true,
+          },
+        });
+        if (completedCount < precedingIds.length) {
+          throw new AppError('Please complete all previous lessons in this course before accessing this lesson.', 403);
+        }
+      }
       return true;
     }
   }
@@ -279,7 +308,15 @@ export const handlePaymentWebhook = async (headers: Record<string, any>, body: a
       },
     });
 
-    enrollmentsCounter.inc();
+    // Emit event to trigger enrollment confirmation email
+    appEventBus.emitEvent(AcademyEvent.COURSE_ENROLLED, {
+      userId: order.user.id,
+      email: order.user.email,
+      name: order.user.name,
+      courseId: order.course.id,
+      courseTitle: order.course.title,
+      courseSlug: order.course.slug,
+    });
 
     // 4. Notifications & Audit Logs
     await createNotification({

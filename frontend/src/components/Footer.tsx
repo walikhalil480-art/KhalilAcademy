@@ -10,11 +10,18 @@ export const Footer: React.FC = () => {
           
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#1A365D] border border-[#4FD1C5]/40 flex items-center justify-center shadow-lg shadow-[#1A365D]/30">
-                <GraduationCap className="w-5 h-5 text-[#4FD1C5]" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-white/95 p-1 border border-[#4FD1C5]/40 flex items-center justify-center shadow-lg shadow-[#1A365D]/30 group-hover:border-[#4FD1C5] transition-all">
+                <img
+                  src="/logo.png"
+                  alt="Khalil Academy"
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <span className="text-lg font-extrabold text-[#F8FAFC]">Khalil Academy</span>
+              <div className="flex flex-col">
+                <span className="text-lg font-black text-[#F8FAFC] leading-tight">Khalil Academy</span>
+                <span className="text-[9px] text-[#4FD1C5] font-extrabold uppercase tracking-wider">Learn • Grow • Succeed</span>
+              </div>
             </Link>
             <p className="text-xs text-[#94A3B8] leading-relaxed max-w-sm">
               Professional education academy dedicated to practical tech skills, real-world experience, and globally verifiable certifications.

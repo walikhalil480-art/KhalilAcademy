@@ -36,13 +36,16 @@ import {
   CheckCircle,
   AlertCircle,
   MessageSquare,
+  BarChart3,
 } from 'lucide-react';
+import { CourseAnalyticsModal } from '../components/CourseAnalyticsModal';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
 
   const [data, setData] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedCourseForAnalytics, setSelectedCourseForAnalytics] = useState<{ id: string; title: string } | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'audit' | 'at-risk'>('overview');
@@ -1069,6 +1072,16 @@ export const AdminDashboardPage: React.FC = () => {
                         style={{ width: `${enr.progressPercentage}%` }}
                       />
                     </div>
+                    <div className="pt-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCourseForAnalytics({ id: enr.courseId, title: enr.courseTitle })}
+                        className="text-[10px] text-[#38BDF8] hover:underline font-bold flex items-center gap-1"
+                      >
+                        <BarChart3 className="w-3 h-3" />
+                        <span>Course Performance & Results →</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1255,6 +1268,15 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Course Analytics & Student Performance Modal */}
+      {selectedCourseForAnalytics && (
+        <CourseAnalyticsModal
+          courseId={selectedCourseForAnalytics.id}
+          courseTitle={selectedCourseForAnalytics.title}
+          onClose={() => setSelectedCourseForAnalytics(null)}
+        />
       )}
     </div>
   );

@@ -1,7 +1,9 @@
 import { prisma } from '../config/database';
 import { AppError } from '../middlewares/errorHandler';
 import { checkAndProcessCourseCompletion } from './certificate.service';
+import { recordAuditLog } from './auditLog.service';
 import { EnrollmentStatus } from '@prisma/client';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export interface PlaybackData {
   lastWatchedPosition: number;
@@ -122,6 +124,40 @@ export const recordLessonPlayback = async (userId: string, lessonId: string, dat
       progressPercentage: courseProgressPercentage,
     },
   });
+
+  // Emit event when student starts their first completed lesson in a course
+  if (completedLessons === 1 && isCompleted && (!existingProgress || !existingProgress.isCompleted)) {
+    const emailSent = await prisma.auditLog.findFirst({
+      where: {
+        userId,
+        action: 'COURSE_STARTED_EMAIL_SENT',
+        entityId: courseId,
+      },
+    });
+
+    if (!emailSent) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+      const course = await prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
+      if (user && course) {
+        appEventBus.emitEvent(AcademyEvent.COURSE_STARTED, {
+          userId,
+          email: user.email,
+          name: user.name,
+          courseId,
+          courseTitle: course.title,
+          lessonTitle: lesson.title,
+        });
+
+        await recordAuditLog({
+          userId,
+          action: 'COURSE_STARTED_EMAIL_SENT',
+          entity: 'Course',
+          entityId: courseId,
+          details: { lessonTitle: lesson.title, courseTitle: course.title },
+        });
+      }
+    }
+  }
 
   let completionResult = null;
   if (is100Percent) {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as courseController from '../controllers/course.controller';
 import * as reviewController from '../controllers/review.controller';
 import * as paymentController from '../controllers/payment.controller';
+import * as courseAnalyticsController from '../controllers/courseAnalytics.controller';
 import { authenticate, authenticateOptional } from '../middlewares/auth';
 import { authorize } from '../middlewares/rbac';
 
@@ -10,6 +11,9 @@ const router = Router();
 router.get('/', authenticateOptional, courseController.listCourses);
 router.get('/:slug', authenticateOptional, courseController.getCourse);
 router.post('/:id/enroll', authenticate, paymentController.enrollFree);
+
+// Course Analytics & Student Performance (Course Instructor & Admins ONLY)
+router.get('/:id/analytics', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), courseAnalyticsController.getCourseAnalytics);
 
 // Course Reviews
 router.get('/:courseId/reviews', reviewController.getCourseReviews);

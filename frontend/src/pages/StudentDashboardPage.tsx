@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { AskKhalilAIDrawer } from '../components/ai/AskKhalilAIDrawer';
 import { AIActionType } from '../types/ai';
+import { StreakWidget } from '../components/gamification/StreakWidget';
+import { BadgesWall } from '../components/gamification/BadgesWall';
+import { gamificationApi, GamificationProfile } from '../services/gamificationApi';
 
 export interface LearningCourseItem {
   enrollmentId: string;
@@ -47,6 +50,7 @@ export const StudentDashboardPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [learningCourses, setLearningCourses] = useState<LearningCourseItem[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [gamificationProfile, setGamificationProfile] = useState<GamificationProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'IN_PROGRESS' | 'COMPLETED'>('ALL');
@@ -68,6 +72,14 @@ export const StudentDashboardPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Fetch gamification profile
+      try {
+        const profile = await gamificationApi.getProfile();
+        setGamificationProfile(profile);
+      } catch (gamifyErr) {
+        console.warn('Gamification profile unavailable:', gamifyErr);
+      }
 
       // Fetch enrolled courses
       try {
@@ -92,6 +104,12 @@ export const StudentDashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateWeeklyGoal = async (minutes: number) => {
+    await gamificationApi.updateWeeklyGoal(minutes);
+    const updated = await gamificationApi.getProfile();
+    setGamificationProfile(updated);
   };
 
   if (loading) {
@@ -170,6 +188,14 @@ export const StudentDashboardPage: React.FC = () => {
             </Link>
           </div>
         </div>
+
+        {/* Learning Streaks, XP Points & Weekly Goals Widget */}
+        {gamificationProfile && (
+          <StreakWidget
+            profile={gamificationProfile}
+            onUpdateGoal={handleUpdateWeeklyGoal}
+          />
+        )}
 
         {/* 4 Analytics Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -420,6 +446,11 @@ export const StudentDashboardPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Badges & Achievements Wall */}
+        {gamificationProfile && gamificationProfile.badges && (
+          <BadgesWall badges={gamificationProfile.badges} />
+        )}
 
       </div>
 

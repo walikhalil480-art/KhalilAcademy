@@ -20,6 +20,7 @@ import statsRoutes from './stats.routes';
 import aiRoutes from './ai.routes';
 import liveSessionRoutes from './liveSession.routes';
 import atRiskStudentRoutes from './atRiskStudent.routes';
+import gamificationRoutes from './gamification.routes';
 import { streamVideo } from '../controllers/stream.controller';
 
 const router = Router();
@@ -40,11 +41,12 @@ router.get('/verify/certificate/:id', certController.verifyCertificate);
 router.use('/admin', adminRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/notifications', notificationRoutes);
-router.use('/upload', uploadRoutes);
+router.use('/uploads', uploadRoutes);
 router.use('/stats', statsRoutes);
 router.use('/ai', aiRoutes);
 router.use('/live-sessions', liveSessionRoutes);
 router.use('/at-risk-students', atRiskStudentRoutes);
+router.use('/gamification', gamificationRoutes);
 router.get('/stream/videos/*', streamVideo);
 
 export default router;

@@ -3,6 +3,7 @@ import { SubmissionStatus } from '@prisma/client';
 import { AppError } from '../middlewares/errorHandler';
 import { createNotification } from './notification.service';
 import { checkAndProcessCourseCompletion } from './certificate.service';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export const submitAssignment = async (
   userId: string,
@@ -42,6 +43,27 @@ export const submitAssignment = async (
         status: SubmissionStatus.SUBMITTED,
         submissionAttempts: 1,
       },
+    });
+  }
+
+  // Fetch student and instructor info to emit event
+  const student = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+  const instructor = assignment.course.instructorId
+    ? await prisma.user.findUnique({ where: { id: assignment.course.instructorId }, select: { name: true, email: true } })
+    : null;
+
+  if (student) {
+    appEventBus.emitEvent(AcademyEvent.ASSIGNMENT_SUBMITTED, {
+      userId,
+      studentEmail: student.email,
+      studentName: student.name,
+      instructorEmail: instructor?.email,
+      instructorName: instructor?.name,
+      assignmentId,
+      assignmentTitle: assignment.title,
+      courseId: assignment.courseId,
+      courseTitle: assignment.course.title,
+      submissionAttempts: submission.submissionAttempts,
     });
   }
 
@@ -104,6 +126,21 @@ export const gradeAssignmentSubmission = async (
     message: notifMessage,
     type: notifType,
     linkUrl: `/courses/${submission.assignment.course.slug}/learn`,
+  });
+
+  // Emit event to trigger assignment graded email
+  appEventBus.emitEvent(AcademyEvent.ASSIGNMENT_GRADED, {
+    userId: submission.userId,
+    studentEmail: submission.user.email,
+    studentName: submission.user.name,
+    assignmentId: submission.assignment.id,
+    assignmentTitle: submission.assignment.title,
+    courseId: submission.assignment.course.id,
+    courseTitle: submission.assignment.course.title,
+    score: data.score !== undefined ? data.score : submission.score || undefined,
+    maxScore: submission.assignment.maxScore,
+    status: gradedStatus as any,
+    feedback: data.feedback || undefined,
   });
 
   // Trigger course completion evaluation

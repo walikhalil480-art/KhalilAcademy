@@ -9,6 +9,12 @@ import { errorHandler } from './middlewares/errorHandler';
 import { apiRateLimiter } from './middlewares/rateLimiter';
 import apiRouter from './routes';
 import { register, httpRequestCounter, httpRequestDurationMicroseconds } from './utils/metrics';
+import { registerEmailEventSubscribers } from './events/emailEventSubscriber';
+import { registerGamificationSubscribers } from './events/gamificationSubscriber';
+
+// Initialize central email & gamification event subscribers
+registerEmailEventSubscribers();
+registerGamificationSubscribers();
 
 export const app = express();
 

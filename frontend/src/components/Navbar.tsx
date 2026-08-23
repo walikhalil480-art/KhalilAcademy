@@ -20,7 +20,9 @@ import {
   Layers,
   Sparkles,
   Video,
-  Radio
+  Radio,
+  Trophy,
+  Flame,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -88,15 +90,19 @@ export const Navbar: React.FC = () => {
           
           {/* Academy Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#1A365D] border border-[#4FD1C5]/40 flex items-center justify-center shadow-lg shadow-[#1A365D]/40 group-hover:border-[#4FD1C5] group-hover:scale-105 transition-all duration-300">
-              <GraduationCap className="w-5 h-5 text-[#4FD1C5]" />
+            <div className="w-10 h-10 rounded-xl bg-white/95 p-1 border border-[#4FD1C5]/40 flex items-center justify-center shadow-lg shadow-[#1A365D]/40 group-hover:border-[#4FD1C5] group-hover:scale-105 transition-all duration-300">
+              <img
+                src="/logo.png"
+                alt="Khalil Academy"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="flex flex-col">
-              <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#F8FAFC] group-hover:text-[#4FD1C5] transition-colors">
+              <span className="text-base sm:text-lg font-black tracking-tight text-[#F8FAFC] group-hover:text-[#4FD1C5] transition-colors leading-tight">
                 Khalil Academy
               </span>
-              <span className="text-[10px] text-[#4FD1C5] font-bold tracking-wider uppercase">
-                Professional Academy
+              <span className="text-[9px] text-[#4FD1C5] font-extrabold tracking-wider uppercase">
+                Learn • Grow • Succeed
               </span>
             </div>
           </Link>
@@ -138,6 +144,18 @@ export const Navbar: React.FC = () => {
             >
               <Video className="w-3.5 h-3.5" />
               Live Classes
+            </Link>
+
+            <Link
+              to="/leaderboard"
+              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                location.pathname === '/leaderboard'
+                  ? 'text-[#0A1322] bg-[#4FD1C5] shadow-md shadow-[#4FD1C5]/25 font-extrabold'
+                  : 'text-[#CBD5E1] hover:text-[#4FD1C5] hover:bg-[#0E1D33]'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5 text-[#EAB308]" />
+              Leaderboard
             </Link>
 
             {isAuthenticated && user && (
@@ -351,6 +369,9 @@ export const Navbar: React.FC = () => {
             </Link>
             <Link to="/live-classes" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">
               Live Classes
+            </Link>
+            <Link to="/leaderboard" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">
+              🏆 Leaderboard
             </Link>
             {isAuthenticated && (
               <Link to="/my-live-classes" className="block text-[#CBD5E1] hover:text-[#4FD1C5] py-2 px-3 rounded-lg hover:bg-[#1A365D]">

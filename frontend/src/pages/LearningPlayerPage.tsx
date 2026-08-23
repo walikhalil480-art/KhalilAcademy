@@ -176,8 +176,12 @@ export const LearningPlayerPage: React.FC = () => {
     const isLocked = target.isLocked || (!currentCourse.isEnrolled && !isFirstLesson);
 
     if (isLocked) {
-      setLockedLessonAttempt(target);
-      setShowEnrollPaywallModal(true);
+      if (!currentCourse.isEnrolled) {
+        setLockedLessonAttempt(target);
+        setShowEnrollPaywallModal(true);
+      } else {
+        alert(`🔒 Lesson Locked\nPlease complete all previous lessons in this course to unlock "${target.title}".`);
+      }
       return;
     }
 
@@ -290,14 +294,29 @@ export const LearningPlayerPage: React.FC = () => {
         loadLesson(next.id);
       }, 2000);
     } else {
-      // Last lesson in the course! 100% course completion!
-      setCourseCompletedModal(true);
-      confetti({
-        particleCount: 200,
-        spread: 120,
-        origin: { y: 0.6 },
-        colors: ['#4F46E5', '#7C3AED', '#06B6D4', '#22C55E', '#F59E0B'],
-      });
+      // Check if all lessons across the course are completed
+      const allLessonsCompleted = all.every((l) => l.id === activeLesson.id || progressMap.get(l.id) || l.progress?.isCompleted);
+      if (allLessonsCompleted) {
+        setCourseCompletedModal(true);
+        confetti({
+          particleCount: 120,
+          spread: 90,
+          origin: { y: 0.7 },
+          colors: ['#4FD1C5', '#38BDF8', '#10B981', '#F59E0B'],
+        });
+      } else {
+        const nextIncomplete = all.find((l) => l.id !== activeLesson.id && !progressMap.get(l.id) && !l.progress?.isCompleted);
+        if (nextIncomplete) {
+          setAutoAdvanceToast({
+            title: activeLesson.title,
+            nextTitle: `Next: ${nextIncomplete.title}`,
+          });
+          setTimeout(() => {
+            setAutoAdvanceToast(null);
+            loadLesson(nextIncomplete.id);
+          }, 2000);
+        }
+      }
     }
   };
 
@@ -345,7 +364,8 @@ export const LearningPlayerPage: React.FC = () => {
           if (eligRes.status === 'fulfilled' && eligRes.value.data.success) {
             const freshElig = eligRes.value.data;
             setEligibilityData(freshElig);
-            if (freshElig.eligible && (!freshElig.wasAlreadyCompleted || !courseCompletedModal)) {
+            // ONLY trigger completion modal if all lessons are 100% satisfied
+            if (freshElig.requirements?.lessons?.satisfied && freshElig.eligible && (!freshElig.wasAlreadyCompleted || !courseCompletedModal)) {
               setCourseCompletedModal(true);
               confetti({
                 particleCount: 200,
@@ -727,8 +747,8 @@ export const LearningPlayerPage: React.FC = () => {
                           );
                         })}
 
-                        {/* Module Quizzes */}
-                        {quizzes.map((quiz) => (
+                        {/* Module Quizzes (In-Module Quizzes Only) */}
+                        {quizzes.filter((q) => !q.isFinalAssessment).map((quiz) => (
                           <button
                             key={quiz.id}
                             type="button"
@@ -788,12 +808,99 @@ export const LearningPlayerPage: React.FC = () => {
                 );
               })
             ) : (
-              <div className="p-6 text-center text-xs text-[#94A3B8]">No modules available.</div>
+              <div className="p-4 text-center text-xs text-[#94A3B8] bg-[#132742] rounded-2xl border border-[#23426A]">
+                No modules found for this course.
+              </div>
             )}
           </div>
+
+          {/* Dedicated Course Final Milestone: 15-Question Final Certification Exam & Assessment (Strictly at the end of course) */}
+          {(() => {
+            const allQuizzes = course.modules?.flatMap((m) => m.quizzes || []) || [];
+            const finalQuiz = allQuizzes.find((q) => q.isFinalAssessment) || allQuizzes[allQuizzes.length - 1];
+            if (!finalQuiz) return null;
+
+            const isCompletedFinal = eligibilityData?.requirements?.finalAssessment?.satisfied;
+            const isLocked = !course.isEnrolled;
+            const areLessonsComplete = totalLessons > 0 ? completedLessons >= totalLessons : true;
+
+            return (
+              <div className="pt-2">
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#132742] to-[#0A1322] border-2 border-[#4FD1C5]/40 hover:border-[#4FD1C5] transition-all shadow-xl space-y-3 relative overflow-hidden group">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4FD1C5] flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-[#F59E0B]" />
+                      <span>Final Course Milestone</span>
+                    </span>
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${
+                      isCompletedFinal
+                        ? 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]/40'
+                        : !areLessonsComplete
+                        ? 'bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30'
+                        : 'bg-[#0369A1]/20 text-[#38BDF8] border-[#0284C7]/30'
+                    }`}>
+                      {isCompletedFinal ? 'Passed ✓' : !areLessonsComplete ? 'Locked' : 'Ready'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-black text-[#F8FAFC] leading-snug group-hover:text-[#4FD1C5] transition-colors">
+                      {finalQuiz.title}
+                    </h4>
+                    <p className="text-[11px] text-[#94A3B8] mt-1 leading-normal">
+                      5 Questions • 40 Mins • Pass: {finalQuiz.passingScore || 80}% • Max 3 Attempts
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!course.isEnrolled) {
+                        setShowEnrollPaywallModal(true);
+                      } else if (!areLessonsComplete && !isCompletedFinal) {
+                        alert(`⚠️ You must finish all video lessons before taking the final assessment. (${completedLessons}/${totalLessons} completed)`);
+                      } else {
+                        navigate(`/quizzes/${finalQuiz.id}`);
+                      }
+                    }}
+                    className={`w-full py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg ${
+                      isLocked
+                        ? 'bg-[#132742] text-[#94A3B8] border border-[#23426A]'
+                        : isCompletedFinal
+                        ? 'bg-[#10B981] hover:bg-[#059669] text-white shadow-[#10B981]/25'
+                        : !areLessonsComplete
+                        ? 'bg-[#1E293B] text-[#94A3B8] border border-[#334155] cursor-not-allowed'
+                        : 'bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white shadow-[#0284C7]/20'
+                    }`}
+                  >
+                    {isLocked ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Enroll to Unlock Exam</span>
+                      </>
+                    ) : isCompletedFinal ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Review Completed Exam</span>
+                      </>
+                    ) : !areLessonsComplete ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5 text-[#EF4444]" />
+                        <span>Complete All Lessons ({completedLessons}/{totalLessons})</span>
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        <span>Start 40-Min Final Exam →</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
         )}
-
         {/* Right Column: Video Stage & Lesson Details */}
         <div className="w-full flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-[calc(100vh-7.5rem)] space-y-6 bg-[#0A1322]">
           
@@ -1393,62 +1500,109 @@ export const LearningPlayerPage: React.FC = () => {
         </div>
       )}
 
-      {/* Completion & Certificate Ready Modal */}
-      {courseCompletedModal && (
-        <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl space-y-6 text-[#F8FAFC] relative overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#1A365D]/40 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#4FD1C5]/20 rounded-full blur-3xl pointer-events-none" />
+      {/* Completion & Next Step / Certificate Modal */}
+      {courseCompletedModal && (() => {
+        const allQuizzes = course?.modules?.flatMap((m) => m.quizzes || []) || [];
+        const finalQuiz = allQuizzes.find((q) => q.isFinalAssessment) || allQuizzes[allQuizzes.length - 1];
+        const isFinalSatisfied = !!eligibilityData?.requirements?.finalAssessment?.satisfied || !!eligibilityData?.eligible;
 
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#F59E0B] to-[#FBBF24] text-[#0A1322] mx-auto flex items-center justify-center shadow-xl shadow-[#F59E0B]/25">
-              <Award className="w-10 h-10" />
-            </div>
+        return (
+          <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
+            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl space-y-6 text-[#F8FAFC] relative overflow-hidden">
+              {/* Background Glow */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#1A365D]/40 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#4FD1C5]/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30 tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Course 100% Completed</span>
+              <div className={`w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-xl ${
+                isFinalSatisfied
+                  ? 'bg-gradient-to-tr from-[#F59E0B] to-[#FBBF24] text-[#0A1322] shadow-[#F59E0B]/25'
+                  : 'bg-gradient-to-tr from-[#0284C7] to-[#38BDF8] text-white shadow-[#0284C7]/25'
+              }`}>
+                <Award className="w-10 h-10" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC]">🎉 Congratulations!</h2>
-              <p className="text-[#CBD5E1] text-xs sm:text-sm leading-relaxed max-w-md mx-auto">
-                You have successfully completed every lesson in <strong className="text-[#F8FAFC]">"{course?.title}"</strong>. Your official certificate of accomplishment is now generated and ready to download!
-              </p>
-            </div>
 
-            <div className="p-4 bg-[#0E1D33] rounded-2xl border border-[#23426A] flex items-center justify-between text-left">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#1A365D] text-[#4FD1C5]">
-                  <Award className="w-5 h-5" />
+              <div className="space-y-2">
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase border tracking-wider ${
+                  isFinalSatisfied
+                    ? 'bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30'
+                    : 'bg-[#0369A1]/20 text-[#38BDF8] border-[#0284C7]/30'
+                }`}>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isFinalSatisfied ? 'Course 100% Completed' : 'All Video Lessons Finished!'}</span>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-[#F8FAFC]">Official Verified Certificate</div>
-                  <div className="text-[11px] text-[#94A3B8]">Ready for portfolio, LinkedIn & PDF export</div>
-                </div>
+                
+                <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC]">
+                  {isFinalSatisfied ? '🎉 Congratulations!' : 'Final Step: Take Your Certification Exam'}
+                </h2>
+                
+                <p className="text-[#CBD5E1] text-xs sm:text-sm leading-relaxed max-w-md mx-auto">
+                  {isFinalSatisfied
+                    ? `You have completed every lesson and passed the final assessment in "${course?.title}". Your official certificate of accomplishment is ready!`
+                    : `Great job finishing all video lectures in "${course?.title}"! To qualify and unlock your official verified certificate, you must now pass the 15-question final assessment with at least 80%.`}
+                </p>
               </div>
-              <span className="px-2.5 py-1 rounded-lg bg-[#22C55E]/15 text-[#22C55E] text-[10px] font-extrabold border border-[#22C55E]/30 uppercase">
-                ISSUED
-              </span>
-            </div>
 
-            <div className="flex flex-col gap-3 pt-2">
-              <Link
-                to="/student/certificates"
-                className="w-full py-3.5 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-extrabold text-xs rounded-xl shadow-lg shadow-[#4FD1C5]/30 transition flex items-center justify-center gap-2"
-              >
-                <Award className="w-4 h-4" />
-                <span>View & Download My Certificate</span>
-              </Link>
-              <button
-                onClick={() => setCourseCompletedModal(false)}
-                className="w-full py-2.5 bg-[#0E1D33] hover:bg-[#1A365D] text-[#CBD5E1] hover:text-[#F8FAFC] text-xs font-bold rounded-xl border border-[#23426A] transition"
-              >
-                Continue Reviewing Lessons
-              </button>
+              {/* Assessment Parameters Banner if Pending */}
+              {!isFinalSatisfied && (
+                <div className="p-4 bg-[#0E1D33] rounded-2xl border border-[#23426A] text-left space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-white">
+                    <span className="flex items-center gap-1.5 text-[#4FD1C5]">
+                      <HelpCircle className="w-4 h-4" /> Final Assessment Details
+                    </span>
+                    <span className="text-[#F59E0B]">Required: 80% Passing</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                    <div className="p-2 rounded-xl bg-[#132742] border border-[#23426A]">
+                      <span className="text-[10px] text-[#94A3B8] block">Questions</span>
+                      <strong className="text-xs text-white">15 MCQs</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#132742] border border-[#23426A]">
+                      <span className="text-[10px] text-[#94A3B8] block">Time Limit</span>
+                      <strong className="text-xs text-white">40 Mins</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#132742] border border-[#23426A]">
+                      <span className="text-[10px] text-[#94A3B8] block">Attempts</span>
+                      <strong className="text-xs text-white">3 Max</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action CTAs */}
+              <div className="flex flex-col gap-3 pt-2">
+                {isFinalSatisfied ? (
+                  <Link
+                    to="/student/certificates"
+                    className="w-full py-3.5 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-extrabold text-xs rounded-xl shadow-lg shadow-[#4FD1C5]/30 transition flex items-center justify-center gap-2"
+                  >
+                    <Award className="w-4 h-4" />
+                    <span>View & Download My Certificate</span>
+                  </Link>
+                ) : finalQuiz ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCourseCompletedModal(false);
+                      navigate(`/quizzes/${finalQuiz.id}`);
+                    }}
+                    className="w-full py-3.5 bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white font-extrabold text-xs rounded-xl shadow-lg shadow-[#0284C7]/30 transition flex items-center justify-center gap-2"
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    <span>Proceed to Final Assessment (40 Mins) →</span>
+                  </button>
+                ) : null}
+
+                <button
+                  onClick={() => setCourseCompletedModal(false)}
+                  className="w-full py-2.5 bg-[#0E1D33] hover:bg-[#1A365D] text-[#CBD5E1] hover:text-[#F8FAFC] text-xs font-bold rounded-xl border border-[#23426A] transition"
+                >
+                  Close & Return to Course Outline
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Course Enrollment Paywall Modal for Locked Lessons / Previews */}
       {showEnrollPaywallModal && (

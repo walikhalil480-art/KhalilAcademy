@@ -63,13 +63,17 @@ export const initializePaystackTransaction = async (params: PaystackInitParams):
     throw new AppError('Invalid payment amount.', 400);
   }
 
+  // Normalize currency for Paystack Kenyan merchant account (KES)
+  const rawCurrency = (params.currency || 'KES').trim().toUpperCase();
+  const currency = rawCurrency === 'USD' || rawCurrency === 'KSH' ? 'KES' : rawCurrency;
+
   try {
     const response = await axios.post(
       `${PAYSTACK_BASE_URL}/transaction/initialize`,
       {
         email: params.email,
         amount: minorAmount,
-        currency: params.currency || 'KES',
+        currency,
         reference: params.reference,
         callback_url: callbackUrl,
         metadata: params.metadata || {},

@@ -3,6 +3,7 @@ import { logger } from '../config/logger';
 import { createNotification } from './notification.service';
 import { sendEmail } from './email.service';
 import { NotificationType, LiveSessionStatus } from '@prisma/client';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export class LiveSessionReminderService {
   private static timer: NodeJS.Timeout | null = null;
@@ -45,10 +46,14 @@ export class LiveSessionReminderService {
           });
 
           if (reg.user?.email) {
-            await sendEmail({
-              to: reg.user.email,
-              subject: `Reminder: ${reg.session.title} is tomorrow`,
-              html: `<p>Hi ${reg.user.name},</p><p>This is a reminder that your live session <strong>${reg.session.title}</strong> (${reg.session.course.title}) starts tomorrow.</p><p><a href="http://localhost:5173/live-classes/${reg.sessionId}">View Class Details</a></p>`,
+            appEventBus.emitEvent(AcademyEvent.LIVE_CLASS_REMINDER_24H, {
+              userId: reg.userId,
+              email: reg.user.email,
+              name: reg.user.name,
+              sessionId: reg.sessionId,
+              sessionTitle: reg.session.title,
+              courseTitle: reg.session.course?.title || 'Khalil Academy Live Course',
+              startTime: reg.session.startTime,
             });
           }
 
@@ -135,10 +140,14 @@ export class LiveSessionReminderService {
           });
 
           if (reg.user?.email) {
-            await sendEmail({
-              to: reg.user.email,
-              subject: `Live Now: ${reg.session.title}`,
-              html: `<p>Hi ${reg.user.name},</p><p><strong>${reg.session.title}</strong> is starting right now!</p><p><a href="http://localhost:5173/live-classes/${reg.sessionId}" style="display:inline-block;padding:10px 20px;background:#059669;color:#fff;text-decoration:none;border-radius:6px;">Join Live Class</a></p>`,
+            appEventBus.emitEvent(AcademyEvent.LIVE_CLASS_STARTING_SOON, {
+              userId: reg.userId,
+              email: reg.user.email,
+              name: reg.user.name,
+              sessionId: reg.sessionId,
+              sessionTitle: reg.session.title,
+              courseTitle: reg.session.course?.title || 'Khalil Academy Live Course',
+              startTime: reg.session.startTime,
             });
           }
 

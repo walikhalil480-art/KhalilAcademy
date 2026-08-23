@@ -83,13 +83,9 @@ describe('At-Risk Student Detection & Intervention Test Suite', () => {
       email: normalStudent.email,
     });
 
-    // 2. Create Category, Course, Module, Lesson, Quiz, Assignment
-    testCategory = await prisma.category.create({
-      data: {
-        name: `DevOps Engineering ${Date.now()}`,
-        slug: `devops-eng-${Date.now()}`,
-      },
-    });
+    // 2. Reuse Category, create Course, Module, Lesson, Quiz, Assignment
+    testCategory = (await prisma.category.findFirst({ where: { slug: 'devops' } })) || (await prisma.category.findFirst());
+    if (!testCategory) throw new Error('No category found in test database.');
 
     testCourse = await prisma.course.create({
       data: {
@@ -225,7 +221,6 @@ describe('At-Risk Student Detection & Intervention Test Suite', () => {
     await prisma.module.deleteMany({ where: { id: testModule.id } });
     await prisma.enrollment.deleteMany({ where: { courseId: testCourse.id } });
     await prisma.course.deleteMany({ where: { id: testCourse.id } });
-    await prisma.category.deleteMany({ where: { id: testCategory.id } });
     await prisma.user.deleteMany({
       where: { id: { in: [adminUser.id, instructorUser.id, normalStudent.id, atRiskStudent.id] } },
     });
