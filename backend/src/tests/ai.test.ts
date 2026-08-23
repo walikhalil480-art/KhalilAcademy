@@ -39,14 +39,9 @@ describe('AI Learning Assistant ("Ask Khalil AI") Test Suite', () => {
     tokenA = generateAccessToken({ userId: userA.id, role: userA.role, email: userA.email });
     tokenB = generateAccessToken({ userId: userB.id, role: userB.role, email: userB.email });
 
-    // 2. Create test Category, Course, Module, Lesson
-    const cat = await prisma.category.create({
-      data: {
-        name: `DevOps & Cloud ${Date.now()}`,
-        slug: `devops-cloud-${Date.now()}`,
-        description: 'Cloud Infrastructure & DevOps Courses',
-      },
-    });
+    // 2. Reuse Category, create Course, Module, Lesson
+    const cat = (await prisma.category.findFirst({ where: { slug: 'devops' } })) || (await prisma.category.findFirst());
+    if (!cat) throw new Error('No category found in test database.');
 
     testCourse = await prisma.course.create({
       data: {

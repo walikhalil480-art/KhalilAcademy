@@ -19,8 +19,16 @@ import {
   Clock,
   Layers,
   Search,
+  HelpCircle,
+  FileCheck,
+  RotateCcw,
+  X,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
 } from 'lucide-react';
 import { resolveMediaUrl, DEFAULT_COURSE_THUMBNAIL } from '../utils/media';
+import { CourseAnalyticsModal } from '../components/CourseAnalyticsModal';
 
 export const InstructorDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +41,16 @@ export const InstructorDashboardPage: React.FC = () => {
   // Course Delete State
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Analytics Modal State
+  const [selectedCourseForAnalytics, setSelectedCourseForAnalytics] = useState<Course | null>(null);
+
+  // Assessment Submissions State
+  const [selectedCourseForSubmissions, setSelectedCourseForSubmissions] = useState<Course | null>(null);
+  const [submissionsData, setSubmissionsData] = useState<any>(null);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
+  const [resettingAttempts, setResettingAttempts] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -207,6 +225,49 @@ export const InstructorDashboardPage: React.FC = () => {
       alert(err.response?.data?.message || 'Failed to delete course.');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const openSubmissionsModal = async (course: Course) => {
+    setSelectedCourseForSubmissions(course);
+    setExpandedAttemptId(null);
+    setLoadingSubmissions(true);
+    try {
+      const res = await api.get(`/courses/${course.id}`);
+      const cData = res.data.course;
+      const qId = cData.finalAssessmentQuizId || (cData.quizzes && cData.quizzes[0]?.id) || (cData.modules?.flatMap((m: any) => m.quizzes || [])[0]?.id);
+      if (qId) {
+        const subRes = await api.get(`/quizzes/${qId}/submissions`);
+        setSubmissionsData({ ...subRes.data, quizId: qId });
+      } else {
+        setSubmissionsData({ attempts: [], totalSubmissions: 0, quizTitle: 'Course Assessment' });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to load assessment submissions.');
+      setSubmissionsData({ attempts: [], totalSubmissions: 0 });
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  const handleResetAttemptsForStudent = async (userId?: string) => {
+    if (!submissionsData?.quizId) return;
+    const confirmMsg = userId
+      ? 'Are you sure you want to reset all attempts for this student?'
+      : 'Are you sure you want to reset attempts for ALL students on this assessment?';
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setResettingAttempts(true);
+      await api.post(`/quizzes/${submissionsData.quizId}/reset-attempts`, { userId });
+      alert('Attempts successfully reset!');
+      if (selectedCourseForSubmissions) {
+        await openSubmissionsModal(selectedCourseForSubmissions);
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to reset attempts.');
+    } finally {
+      setResettingAttempts(false);
     }
   };
 
@@ -386,6 +447,17 @@ export const InstructorDashboardPage: React.FC = () => {
                       <span>Preview</span>
                     </Link>
 
+                    {/* View Course Performance & Student Analytics Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCourseForAnalytics(c)}
+                      className="px-3.5 py-2 bg-[#0284c7]/20 hover:bg-[#0284c7]/30 border border-[#38BDF8]/50 hover:border-[#38BDF8] text-[#38BDF8] font-black rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm shadow-[#0284c7]/10"
+                      title="Course Completion Rate, Average Quiz Scores, Student Progress & Assignments"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 text-[#38BDF8]" />
+                      <span>Analytics & Students</span>
+                    </button>
+
                     <Link
                       to={`/instructor/courses/${c.id}/manage`}
                       className="px-4 py-2 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-bold rounded-xl text-xs transition shadow-md shadow-[#4FD1C5]/20 flex items-center space-x-1.5"
@@ -408,6 +480,196 @@ export const InstructorDashboardPage: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Course Analytics & Student Performance Modal */}
+        {selectedCourseForAnalytics && (
+          <CourseAnalyticsModal
+            courseId={selectedCourseForAnalytics.id}
+            courseTitle={selectedCourseForAnalytics.title}
+            onClose={() => setSelectedCourseForAnalytics(null)}
+          />
+        )}
+
+        {/* Assessment Submissions & Student Answers Inspector Modal */}
+        {selectedCourseForSubmissions && (
+          <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 max-w-4xl w-full my-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+              
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-[#23426A] pb-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A365D] border border-[#38BDF8]/30 text-[#38BDF8] text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
+                    <FileCheck className="w-3.5 h-3.5" />
+                    <span>Student Assessment Review & Grading</span>
+                  </div>
+                  <h2 className="text-lg font-extrabold text-[#F8FAFC]">
+                    {selectedCourseForSubmissions.title}
+                  </h2>
+                  <p className="text-xs text-[#CBD5E1] mt-0.5">
+                    Inspect all student submissions, answers chosen, scores, and manage attempt resets.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCourseForSubmissions(null)}
+                  className="p-2 text-[#94A3B8] hover:text-white rounded-xl hover:bg-[#1A365D] transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Assessment Stats Banner */}
+              {submissionsData && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
+                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Total Submissions</span>
+                    <span className="text-base font-extrabold text-white mt-0.5 block">{submissionsData.totalSubmissions || 0}</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
+                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Passing Grade</span>
+                    <span className="text-base font-extrabold text-[#10B981] mt-0.5 block">{submissionsData.passingScore || 80}%</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
+                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Total Questions</span>
+                    <span className="text-base font-extrabold text-[#38BDF8] mt-0.5 block">{submissionsData.totalQuestions || 5} Questions</span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A] flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleResetAttemptsForStudent()}
+                      disabled={resettingAttempts || !submissionsData.totalSubmissions}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#EF4444]/15 hover:bg-[#EF4444]/25 border border-[#EF4444]/30 text-[#EF4444] text-xs font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{resettingAttempts ? 'Resetting...' : 'Reset All Attempts'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Submissions List */}
+              {loadingSubmissions ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-3 border-[#4FD1C5] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-[#94A3B8]">Loading student submissions...</span>
+                </div>
+              ) : !submissionsData?.attempts || submissionsData.attempts.length === 0 ? (
+                <div className="p-8 text-center bg-[#0E1D33] rounded-2xl border border-[#23426A] space-y-2">
+                  <HelpCircle className="w-8 h-8 text-[#94A3B8] mx-auto opacity-50" />
+                  <p className="text-xs font-bold text-[#CBD5E1]">No student submissions recorded yet.</p>
+                  <p className="text-[11px] text-[#94A3B8]">When students complete this course's assessment, their full answer sheet and scores will appear here in real time.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {submissionsData.attempts.map((att: any, idx: number) => {
+                    const isExpanded = expandedAttemptId === att.id;
+                    const isPassed = att.passed || att.percentage >= (submissionsData.passingScore || 80);
+
+                    return (
+                      <div
+                        key={att.id}
+                        className={`rounded-2xl border transition-all overflow-hidden ${
+                          isPassed ? 'bg-[#0E1D33] border-[#10B981]/40' : 'bg-[#0E1D33] border-[#EF4444]/40'
+                        }`}
+                      >
+                        {/* Summary Row */}
+                        <div
+                          onClick={() => setExpandedAttemptId(isExpanded ? null : att.id)}
+                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[#132742]/80 transition"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm ${
+                              isPassed ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#EF4444]/20 text-[#EF4444]'
+                            }`}>
+                              #{idx + 1}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs sm:text-sm font-extrabold text-white truncate">
+                                {att.user?.name || 'Student'} ({att.user?.email || 'N/A'})
+                              </h4>
+                              <span className="text-[10px] text-[#94A3B8]">
+                                Submitted: {new Date(att.completedAt).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 justify-between sm:justify-end">
+                            <div className="text-right">
+                              <div className={`text-xs sm:text-sm font-black ${isPassed ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+                                {att.percentage}% ({isPassed ? 'PASSED' : 'FAILED'})
+                              </div>
+                              <div className="text-[10px] text-[#94A3B8]">
+                                Score: {att.score} / {att.maxScore} pts
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleResetAttemptsForStudent(att.userId);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-[#071326] border border-[#23426A] hover:border-[#EF4444] text-[10px] font-bold text-[#CBD5E1] hover:text-[#EF4444] transition flex items-center gap-1"
+                              title="Reset attempts for this student"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span className="hidden sm:inline">Reset</span>
+                            </button>
+
+                            <div className="text-[#94A3B8]">
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Detailed Question & Answer Breakdown when Expanded */}
+                        {isExpanded && (
+                          <div className="p-4 pt-0 border-t border-[#23426A]/60 space-y-3 bg-[#071326]/50">
+                            <h5 className="text-[11px] font-extrabold text-[#38BDF8] uppercase tracking-wider pt-3">
+                              Student Answer Breakdown ({att.answers?.length || 0} Questions)
+                            </h5>
+
+                            <div className="space-y-2.5">
+                              {att.answers?.map((ans: any, aIdx: number) => {
+                                const isCorrect = ans.selectedOption?.isCorrect;
+                                return (
+                                  <div
+                                    key={ans.id || aIdx}
+                                    className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                                      isCorrect
+                                        ? 'bg-[#0D1E36] border-[#10B981]/30'
+                                        : 'bg-[#0D1E36] border-[#EF4444]/30'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <strong className="text-white">Q{aIdx + 1}. {ans.question?.questionText}</strong>
+                                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase ${
+                                        isCorrect ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#EF4444]/20 text-[#EF4444]'
+                                      }`}>
+                                        {isCorrect ? '✓ Correct' : '✕ Incorrect'}
+                                      </span>
+                                    </div>
+
+                                    <div className="text-[11px] text-[#CBD5E1] pl-2 border-l-2 border-[#23426A]">
+                                      <span className="text-[#94A3B8]">Selected Answer: </span>
+                                      <strong className={isCorrect ? 'text-[#10B981]' : 'text-[#EF4444]'}>
+                                        {ans.selectedOption?.optionText || 'No Answer'}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {courseToDelete && (

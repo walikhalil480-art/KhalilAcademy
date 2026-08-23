@@ -30,25 +30,27 @@ export const exportCertificateToPdf = async (elementId: string, filename: string
 
   // 3. Render high DPI canvas from exact DOM element
   const canvas = await html2canvas(element, {
-    scale: 3, // 3x scale for crisp printing and zooming
+    scale: 2, // 2x scale for ultra crisp vector-like clarity
     useCORS: true,
     allowTaint: true,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FCFDFE',
     logging: false,
+    scrollX: 0,
+    scrollY: 0,
+    width: element.offsetWidth,
+    height: element.offsetHeight,
   });
 
   const imgData = canvas.toDataURL('image/png', 1.0);
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
 
-  // 4. Create landscape PDF matching exact dimensions and aspect ratio of certificate element
+  // 4. Create standard ISO A4 landscape PDF (297mm x 210mm) for pixel-perfect printing
   const pdf = new jsPDF({
-    orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
-    unit: 'px',
-    format: [imgWidth, imgHeight],
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
     compress: true,
   });
 
-  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+  pdf.addImage(imgData, 'PNG', 0, 0, 297, 210, undefined, 'FAST');
   pdf.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
 };

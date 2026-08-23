@@ -8,6 +8,7 @@ import {
   LiveAttendanceStatus,
   NotificationType,
 } from '@prisma/client';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export interface CreateLiveSessionDTO {
   title: string;
@@ -59,6 +60,9 @@ export class LiveSessionService {
     if (session.status === LiveSessionStatus.CANCELLED) {
       return LiveSessionStatus.CANCELLED;
     }
+    if (session.status === LiveSessionStatus.COMPLETED) {
+      return LiveSessionStatus.COMPLETED;
+    }
     const now = new Date();
     const start = new Date(session.startTime);
     const end = new Date(session.endTime);
@@ -81,7 +85,9 @@ export class LiveSessionService {
     endTime: Date;
     joinBufferMinutes: number;
   }): boolean {
-    if (session.status === LiveSessionStatus.CANCELLED) return false;
+    if (session.status === LiveSessionStatus.CANCELLED || session.status === LiveSessionStatus.COMPLETED) {
+      return false;
+    }
 
     const now = new Date().getTime();
     const bufferMs = (session.joinBufferMinutes || 15) * 60 * 1000;
@@ -522,6 +528,66 @@ export class LiveSessionService {
     }
 
     return updated;
+  }
+
+  /**
+   * End a live session (Instructors / Admins)
+   */
+  public static async endSession(sessionId: string, userId: string, userRole: string) {
+    const session = await prisma.liveSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        attendances: { where: { leftAt: null } },
+        course: { select: { id: true, title: true, slug: true } },
+        instructor: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+    if (!session) {
+      throw new AppError('Live session not found.', 404);
+    }
+
+    if (session.instructorId !== userId && userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+      throw new AppError('You do not have permission to end this live session.', 403);
+    }
+
+    const now = new Date();
+
+    // Close any currently active attendee tracking records
+    for (const att of session.attendances) {
+      const duration = Math.max(1, Math.round((now.getTime() - new Date(att.joinedAt).getTime()) / (60 * 1000)));
+      const scheduledDuration = Math.max(1, Math.round((new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / (60 * 1000)));
+      const threshold = session.attendanceThresholdPercent || 70;
+      const attendedPercent = (duration / scheduledDuration) * 100;
+      const newStatus = attendedPercent >= threshold ? LiveAttendanceStatus.PRESENT : (duration > 5 ? LiveAttendanceStatus.PARTIAL : att.status);
+
+      await prisma.liveSessionAttendance.update({
+        where: { id: att.id },
+        data: {
+          leftAt: now,
+          durationMinutes: duration,
+          status: newStatus,
+        },
+      });
+    }
+
+    // Update session status to COMPLETED and adjust endTime if ended earlier
+    const updated = await prisma.liveSession.update({
+      where: { id: sessionId },
+      data: {
+        status: LiveSessionStatus.COMPLETED,
+        endTime: session.endTime > now ? now : session.endTime,
+      },
+      include: {
+        course: { select: { id: true, title: true, slug: true } },
+        instructor: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    return {
+      ...updated,
+      dynamicStatus: LiveSessionStatus.COMPLETED,
+      isJoinable: false,
+    };
   }
 
   /**
@@ -1103,11 +1169,15 @@ export class LiveSessionService {
         }).catch(() => {});
 
         if (reg.user?.email) {
-          sendEmail({
-            to: reg.user.email,
-            subject: `Recording Available: ${session.title}`,
-            html: `<p>Hi ${reg.user.name},</p><p>The recording for <strong>${session.title}</strong> is now live.</p><p><a href="http://localhost:5173/live-classes/${session.id}">Watch Recording</a></p>`,
-          }).catch(() => {});
+          appEventBus.emitEvent(AcademyEvent.LIVE_CLASS_MISSED, {
+            userId: reg.userId,
+            email: reg.user.email,
+            name: reg.user.name,
+            sessionId: session.id,
+            sessionTitle: session.title,
+            courseTitle: session.course?.title || 'Live Session',
+            recordingUrl: session.recordingUrl || undefined,
+          });
         }
       }
     } catch (e) {}

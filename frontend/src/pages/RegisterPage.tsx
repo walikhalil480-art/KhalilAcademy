@@ -62,8 +62,12 @@ export const RegisterPage: React.FC = () => {
       <div className="w-full max-w-md bg-[#132742] border border-[#23426A] rounded-3xl p-8 shadow-2xl space-y-6">
         
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-[#1A365D] border border-[#4FD1C5]/30 text-[#4FD1C5] flex items-center justify-center mx-auto shadow-lg shadow-[#4FD1C5]/10">
-            <GraduationCap className="w-7 h-7 text-[#4FD1C5]" />
+          <div className="w-16 h-16 rounded-2xl bg-white/95 p-1.5 border border-[#4FD1C5]/30 flex items-center justify-center mx-auto shadow-lg shadow-[#4FD1C5]/10">
+            <img
+              src="/logo.png"
+              alt="Khalil Academy"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-2xl font-extrabold text-[#F8FAFC]">Create Account</h1>
           <p className="text-xs text-[#CBD5E1]">Join Khalil Academy to start learning or teaching</p>

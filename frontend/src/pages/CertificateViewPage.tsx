@@ -169,165 +169,140 @@ export const CertificateViewPage: React.FC = () => {
         {/* Printable & Exportable Academic Certificate Document (A4 Landscape Proportions) */}
         <div
           id="academic-certificate-document"
-          className="w-[1060px] min-w-[1060px] min-h-[750px] mx-auto bg-[#FCFDFF] text-[#0A1322] p-10 relative select-none shadow-2xl rounded-sm print:shadow-none print:m-0"
+          className="w-[1060px] min-w-[1060px] h-[750px] min-h-[750px] mx-auto bg-[#FCFDFE] text-[#0A1322] p-8 relative select-none shadow-2xl rounded-sm print:shadow-none print:m-0 block"
           style={{
-            backgroundImage: `
-              radial-gradient(circle at center, rgba(79, 209, 197, 0.03) 0%, transparent 70%),
-              repeating-linear-gradient(45deg, rgba(26, 54, 93, 0.015) 0px, rgba(26, 54, 93, 0.015) 1px, transparent 1px, transparent 8px)
-            `,
+            boxSizing: 'border-box',
           }}
         >
           {/* Outer Academic Border Framing */}
-          <div className="w-full h-full border-2 border-[#1A365D] p-3 relative">
+          <div className="w-full h-full border-[3px] border-[#0E1E36] p-2 relative flex flex-col justify-between" style={{ boxSizing: 'border-box' }}>
             
-            {/* Inner Double Hairline Border with Gold/Teal Accents */}
-            <div className="w-full h-full border border-[#23426A]/40 p-6 flex flex-col justify-between relative bg-white/80">
+            {/* Inner Double Hairline Border with Gold Accents */}
+            <div className="w-full h-full border border-[#C5A059] px-8 py-6 flex flex-col justify-between relative bg-white" style={{ boxSizing: 'border-box' }}>
               
-              {/* Corner Ornamental Flourishes */}
-              <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-[#C5A059]" />
-              <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-[#C5A059]" />
-              <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-[#C5A059]" />
-              <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-[#C5A059]" />
-
-              {/* Faint Watermark Emblem in Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.035]">
-                <div className="w-96 h-96 rounded-full border-[12px] border-[#1A365D] flex items-center justify-center">
-                  <span className="font-['Cinzel',serif] text-5xl font-black text-[#1A365D] tracking-widest text-center">
-                    KHALIL<br />ACADEMY
-                  </span>
-                </div>
-              </div>
+              {/* Corner Victorian Flourishes */}
+              <div className="absolute top-2 left-2 w-8 h-8 border-t-[2.5px] border-l-[2.5px] border-[#C5A059]" />
+              <div className="absolute top-2 right-2 w-8 h-8 border-t-[2.5px] border-r-[2.5px] border-[#C5A059]" />
+              <div className="absolute bottom-2 left-2 w-8 h-8 border-b-[2.5px] border-l-[2.5px] border-[#C5A059]" />
+              <div className="absolute bottom-2 right-2 w-8 h-8 border-b-[2.5px] border-r-[2.5px] border-[#C5A059]" />
 
               {/* ========================================================= */}
-              {/* 1. ACADEMY HEADER */}
+              {/* 1. ACADEMY HEADER & GRAND OFFICIAL LOGO */}
               {/* ========================================================= */}
-              <div className="text-center space-y-2 relative z-10 pt-2">
-                {/* Emblem Badge */}
-                <div className="flex items-center justify-center space-x-3 mb-1">
-                  <div className="w-12 h-12 rounded-full bg-[#1A365D] border-2 border-[#C5A059] flex items-center justify-center shadow-sm">
-                    <Award className="w-6 h-6 text-[#4FD1C5]" />
-                  </div>
+              <div className="text-center relative z-10">
+                {/* Official Brand Logo with fixed pixel dimensions */}
+                <div className="flex items-center justify-center mb-2">
+                  <img
+                    src="/logo.png"
+                    alt="Khalil Academy"
+                    style={{
+                      width: '140px',
+                      height: '115px',
+                      objectFit: 'contain',
+                      display: 'block',
+                      margin: '0 auto',
+                    }}
+                  />
                 </div>
 
-                <h1 className="font-['Cinzel',serif] text-2xl sm:text-3xl font-bold tracking-[0.28em] text-[#1A365D] uppercase">
-                  KHALIL ACADEMY
-                </h1>
-                
-                <div className="flex items-center justify-center space-x-4">
-                  <div className="h-[1px] w-20 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent" />
-                  <p className="font-sans text-[11px] font-extrabold uppercase tracking-[0.35em] text-[#4FD1C5] bg-[#1A365D] px-4 py-0.5 rounded-full">
+                <div className="flex items-center justify-center space-x-4 mb-2">
+                  <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent" />
+                  <span className="font-['Cinzel',serif] text-[13px] font-black uppercase tracking-[0.35em] text-[#0E1E36]">
                     CERTIFICATE OF COMPLETION
-                  </p>
-                  <div className="h-[1px] w-20 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent" />
+                  </span>
+                  <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent" />
                 </div>
               </div>
 
               {/* ========================================================= */}
-              {/* 2. MAIN CREDENTIAL STATEMENT */}
+              {/* 2. MAIN CREDENTIAL CITATION */}
               {/* ========================================================= */}
-              <div className="text-center space-y-3.5 my-auto py-4 relative z-10">
-                <p className="font-['Cormorant_Garamond',serif] italic text-base text-[#475569] tracking-wide">
-                  This certificate is proudly presented to
+              <div className="text-center relative z-10 my-auto">
+                <p className="font-['Cormorant_Garamond',serif] italic text-base text-[#475569] tracking-wide mb-1.5">
+                  This certificate is proudly conferred upon
                 </p>
 
-                {/* Recipient Name - Visual Focal Point */}
-                <div className="py-1">
-                  <h2 className="font-['Playfair_Display',serif] text-4xl sm:text-5xl font-bold text-[#0A1322] tracking-tight inline-block border-b-2 border-[#C5A059]/60 pb-2 px-8 min-w-[380px]">
+                {/* Recipient Full Name */}
+                <div className="mb-2">
+                  <h2 className="font-['Playfair_Display',serif] text-5xl font-black text-[#0E1E36] tracking-tight inline-block border-b-2 border-[#C5A059] pb-1 px-12 min-w-[420px]">
                     {certificate.studentName}
                   </h2>
                 </div>
 
-                <p className="font-['Cormorant_Garamond',serif] italic text-sm text-[#475569] tracking-wide">
-                  for successfully completing the comprehensive program
+                <p className="font-['Cormorant_Garamond',serif] italic text-sm text-[#475569] tracking-wide mb-1">
+                  for successfully completing and demonstrating mastery in
                 </p>
 
-                {/* Program Title */}
-                <div>
-                  <h3 className="font-['Playfair_Display',serif] text-2xl sm:text-3xl font-bold text-[#1A365D] tracking-normal">
+                {/* Course Title */}
+                <div className="mb-1">
+                  <h3 className="font-['Playfair_Display',serif] text-3xl font-black text-[#0E1E36] tracking-normal mb-1">
                     {certificate.courseTitle}
                   </h3>
-                  <div className="mt-1.5">
-                    <span className="font-sans text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#1A365D] bg-[#1A365D]/5 px-4 py-1 rounded-full border border-[#1A365D]/15 inline-block">
-                      Professional Certificate
+                  <div>
+                    <span className="font-['Cinzel',serif] text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#C5A059] bg-[#0E1E36] px-5 py-0.5 rounded-full inline-block shadow-sm">
+                      Professional Specialization
                     </span>
                   </div>
                 </div>
 
-                {/* Formal Academic Statement */}
-                <p className="font-sans text-xs text-[#64748B] max-w-2xl mx-auto leading-relaxed pt-1">
-                  This certificate recognizes the successful completion of the required coursework, practical exercises, assessments, and learning objectives prescribed by Khalil Academy.
+                {/* Formal Academic Citation */}
+                <p className="font-sans text-[11px] text-[#64748B] max-w-2xl mx-auto leading-relaxed mt-2">
+                  This credential certifies that the recipient has satisfied all rigorous academic requirements, assessments, practical projects, and learning standards established by Khalil Academy.
                 </p>
               </div>
 
               {/* ========================================================= */}
-              {/* 3. CREDENTIAL METADATA GRID */}
+              {/* 3. SIGNATURES & OFFICIAL ACADEMY SEAL */}
               {/* ========================================================= */}
-              <div className="bg-[#FAFBFD] border border-[#E2E8F0] rounded-xl p-3 grid grid-cols-4 gap-3 text-center my-2 relative z-10">
-                <div className="border-r border-[#E2E8F0] last:border-none px-2">
-                  <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider block">Recipient</span>
-                  <span className="text-xs font-bold text-[#0A1322] truncate block mt-0.5">{certificate.studentName}</span>
-                </div>
-                <div className="border-r border-[#E2E8F0] last:border-none px-2">
-                  <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider block">Credential Type</span>
-                  <span className="text-xs font-bold text-[#0A1322] block mt-0.5">Professional Certificate</span>
-                </div>
-                <div className="border-r border-[#E2E8F0] last:border-none px-2">
-                  <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider block">Completion Date</span>
-                  <span className="text-xs font-bold text-[#0A1322] block mt-0.5">{formattedDate}</span>
-                </div>
-                <div className="px-2">
-                  <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider block">Credential Status</span>
-                  <span className="text-xs font-extrabold text-[#059669] flex items-center justify-center gap-1 mt-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> Verified
-                  </span>
-                </div>
-              </div>
-
-              {/* ========================================================= */}
-              {/* 4. SIGNATURES & OFFICIAL ACADEMY SEAL */}
-              {/* ========================================================= */}
-              <div className="pt-4 border-t border-[#E2E8F0] grid grid-cols-3 items-end gap-6 relative z-10">
+              <div className="pt-2 border-t border-[#E2E8F0] grid grid-cols-3 items-end gap-6 relative z-10">
                 
                 {/* Left Signature: Academic Director */}
                 <div className="text-center space-y-1">
-                  <div className="h-10 flex items-end justify-center pb-1">
-                    <span className="font-['Playfair_Display',serif] italic text-lg text-[#1A365D] font-bold border-b border-[#94A3B8] w-48 block">
+                  <div className="h-12 flex items-end justify-center pb-1">
+                    <span className="font-['Alex_Brush',cursive] text-4xl text-[#0E1E36] font-medium leading-none">
                       Eng. Khalil A. Wali
                     </span>
                   </div>
-                  <p className="text-xs font-bold text-[#0A1322]">Academic Director</p>
-                  <p className="text-[10px] text-[#64748B]">Khalil Academy</p>
+                  <div className="w-48 mx-auto border-t border-[#94A3B8] pt-1">
+                    <p className="text-xs font-bold text-[#0E1E36]">Eng. Khalil A. Wali</p>
+                    <p className="text-[10px] text-[#64748B]">Academic Director · Khalil Academy</p>
+                  </div>
                 </div>
 
                 {/* Center: Official Circular Academy Seal */}
                 <div className="flex flex-col items-center justify-center">
-                  <div className="w-20 h-20 rounded-full border-2 border-[#C5A059] p-1 flex flex-col items-center justify-center bg-[#FCFDFF] shadow-sm relative">
-                    <div className="w-full h-full rounded-full border border-[#1A365D] p-1 flex flex-col items-center justify-center text-center">
-                      <span className="text-[7px] font-black uppercase text-[#1A365D] tracking-widest leading-none">KHALIL ACADEMY</span>
-                      <ShieldCheck className="w-4 h-4 text-[#C5A059] my-0.5" />
-                      <span className="text-[7px] font-black uppercase text-[#059669] tracking-wider leading-none">CERTIFIED</span>
-                      <span className="text-[6px] font-bold text-[#64748B] tracking-tighter leading-none mt-0.5">EST. 2024</span>
+                  <div className="w-20 h-20 rounded-full border-2 border-[#C5A059] p-1 flex flex-col items-center justify-center bg-[#FCFDFE] shadow-md relative">
+                    <div className="w-full h-full rounded-full border border-[#0E1E36] p-1 flex flex-col items-center justify-center text-center">
+                      <img
+                        src="/logo.png"
+                        alt="Official Seal Emblem"
+                        style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
+                      />
+                      <span className="text-[6.5px] font-black uppercase text-[#0E1E36] tracking-widest leading-none">OFFICIAL SEAL</span>
+                      <span className="text-[6px] font-black uppercase text-[#C5A059] tracking-wider leading-none mt-0.5">ACCREDITED</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Signature: Program Instructor */}
                 <div className="text-center space-y-1">
-                  <div className="h-10 flex items-end justify-center pb-1">
-                    <span className="font-['Playfair_Display',serif] italic text-lg text-[#1A365D] font-bold border-b border-[#94A3B8] w-48 block">
+                  <div className="h-12 flex items-end justify-center pb-1">
+                    <span className="font-['Alex_Brush',cursive] text-4xl text-[#0E1E36] font-medium leading-none">
                       {certificate.instructorName || 'Academic Faculty'}
                     </span>
                   </div>
-                  <p className="text-xs font-bold text-[#0A1322]">{certificate.instructorName || 'Academic Faculty'}</p>
-                  <p className="text-[10px] text-[#64748B]">Program Instructor · Khalil Academy</p>
+                  <div className="w-48 mx-auto border-t border-[#94A3B8] pt-1">
+                    <p className="text-xs font-bold text-[#0E1E36]">{certificate.instructorName || 'Academic Faculty'}</p>
+                    <p className="text-[10px] text-[#64748B]">Faculty Instructor · Khalil Academy</p>
+                  </div>
                 </div>
 
               </div>
 
               {/* ========================================================= */}
-              {/* 5. VERIFICATION & SECURITY FOOTER */}
+              {/* 4. VERIFICATION & SECURITY FOOTER */}
               {/* ========================================================= */}
-              <div className="mt-3 pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] text-[#64748B] relative z-10">
+              <div className="mt-2 pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] text-[#64748B] relative z-10">
                 
                 {/* Left: Verification URL with mini QR code */}
                 <div className="flex items-center space-x-3">
@@ -335,7 +310,8 @@ export const CertificateViewPage: React.FC = () => {
                     <img
                       src={certificate.qrCodeUrl}
                       alt="Certificate Verification QR Code"
-                      className="w-10 h-10 border border-[#CBD5E1] p-0.5 rounded bg-white"
+                      style={{ width: '38px', height: '38px', objectFit: 'contain', display: 'block' }}
+                      className="border border-[#CBD5E1] p-0.5 rounded bg-white"
                     />
                   ) : (
                     <div className="w-10 h-10 bg-slate-100 border border-[#CBD5E1] rounded flex items-center justify-center">
@@ -343,28 +319,28 @@ export const CertificateViewPage: React.FC = () => {
                     </div>
                   )}
                   <div>
-                    <span className="font-bold text-[#0A1322] block uppercase text-[9px] tracking-wider">Verify Credential</span>
+                    <span className="font-bold text-[#0E1E36] block uppercase text-[9px] tracking-wider">Online Verification</span>
                     <a
                       href={officialVerificationUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#1A365D] hover:underline font-mono"
+                      className="text-[#1A365D] hover:underline font-mono text-[9px]"
                     >
                       {officialVerificationUrl}
                     </a>
                   </div>
                 </div>
 
-                {/* Center: Digital Authenticity Seal */}
-                <div className="hidden sm:flex items-center space-x-1.5 text-[#059669] font-bold uppercase text-[9px] tracking-wider">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Verified Institutional Credential</span>
+                {/* Center: Issue Date */}
+                <div className="text-center">
+                  <span className="text-[#94A3B8] block text-[9px] uppercase tracking-wider font-bold">Issue Date</span>
+                  <span className="font-bold text-[#0E1E36]">{formattedDate}</span>
                 </div>
 
                 {/* Right: Certificate ID */}
                 <div className="text-right font-mono">
-                  <span className="text-[#94A3B8] block text-[9px]">CERTIFICATE ID</span>
-                  <span className="font-bold text-[#0A1322]">{certNumber}</span>
+                  <span className="text-[#94A3B8] block text-[9px] uppercase tracking-wider font-bold">Certificate ID</span>
+                  <span className="font-bold text-[#0E1E36]">{certNumber}</span>
                 </div>
 
               </div>

@@ -201,6 +201,23 @@ export const leaveSession = async (req: AuthenticatedRequest, res: Response, nex
   }
 };
 
+export const endSession = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const session = await LiveSessionService.endSession(
+      req.params.id,
+      req.user!.id,
+      req.user!.role
+    );
+    res.json({ success: true, message: 'Live class ended successfully.', session });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getParticipants = async (
   req: AuthenticatedRequest,
   res: Response,

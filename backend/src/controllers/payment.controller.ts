@@ -101,10 +101,11 @@ export const initializePaystackCheckout = async (req: AuthenticatedRequest, res:
       });
     }
 
-    // 4. Generate unique payment reference
+    // 4. Generate unique payment reference and normalize currency (KES / KSH)
     const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
     const reference = `PSK_${Date.now()}_${randomHex}`;
-    const currency = course.currency || 'KES';
+    const rawCurrency = (course.currency || process.env.DEFAULT_CURRENCY || 'KES').trim().toUpperCase();
+    const currency = rawCurrency === 'USD' || rawCurrency === 'KSH' ? 'KES' : rawCurrency;
 
     // 5. Create PENDING Payment entry in DB
     await prisma.payment.create({

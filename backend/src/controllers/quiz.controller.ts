@@ -132,3 +132,22 @@ export const updateQuiz = async (req: AuthenticatedRequest, res: Response, next:
     next(error);
   }
 };
+
+export const getInstructorSubmissions = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const data = await quizService.getInstructorQuizSubmissions(req.params.id, req.user!.id, req.user!.role);
+    res.json({ success: true, ...data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetAttempts = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await quizService.resetQuizAttemptsForStudent(req.params.id, req.body.userId);
+    res.json({ ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+

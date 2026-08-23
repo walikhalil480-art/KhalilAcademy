@@ -31,6 +31,7 @@ import { LiveClassesPage } from './pages/LiveClassesPage';
 import { LiveSessionDetailPage } from './pages/LiveSessionDetailPage';
 import { MyLiveClassesPage } from './pages/MyLiveClassesPage';
 import { InstructorLiveClassesPage } from './pages/InstructorLiveClassesPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 
 export const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -76,6 +77,7 @@ export const App: React.FC = () => {
           <Route path="/courses/:slug" element={<CourseDetailPage />} />
           <Route path="/live-classes" element={<LiveClassesPage />} />
           <Route path="/live-classes/:id" element={<LiveSessionDetailPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />

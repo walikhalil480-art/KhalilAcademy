@@ -7,6 +7,8 @@ import { createNotification } from './notification.service';
 import { recordAuditLog } from './auditLog.service';
 import { EnrollmentStatus } from '@prisma/client';
 import { CertificateEligibilityService } from './certificateEligibility.service';
+import { sendCourseCompletionEmail, sendCertificateIssuedEmail } from './email.service';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 export const checkAndProcessCourseCompletion = async (userId: string, courseId: string) => {
   const enrollment = await prisma.enrollment.findUnique({
@@ -31,6 +33,38 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
     });
   }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  // 1. Trigger Course Completion Email if all lessons and required coursework are completed
+  if (user && eligibility.requirements.lessons.satisfied && eligibility.requirements.assignments.satisfied) {
+    const emailSent = await prisma.auditLog.findFirst({
+      where: {
+        userId,
+        action: 'COURSE_COMPLETION_EMAIL_SENT',
+        entityId: courseId,
+      },
+    });
+
+    if (!emailSent) {
+      appEventBus.emitEvent(AcademyEvent.COURSE_COMPLETED, {
+        userId,
+        email: user.email,
+        name: user.name,
+        courseId,
+        courseTitle: enrollment.course.title,
+        completedAt: new Date(),
+      });
+
+      await recordAuditLog({
+        userId,
+        action: 'COURSE_COMPLETION_EMAIL_SENT',
+        entity: 'Course',
+        entityId: courseId,
+        details: { courseTitle: enrollment.course.title },
+      });
+    }
+  }
+
   if (!eligibility.eligible) {
     return { completed: false, certificate: null, eligibility };
   }
@@ -52,7 +86,6 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
     return { completed: true, certificate: null, eligibility };
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { completed: true, certificate: null, eligibility };
 
   // Issue Certificate if not already issued (Idempotent lookup & unique constraint safety)
@@ -108,6 +141,40 @@ export const checkAndProcessCourseCompletion = async (userId: string, courseId: 
         entityId: cert.id,
         details: { certificateNumber: certNum, courseId },
       });
+
+      // 2. Generate PDF and dispatch official Certificate Issued Email with PDF Attachment
+      const verificationUrl = `${env.APP_URL}/verify-certificate/${cert.certificateNumber}`;
+      try {
+        const pdfBuffer = await generateCertificatePdf({
+          certificateNumber: cert.certificateNumber,
+          studentName: cert.studentName,
+          courseTitle: cert.courseTitle,
+          instructorName: cert.instructorName,
+          issueDate: new Date(cert.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+          verificationUrl,
+        });
+
+        appEventBus.emitEvent(AcademyEvent.CERTIFICATE_ISSUED, {
+          userId,
+          email: user.email,
+          name: user.name,
+          courseId,
+          courseTitle: enrollment.course.title,
+          certificateNumber: cert.certificateNumber,
+          verificationUrl: `${env.APP_URL}/certificates/${cert.certificateNumber}`,
+          pdfBuffer,
+        });
+
+        await recordAuditLog({
+          userId,
+          action: 'CERTIFICATE_PDF_EMAIL_SENT',
+          entity: 'Certificate',
+          entityId: cert.id,
+          details: { certificateNumber: cert.certificateNumber, courseId },
+        });
+      } catch (pdfEmailErr: any) {
+        console.error('[EMAIL] Failed to generate/dispatch certificate PDF email:', pdfEmailErr);
+      }
     } catch (err: any) {
       // If concurrent request created certificate, fetch existing one
       if (err.code === 'P2002') {

@@ -67,13 +67,9 @@ describe('Live Classes & Virtual Classroom Test Suite', () => {
       email: studentB.email,
     });
 
-    // 2. Create Category and Course
-    testCategory = await prisma.category.create({
-      data: {
-        name: `Cloud Architecture ${Date.now()}`,
-        slug: `cloud-arch-${Date.now()}`,
-      },
-    });
+    // 2. Reuse Category and create Course
+    testCategory = (await prisma.category.findFirst({ where: { slug: 'aws' } })) || (await prisma.category.findFirst());
+    if (!testCategory) throw new Error('No category found in test database.');
 
     testCourse = await prisma.course.create({
       data: {
@@ -101,7 +97,6 @@ describe('Live Classes & Virtual Classroom Test Suite', () => {
     });
     await prisma.liveSession.deleteMany({ where: { courseId: testCourse.id } });
     await prisma.course.deleteMany({ where: { id: testCourse.id } });
-    await prisma.category.deleteMany({ where: { id: testCategory.id } });
     await prisma.user.deleteMany({
       where: { id: { in: [instructorUser.id, studentA.id, studentB.id] } },
     });

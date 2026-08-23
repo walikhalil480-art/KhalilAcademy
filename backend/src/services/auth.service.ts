@@ -7,6 +7,7 @@ import { AppError } from '../middlewares/errorHandler';
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } from './email.service';
 import { recordAuditLog } from './auditLog.service';
 import { authFailuresCounter } from '../utils/metrics';
+import { appEventBus, AcademyEvent } from '../events/eventBus';
 
 // List of obvious placeholder/fake names that are rejected
 const PLACEHOLDER_NAMES = [
@@ -127,7 +128,13 @@ export const registerUser = async (data: {
     },
   });
 
-  await sendVerificationEmail(user.email, verificationToken, user.name);
+  // Emit event to trigger verification email
+  appEventBus.emitEvent(AcademyEvent.USER_REGISTERED, {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    verificationToken,
+  });
 
   await recordAuditLog({
     userId: user.id,
@@ -348,7 +355,12 @@ export const verifyEmailToken = async (token: string) => {
     },
   });
 
-  await sendWelcomeEmail(user.email, user.name);
+  // Emit event to trigger welcome email
+  appEventBus.emitEvent(AcademyEvent.USER_VERIFIED, {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+  });
 
   await recordAuditLog({
     userId: user.id,

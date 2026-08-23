@@ -151,6 +151,11 @@ export const liveSessionApi = {
     return res.data;
   },
 
+  endSession: async (id: string) => {
+    const res = await api.post(`/live-sessions/${id}/end`);
+    return res.data.session as LiveSession;
+  },
+
   deleteSession: async (id: string) => {
     const res = await api.delete(`/live-sessions/${id}`);
     return res.data;

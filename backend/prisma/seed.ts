@@ -69,22 +69,35 @@ async function main() {
 
   // 2. Categories
   const categoryNames = [
-    { name: 'Cloud Computing', slug: 'cloud-computing', description: 'Core Cloud Platforms & Infrastructure' },
-    { name: 'DevOps', slug: 'devops', description: 'Continuous Integration & Delivery Pipelines' },
-    { name: 'DevSecOps', slug: 'devsecops', description: 'Pipeline Security Automation' },
-    { name: 'AWS', slug: 'aws', description: 'Amazon Web Services Architecture' },
-    { name: 'Kubernetes', slug: 'kubernetes', description: 'Container Orchestration' },
-    { name: 'Docker', slug: 'docker', description: 'Containerization & Microservices' },
-    { name: 'Linux', slug: 'linux', description: 'Enterprise Linux Systems' },
-    { name: 'Programming', slug: 'programming', description: 'Modern Software Engineering' },
+    { name: 'Windows Administration', slug: 'windows-administration', description: 'Windows 10/11, Windows Server, Active Directory & PowerShell', icon: 'Monitor' },
+    { name: 'Linux Administration', slug: 'linux-administration', description: 'Enterprise Linux (RHEL, Ubuntu, Debian), Bash scripting & system administration', icon: 'Terminal' },
+    { name: 'DevOps Engineering', slug: 'devops', description: 'CI/CD pipelines, automated testing, deployment strategies & monitoring', icon: 'GitBranch' },
+    { name: 'Terraform & IaC', slug: 'terraform-iac', description: 'HashiCorp Terraform, declarative infrastructure & multi-cloud provisioning', icon: 'Cpu' },
+    { name: 'Docker & Containers', slug: 'docker-containers', description: 'Dockerfiles, containerization, microservices & multi-stage builds', icon: 'Box' },
+    { name: 'Kubernetes & Cloud Native', slug: 'kubernetes', description: 'Container orchestration, Pods, Deployments, Services, Helm & ingress controllers', icon: 'Layers' },
+    { name: 'Git & Version Control', slug: 'git-version-control', description: 'Git workflows, branching models, GitHub, GitLab & team collaboration', icon: 'GitPullRequest' },
+    { name: 'Cloud Computing', slug: 'cloud-computing', description: 'Core cloud architecture, virtualization, serverless & cloud strategy', icon: 'Cloud' },
+    { name: 'Amazon Web Services (AWS)', slug: 'aws', description: 'AWS Solutions Architect, EC2, S3, Lambda, IAM, VPC & CloudFormation', icon: 'CloudRain' },
+    { name: 'Microsoft Azure', slug: 'azure', description: 'Azure Administrator, Azure VMs, Entra ID, Virtual Networks & Blob Storage', icon: 'CloudLightning' },
+    { name: 'Google Cloud Platform (GCP)', slug: 'google-cloud', description: 'GCP Compute Engine, GKE, BigQuery, Cloud IAM & Anthos', icon: 'CloudSun' },
+    { name: 'Programming & Software Engineering', slug: 'programming', description: 'Algorithms, data structures, object-oriented design & software architecture', icon: 'Code' },
+    { name: 'Web Development & Full Stack', slug: 'web-development', description: 'Modern web applications, React, Node.js, Next.js, Tailwind CSS & APIs', icon: 'Globe' },
+    { name: 'Python Development', slug: 'python-development', description: 'Python 3, scripting, backend APIs (FastAPI/Django) & automation', icon: 'FileCode' },
+    { name: 'JavaScript & TypeScript', slug: 'javascript-typescript', description: 'Modern TypeScript, asynchronous architecture, Node.js & runtime mastery', icon: 'FileText' },
+    { name: 'Databases & SQL', slug: 'databases-sql', description: 'PostgreSQL, MySQL, Redis, MongoDB, schema design & query optimization', icon: 'Database' },
+    { name: 'Cybersecurity & Ethical Hacking', slug: 'cybersecurity', description: 'Network defense, ethical hacking, vulnerability assessments & security policies', icon: 'ShieldCheck' },
+    { name: 'Network Engineering', slug: 'networking', description: 'TCP/IP, routing, switching, DNS, VPNs, subnets & network troubleshooting', icon: 'Radio' },
+    { name: 'DevSecOps & Security Automation', slug: 'devsecops', description: 'Pipeline security scanning, SAST/DAST, secrets management & compliance', icon: 'Lock' },
+    { name: 'Artificial Intelligence & Machine Learning', slug: 'artificial-intelligence', description: 'Generative AI, Large Language Models, prompt engineering & machine learning', icon: 'Sparkles' },
+    { name: 'Microsoft Office & Productivity', slug: 'microsoft-office', description: 'Microsoft Word, Excel, PowerPoint, Outlook & workplace productivity tools', icon: 'BookOpen' },
   ];
 
   const categoriesMap = new Map();
   for (const cat of categoryNames) {
     const created = await prisma.category.upsert({
       where: { slug: cat.slug },
-      update: {},
-      create: { name: cat.name, slug: cat.slug, description: cat.description },
+      update: { name: cat.name, description: cat.description, icon: cat.icon },
+      create: { name: cat.name, slug: cat.slug, description: cat.description, icon: cat.icon },
     });
     categoriesMap.set(cat.slug, created);
   }
