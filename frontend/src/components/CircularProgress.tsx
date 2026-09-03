@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface CircularProgressProps {
   percentage: number;
@@ -27,7 +27,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#23426A"
+          stroke="#E2E8F0"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -36,7 +36,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#4FD1C5"
+          stroke="#087F78"
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={circumference}
@@ -46,9 +46,9 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center text-center">
-        <span className="text-lg font-extrabold text-[#F8FAFC]">{Math.round(percentage)}%</span>
+        <span className="text-lg font-extrabold text-[#0B1F3A] dark:text-white font-mono">{Math.round(percentage)}%</span>
         {completedLessons !== undefined && totalLessons !== undefined && (
-          <span className="text-[10px] font-semibold text-[#94A3B8]">
+          <span className="text-[10px] font-bold text-slate-400">
             {completedLessons}/{totalLessons} lessons
           </span>
         )}

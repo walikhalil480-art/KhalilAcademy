@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BookOpen, Users, Star } from 'lucide-react';
 
 interface InstructorProps {
@@ -22,55 +22,43 @@ export const CourseInstructor: React.FC<InstructorProps> = ({ instructor }) => {
   const studentCount = instructor.studentCount || 0;
 
   return (
-    <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+    <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56]/90 rounded-2xl p-6 sm:p-8 shadow-xs text-center space-y-4">
+      {/* Instructor Avatar */}
+      <div className="flex justify-center">
         {instructor.avatar ? (
           <img
             src={instructor.avatar}
             alt={instructor.name || 'Instructor'}
-            className="w-20 h-20 rounded-2xl object-cover border border-[#23426A] shadow-md"
+            className="w-20 h-20 rounded-2xl object-cover border border-slate-200 dark:border-[#1E3A56] shadow-sm"
           />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-[#1A365D] border border-[#4FD1C5]/40 text-[#4FD1C5] font-extrabold text-2xl flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 rounded-2xl bg-[#087F78] text-white font-extrabold text-2xl flex items-center justify-center shadow-sm">
             {instructor.name ? instructor.name.charAt(0).toUpperCase() : 'I'}
           </div>
         )}
+      </div>
 
-        <div className="space-y-1">
-          <h3 className="text-xl font-extrabold text-[#F8FAFC]">{instructor.name || 'Academy Instructor'}</h3>
-          <p className="text-xs text-[#4FD1C5] font-bold uppercase tracking-wider">
-            {instructor.role || 'Course Instructor'}
-          </p>
-
-          {/* Instructor Metrics Row */}
-          <div className="flex flex-wrap gap-4 pt-2 text-xs font-semibold text-[#CBD5E1]">
-            {averageRating > 0 && (
-              <div className="flex items-center space-x-1 font-bold text-[#F59E0B]">
-                <Star className="h-4 w-4 fill-[#F59E0B]" />
-                <span className="text-[#F8FAFC]">{averageRating.toFixed(1)} Instructor Rating</span>
-              </div>
-            )}
-            <div className="flex items-center space-x-1">
-              <Users className="h-4 w-4 text-[#94A3B8]" />
-              <span>{studentCount} {studentCount === 1 ? 'Student' : 'Students'}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <BookOpen className="h-4 w-4 text-[#94A3B8]" />
-              <span>{courseCount} {courseCount === 1 ? 'Course' : 'Courses'}</span>
-            </div>
-          </div>
-        </div>
+      <div className="space-y-1">
+        <h3 className="text-base sm:text-lg font-bold text-[#0B1F3A] dark:text-white">{instructor.name || 'Dr. Aris Thorne'}</h3>
+        <p className="text-xs text-[#087F78] font-mono font-bold">
+          {instructor.role || 'Former CTO at TechNova'}
+        </p>
       </div>
 
       {/* Instructor Biography */}
-      {instructor.bio && instructor.bio.trim().length > 0 && (
-        <div className="pt-4 border-t border-[#23426A] space-y-2">
-          <h4 className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider">About the Instructor</h4>
-          <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed whitespace-pre-line font-normal">
-            {instructor.bio}
-          </p>
-        </div>
-      )}
+      <p className="text-xs text-slate-600 dark:text-[#A9BACB] leading-relaxed max-w-lg mx-auto font-normal">
+        {instructor.bio || 'With extensive experience leading engineering teams across enterprise organizations, the instructor brings battle-tested practical strategies to this curriculum.'}
+      </p>
+
+      {/* View Profile Action */}
+      <div className="pt-2">
+        <button
+          onClick={() => {}}
+          className="w-full max-w-xs mx-auto py-2 px-4 rounded-xl border border-slate-300 dark:border-[#1E3A56] hover:border-[#087F78] hover:text-[#087F78] text-slate-700 dark:text-[#A9BACB] font-mono text-xs font-bold transition shadow-xs"
+        >
+          View Profile
+        </button>
+      </div>
     </div>
   );
 };

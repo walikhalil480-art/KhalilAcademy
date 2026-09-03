@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,36 +8,33 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Light mode design tokens
         brand: {
-          navy: '#1A365D',
-          navyDark: '#0A1322',
-          navySurface: '#0E1D33',
-          navyCard: '#132742',
-          navyElevated: '#1A365D',
-          navyBorder: '#23426A',
-          turquoise: '#4FD1C5',
-          turquoiseHover: '#38B2AC',
-          turquoiseDark: '#2C7A7B',
-          turquoiseLight: '#81E6D9',
-        },
-        navy: {
-          main: '#0A1322',
-          secondary: '#0E1D33',
-          surface: '#132742',
-          elevated: '#1A365D',
-          border: '#23426A',
+          // Light surfaces
+          pageBg: '#F1F5F7',
+          cardBg: '#FFFFFF',
+          navyPrimary: '#0B1F3A',
+          navyText: '#102A43',
+          secondaryText: '#60758A',
+          border: '#D9E3E8',
+          // Dark surfaces
+          darkPage: '#07182D',
+          darkSecondary: '#0B223D',
+          darkCard: '#102A43',
+          darkElevated: '#152F4A',
+          darkBorder: '#1E3A56',
+          darkText: '#F8FAFC',
+          darkMuted: '#A9BACB',
+          // Teal palette
+          teal: '#087F78',
+          tealHover: '#076E6A',
+          tealAccent: '#14B8A6',
+          tealLight: '#CCFBF1',
         },
         accent: {
-          turquoise: '#4FD1C5',
-          turquoiseHover: '#38B2AC',
           success: '#22C55E',
           warning: '#F59E0B',
           error: '#EF4444',
-        },
-        slateText: {
-          main: '#F8FAFC',
-          secondary: '#CBD5E1',
-          muted: '#94A3B8',
         },
       },
       fontFamily: {

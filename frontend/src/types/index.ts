@@ -278,6 +278,10 @@ export interface CourseEligibilityResult {
     };
   };
   missingRequirements: string[];
+  pendingAssignmentId?: string | null;
+  pendingAssignmentTitle?: string | null;
+  pendingQuizId?: string | null;
+  pendingQuizTitle?: string | null;
   certificate: {
     id: string;
     certificateNumber: string;
@@ -307,20 +311,90 @@ export interface Enrollment {
   createdAt: string;
 }
 
+export type CertificateStatus = 'ACTIVE' | 'SUSPENDED' | 'REVOKED' | 'REPLACED' | 'DELETED';
+export type CertificateAuditAction =
+  | 'ISSUED'
+  | 'SUSPENDED'
+  | 'RESTORED'
+  | 'REVOKED'
+  | 'RE_CERTIFICATION_CREATED'
+  | 'RE_CERTIFICATION_COMPLETED'
+  | 'REPLACED'
+  | 'DELETED';
+
+export type RecertificationScope =
+  | 'FULL_COURSE'
+  | 'SELECTED_LESSONS'
+  | 'SELECTED_ASSESSMENTS'
+  | 'FINAL_ASSIGNMENT'
+  | 'CUSTOM';
+
+export type RevocationReasonCategory =
+  | 'REQUIREMENTS_BYPASSED'
+  | 'FINAL_ASSIGNMENT_IMPROPER'
+  | 'ACADEMIC_MISCONDUCT'
+  | 'SYSTEM_ERROR'
+  | 'ASSESSMENT_INVALIDATED'
+  | 'OTHER';
+
+export interface CertificateAuditLog {
+  id: string;
+  certificateId: string;
+  action: CertificateAuditAction;
+  performedBy: string;
+  performerName?: string | null;
+  performerRole?: string | null;
+  reason: string;
+  previousStatus?: CertificateStatus | null;
+  newStatus?: CertificateStatus | null;
+  metadata?: any;
+  createdAt: string;
+}
+
+export interface RecertificationRequirement {
+  id: string;
+  certificateId: string;
+  courseId: string;
+  userId: string;
+  scope: RecertificationScope;
+  requiredLessonIds: string[];
+  requiredQuizIds: string[];
+  requiredAssignmentIds: string[];
+  requireFinalAssignment: boolean;
+  notes?: string | null;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  newCertificateId?: string | null;
+  createdAt: string;
+}
+
 export interface Certificate {
   id: string;
   certificateNumber: string;
   userId?: string;
+  studentEmail?: string;
   courseId?: string;
   studentName: string;
   courseTitle: string;
   instructorName?: string;
   issueDate: string;
+  status: CertificateStatus;
   isRevoked?: boolean;
-  revocationReason?: string;
+  revokedAt?: string | null;
+  revokedBy?: string | null;
+  revocationReason?: string | null;
+  revocationCategory?: RevocationReasonCategory | null;
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
+  replacedByCertificateId?: string | null;
+  replacedByCertificateNumber?: string | null;
+  previousCertificateId?: string | null;
   verificationUrl?: string;
   qrCodeUrl?: string;
   course?: Course;
+  recertificationRequirement?: RecertificationRequirement | null;
+  activeRecertificationRequirement?: RecertificationRequirement | null;
 }
 
 export interface Notification {

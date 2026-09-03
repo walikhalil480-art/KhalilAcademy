@@ -144,8 +144,18 @@ export const getInstructorSubmissions = async (req: AuthenticatedRequest, res: R
 
 export const resetAttempts = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await quizService.resetQuizAttemptsForStudent(req.params.id, req.body.userId);
+    const targetUserId = req.body.userId || req.body.studentId;
+    const result = await quizService.resetQuizAttemptsForStudent(req.params.id, targetUserId);
     res.json({ ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const disqualifyQuiz = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await quizService.disqualifyQuizForCheating(req.user!.id, req.params.id);
+    res.json({ success: true, message: 'Quiz disqualified due to integrity violations.', ...result });
   } catch (error) {
     next(error);
   }

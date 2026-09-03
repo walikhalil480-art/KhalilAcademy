@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { aiService } from '../../services/aiService';
 import { AIMessage, AIConversation, AIActionType } from '../../types/ai';
 import {
@@ -251,18 +251,18 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
         const code = language ? lines.slice(1).join('\n') : lines.join('\n');
 
         return (
-          <div key={pIdx} className="my-3 rounded-xl overflow-hidden border border-[#23426A] bg-[#070E1A]">
-            <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#0E1D33] border-b border-[#23426A] text-[11px] text-[#94A3B8] font-mono">
+          <div key={pIdx} className="my-3 rounded-xl overflow-hidden border border-slate-700 bg-[#102A43] text-white">
+            <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#152F4A] border-b border-slate-700 text-[11px] text-slate-400 font-mono">
               <span>{language || 'code'}</span>
               <button
                 onClick={() => navigator.clipboard.writeText(code)}
-                className="hover:text-[#4FD1C5] transition flex items-center gap-1 text-[10px]"
+                className="hover:text-teal-300 transition flex items-center gap-1 text-[10px]"
               >
                 <Copy className="w-3 h-3" />
                 <span>Copy</span>
               </button>
             </div>
-            <pre className="p-3.5 text-xs text-[#38BDF8] font-mono overflow-x-auto whitespace-pre leading-relaxed">
+            <pre className="p-3.5 text-xs text-teal-300 font-mono overflow-x-auto whitespace-pre leading-relaxed">
               {code}
             </pre>
           </div>
@@ -277,26 +277,42 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
     });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300">
-      <div className="w-full max-w-2xl bg-[#0A1322] border-l border-[#23426A] flex flex-col h-full shadow-2xl animate-slide-left text-[#F8FAFC]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-slate-900/60 backdrop-blur-xs transition-all duration-300"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-[#F1F5F7] dark:bg-[#07182D] border-l border-slate-200 dark:border-[#1E3A56] flex flex-col h-full shadow-2xl animate-slide-left text-[#0B1F3A] dark:text-white transition-colors"
+      >
         
         {/* 1. Header Bar */}
-        <div className="h-16 px-4 sm:px-6 bg-[#0E1D33] border-b border-[#23426A] flex items-center justify-between flex-shrink-0">
+        <div className="h-16 px-4 sm:px-6 bg-white dark:bg-[#0B223D] border-b border-slate-200 dark:border-[#1E3A56] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#1A365D] border border-[#4FD1C5]/40 text-[#4FD1C5] flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Sparkles className="w-5 h-5 animate-pulse text-[#4FD1C5]" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-[#087F78]/30 border border-[#087F78]/20 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center flex-shrink-0 shadow-xs">
+              <Sparkles className="w-5 h-5 animate-pulse text-[#087F78] dark:text-[#14B8A6]" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-extrabold text-[#F8FAFC] flex items-center gap-2">
+              <h2 className="text-sm font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-2">
                 <span>Ask Khalil AI</span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[#4FD1C5]/15 text-[#4FD1C5] border border-[#4FD1C5]/30">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-50 dark:bg-[#087F78]/40 text-[#087F78] dark:text-[#14B8A6] border border-teal-200 dark:border-teal-700/50 font-mono">
                   TUTOR
                 </span>
               </h2>
-              <p className="text-[11px] text-[#94A3B8] truncate max-w-xs sm:max-w-md">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs sm:max-w-md">
                 {lessonTitle ? `Lesson: ${lessonTitle}` : courseTitle || 'Dynamic AI Learning Tutor'}
               </p>
             </div>
@@ -305,15 +321,15 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
           {/* Header Controls */}
           <div className="flex items-center space-x-2">
             {/* Level Selector */}
-            <div className="hidden sm:flex items-center bg-[#0A1322] rounded-xl border border-[#23426A] p-0.5 text-[11px] font-semibold">
+            <div className="hidden sm:flex items-center bg-slate-100 dark:bg-[#152F4A] rounded-xl border border-slate-200 dark:border-slate-700 p-0.5 text-[11px] font-bold">
               {(['Beginner', 'Intermediate', 'Advanced'] as const).map((lvl) => (
                 <button
                   key={lvl}
                   onClick={() => setExplanationLevel(lvl)}
                   className={`px-2.5 py-1 rounded-lg transition ${
                     explanationLevel === lvl
-                      ? 'bg-[#4FD1C5] text-[#0A1322] font-black shadow-sm'
-                      : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                      ? 'bg-[#087F78] text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
                   }`}
                 >
                   {lvl}
@@ -325,7 +341,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
-                className="p-2 text-[#CBD5E1] hover:text-[#4FD1C5] hover:bg-[#132742] rounded-xl transition flex items-center gap-1 text-xs font-semibold"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-[#087F78] dark:hover:text-[#14B8A6] hover:bg-slate-100 dark:bg-[#0B223D] dark:hover:bg-[#152F4A] rounded-xl transition flex items-center gap-1 text-xs font-bold"
                 title="Chat History"
               >
                 <Layers className="w-4 h-4" />
@@ -333,12 +349,12 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
               </button>
 
               {showHistoryDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-[#102342] border border-[#23426A] rounded-2xl shadow-2xl p-2 z-50 space-y-1">
-                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#23426A] text-[11px] font-bold text-[#94A3B8]">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#102A43] border border-slate-200 dark:border-slate-750 rounded-2xl shadow-xl p-2 z-50 space-y-1">
+                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-100 dark:border-[#1E3A56] text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     <span>Conversations</span>
                     <button
                       onClick={handleStartNewChat}
-                      className="text-[#4FD1C5] hover:underline flex items-center gap-1"
+                      className="text-[#087F78] dark:text-[#14B8A6] hover:underline flex items-center gap-1 font-bold"
                     >
                       <Plus className="w-3 h-3" /> New
                     </button>
@@ -352,14 +368,14 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                           onClick={() => loadConversation(c.id)}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition cursor-pointer ${
                             activeConversationId === c.id
-                              ? 'bg-[#1A365D] text-[#4FD1C5] font-bold'
-                              : 'text-[#CBD5E1] hover:bg-[#132742]'
+                              ? 'bg-teal-50 dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] font-bold'
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-[#152F4A] dark:hover:bg-[#152F4A]'
                           }`}
                         >
                           <span className="truncate flex-1 pr-2">{c.title || 'Chat'}</span>
                           <button
                             onClick={(e) => handleDeleteConversation(c.id, e)}
-                            className="text-[#94A3B8] hover:text-[#EF4444] transition p-1"
+                            className="text-slate-400 hover:text-[#EF4444] transition p-1"
                             title="Delete Chat"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -367,7 +383,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                         </div>
                       ))
                     ) : (
-                      <div className="p-3 text-center text-xs text-[#94A3B8]">No past chats.</div>
+                      <div className="p-3 text-center text-xs text-slate-400 dark:text-slate-500">No past chats.</div>
                     )}
                   </div>
                 </div>
@@ -377,7 +393,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
             {/* New Chat Button */}
             <button
               onClick={handleStartNewChat}
-              className="p-2 text-[#CBD5E1] hover:text-[#4FD1C5] hover:bg-[#132742] rounded-xl transition"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-[#087F78] dark:hover:text-[#14B8A6] hover:bg-slate-100 dark:bg-[#0B223D] dark:hover:bg-[#152F4A] rounded-xl transition"
               title="Start New Chat"
             >
               <Plus className="w-4 h-4" />
@@ -386,7 +402,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#132742] rounded-xl transition"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white hover:bg-slate-100 dark:bg-[#0B223D] dark:hover:bg-[#152F4A] rounded-xl transition"
               title="Close Assistant"
             >
               <X className="w-5 h-5" />
@@ -395,7 +411,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
         </div>
 
         {/* 2. Dynamic Smart Action Chips Bar */}
-        <div className="px-4 py-2.5 bg-[#0E1D33]/60 border-b border-[#23426A] flex items-center gap-2 overflow-x-auto scrollbar-none flex-shrink-0">
+        <div className="px-4 py-2.5 bg-white dark:bg-[#0B223D] border-b border-slate-200 dark:border-[#1E3A56] flex items-center gap-2 overflow-x-auto scrollbar-none flex-shrink-0">
           {[
             { label: 'Explain this lesson', prompt: `Explain the key concepts of "${lessonTitle || 'this lesson'}" step by step.`, icon: Sparkles },
             { label: 'Summarize lesson', prompt: `Summarize "${lessonTitle || 'this lesson'}" concisely with main takeaways.`, icon: FileText },
@@ -412,9 +428,9 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                   if (item.action) item.action();
                   else if (item.prompt) handleSendMessage(item.prompt);
                 }}
-                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#132742] hover:bg-[#1A365D] border border-[#23426A] hover:border-[#4FD1C5]/40 text-[#CBD5E1] hover:text-[#F8FAFC] transition whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 shadow-sm"
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#152F4A] hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-[#0B1F3A] dark:hover:text-white transition whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 shadow-xs"
               >
-                <Icon className="w-3.5 h-3.5 text-[#4FD1C5]" />
+                <Icon className="w-3.5 h-3.5 text-[#087F78] dark:text-[#14B8A6]" />
                 <span>{item.label}</span>
               </button>
             );
@@ -425,12 +441,12 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12 space-y-5">
-              <div className="w-16 h-16 rounded-3xl bg-[#132742] border border-[#23426A] text-[#4FD1C5] mx-auto flex items-center justify-center shadow-xl">
-                <Sparkles className="w-8 h-8 animate-pulse text-[#4FD1C5]" />
+              <div className="w-16 h-16 rounded-3xl bg-teal-50 dark:bg-[#087F78]/30 border border-[#087F78]/20 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] mx-auto flex items-center justify-center shadow-xs">
+                <Sparkles className="w-8 h-8 animate-pulse text-[#087F78] dark:text-[#14B8A6]" />
               </div>
               <div className="space-y-2 max-w-md mx-auto">
-                <h3 className="text-base font-extrabold text-[#F8FAFC]">Hi! I'm your Khalil AI Tutor.</h3>
-                <p className="text-xs text-[#CBD5E1] leading-relaxed">
+                <h3 className="text-base font-extrabold text-[#0B1F3A] dark:text-white">Hi! I'm your Khalil AI Tutor.</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Ask me anything about {lessonTitle ? `"${lessonTitle}"` : 'your course'}, request real-world analogies, paste errors or code to troubleshoot, or ask me to quiz you!
                 </p>
               </div>
@@ -449,13 +465,13 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                       if (card.action) card.action();
                       else if (card.prompt) handleSendMessage(card.prompt);
                     }}
-                    className="p-3.5 bg-[#102342] hover:bg-[#132742] border border-[#23426A] hover:border-[#4FD1C5]/50 rounded-2xl transition space-y-1 group"
+                    className="p-3.5 bg-white dark:bg-[#102A43] hover:bg-slate-50 dark:hover:bg-[#152F4A] border border-slate-200/90 dark:border-[#1E3A56] hover:border-[#087F78] dark:hover:border-teal-500 rounded-2xl transition space-y-1 group shadow-xs"
                   >
-                    <div className="text-xs font-bold text-[#F8FAFC] group-hover:text-[#4FD1C5] transition flex items-center justify-between">
+                    <div className="text-xs font-bold text-[#0B1F3A] dark:text-white group-hover:text-[#087F78] dark:group-hover:text-[#14B8A6] transition flex items-center justify-between">
                       <span>{card.title}</span>
-                      <Sparkles className="w-3.5 h-3.5 text-[#94A3B8] group-hover:text-[#4FD1C5]" />
+                      <Sparkles className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#087F78] dark:group-hover:text-[#14B8A6]" />
                     </div>
-                    <div className="text-[11px] text-[#94A3B8] leading-tight">{card.desc}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">{card.desc}</div>
                   </button>
                 ))}
               </div>
@@ -468,32 +484,32 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                   key={msg.id || mIdx}
                   className={`flex flex-col space-y-1 ${isUser ? 'items-end' : 'items-start'}`}
                 >
-                  <div className="flex items-center space-x-1.5 px-1 text-[10px] text-[#94A3B8] font-semibold">
+                  <div className="flex items-center space-x-1.5 px-1 text-[10px] text-slate-400 font-bold font-mono">
                     <span>{isUser ? 'You' : 'Ask Khalil AI'}</span>
                     <span>•</span>
                     <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
 
                   <div
-                    className={`max-w-[92%] sm:max-w-[88%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed relative shadow-md ${
+                    className={`max-w-[92%] sm:max-w-[88%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed relative shadow-xs ${
                       isUser
-                        ? 'bg-[#1A365D] text-[#F8FAFC] rounded-tr-sm border border-[#2B4C7E]'
-                        : 'bg-[#102342] text-[#F8FAFC] rounded-tl-sm border border-[#23426A]'
+                        ? 'bg-[#087F78] text-white rounded-tr-xs shadow-xs'
+                        : 'bg-white dark:bg-[#102A43] text-[#0B1F3A] dark:text-white rounded-tl-xs border border-slate-200/90 dark:border-[#1E3A56] shadow-xs'
                     }`}
                   >
-                    <div className="text-[#F8FAFC]">{renderMessageContent(msg.content)}</div>
+                    <div>{renderMessageContent(msg.content)}</div>
 
                     {!isUser && (
-                      <div className="flex items-center justify-end space-x-3 pt-2 mt-2 border-t border-[#23426A]/50 text-[11px] text-[#94A3B8]">
+                      <div className="flex items-center justify-end space-x-3 pt-2 mt-2 border-t border-slate-100 dark:border-[#1E3A56] text-[11px] text-slate-400 dark:text-slate-500">
                         <button
                           onClick={() => copyToClipboard(msg.content, mIdx)}
-                          className="hover:text-[#4FD1C5] transition flex items-center gap-1"
+                          className="hover:text-[#087F78] dark:hover:text-[#14B8A6] transition flex items-center gap-1 font-bold font-mono"
                           title="Copy Answer"
                         >
                           {copiedIndex === mIdx ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-[#22C55E]" />
-                              <span className="text-[#22C55E]">Copied</span>
+                              <Check className="w-3.5 h-3.5 text-[#087F78] dark:text-[#14B8A6]" />
+                              <span className="text-[#087F78] dark:text-[#14B8A6]">Copied</span>
                             </>
                           ) : (
                             <>
@@ -511,9 +527,9 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
           )}
 
           {sending && (
-            <div className="flex items-start space-x-3 p-4 bg-[#102342] border border-[#23426A] rounded-2xl max-w-xs animate-slide-up">
-              <RefreshCw className="w-4 h-4 text-[#4FD1C5] animate-spin flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-[#CBD5E1] font-medium animate-pulse">
+            <div className="flex items-start space-x-3 p-4 bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-2xl max-w-xs animate-slide-up shadow-xs">
+              <RefreshCw className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6] animate-spin flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-slate-600 dark:text-slate-300 font-medium animate-pulse">
                 Analyzing lesson context & thinking...
               </div>
             </div>
@@ -521,14 +537,14 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
 
           {/* Honest Error State with Retry */}
           {error && (
-            <div className="p-4 bg-[#EF4444]/15 border border-[#EF4444]/40 rounded-2xl text-xs text-[#EF4444] flex items-center justify-between gap-3 animate-slide-up">
+            <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-xs text-[#EF4444] flex items-center justify-between gap-3 animate-slide-up">
               <div className="flex items-center gap-2 min-w-0">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{error}</span>
               </div>
               <button
                 onClick={handleRetry}
-                className="px-3 py-1.5 bg-[#EF4444] text-white font-bold rounded-xl text-xs hover:bg-[#DC2626] transition flex-shrink-0 flex items-center gap-1 shadow-sm"
+                className="px-3 py-1.5 bg-[#EF4444] text-white font-bold rounded-xl text-xs hover:bg-[#DC2626] transition flex-shrink-0 flex items-center gap-1 shadow-xs"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Retry</span>
@@ -541,15 +557,15 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
 
         {/* 4. Optional Code / Error Expander */}
         {showCodeInput && (
-          <div className="p-4 bg-[#0E1D33] border-t border-[#23426A] space-y-3">
+          <div className="p-4 bg-white dark:bg-[#0B223D] border-t border-slate-200 dark:border-[#1E3A56] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#F8FAFC] flex items-center gap-1.5">
-                <Code2 className="w-4 h-4 text-[#4FD1C5]" />
+              <span className="text-xs font-bold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                <Code2 className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
                 <span>Paste Code / Error for Diagnosis</span>
               </span>
               <button
                 onClick={() => setShowCodeInput(false)}
-                className="text-[11px] text-[#94A3B8] hover:text-[#F8FAFC]"
+                className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white font-bold"
               >
                 Hide
               </button>
@@ -560,7 +576,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
               onChange={(e) => setCodeSnippet(e.target.value)}
               placeholder="Paste code snippet, Dockerfile, or Kubernetes YAML here..."
               rows={3}
-              className="w-full font-mono p-3 bg-[#070E1A] border border-[#23426A] focus:border-[#4FD1C5] rounded-xl text-xs text-[#38BDF8] placeholder-[#94A3B8] focus:outline-none resize-none leading-relaxed"
+              className="w-full font-mono p-3 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 focus:border-[#087F78] rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-[#0B223D] focus:outline-none resize-none leading-relaxed"
             />
 
             <textarea
@@ -568,13 +584,13 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
               onChange={(e) => setErrorMessage(e.target.value)}
               placeholder="Paste error output or stack trace here (optional)..."
               rows={2}
-              className="w-full font-mono p-3 bg-[#070E1A] border border-[#23426A] focus:border-[#4FD1C5] rounded-xl text-xs text-[#EF4444] placeholder-[#94A3B8] focus:outline-none resize-none leading-relaxed"
+              className="w-full font-mono p-3 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 focus:border-[#087F78] rounded-xl text-xs text-[#EF4444] placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-[#0B223D] focus:outline-none resize-none leading-relaxed"
             />
           </div>
         )}
 
         {/* 5. Input Area */}
-        <div className="p-4 bg-[#0E1D33] border-t border-[#23426A] flex-shrink-0">
+        <div className="p-4 bg-white dark:bg-[#0B223D] border-t border-slate-200 dark:border-[#1E3A56] flex-shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -599,7 +615,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                     : 'Ask your AI tutor anything...'
                 }
                 rows={1}
-                className="w-full pl-4 pr-10 py-3 bg-[#070E1A] border border-[#23426A] focus:border-[#4FD1C5] rounded-2xl text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none transition resize-none max-h-32"
+                className="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 focus:border-[#087F78] rounded-2xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-[#0B223D] focus:outline-none transition resize-none max-h-32"
                 disabled={sending}
               />
 
@@ -607,7 +623,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
                 type="button"
                 onClick={() => setShowCodeInput(!showCodeInput)}
                 className={`absolute right-3 top-3 transition ${
-                  showCodeInput ? 'text-[#4FD1C5]' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  showCodeInput ? 'text-[#087F78] dark:text-[#14B8A6]' : 'text-slate-400 dark:text-slate-500 hover:text-[#0B1F3A] dark:hover:text-white'
                 }`}
                 title="Attach Code / Error Log"
               >
@@ -618,7 +634,7 @@ export const AskKhalilAIDrawer: React.FC<AskKhalilAIDrawerProps> = ({
             <button
               type="submit"
               disabled={sending || (!inputMessage.trim() && !codeSnippet.trim() && !errorMessage.trim())}
-              className="p-3 bg-[#4FD1C5] hover:bg-[#38B2AC] disabled:opacity-40 text-[#0A1322] rounded-2xl transition shadow-lg shadow-[#4FD1C5]/20 flex-shrink-0 font-bold"
+              className="p-3 bg-[#087F78] hover:bg-[#076E6A] disabled:opacity-40 text-white rounded-2xl transition shadow-xs flex-shrink-0 font-bold"
             >
               <Send className="w-4 h-4" />
             </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -117,20 +117,20 @@ export const LiveClassesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#071326] text-[#F8FAFC] pb-24">
+    <div className="min-h-screen bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white pb-24 transition-colors">
       {/* Hero Header */}
-      <div className="bg-gradient-to-b from-[#0A192F] to-[#071326] border-b border-[#23426A] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white dark:bg-[#0B223D] border-b border-slate-200 dark:border-[#1E3A56] py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1A365D] border border-[#4FD1C5]/40 text-[#4FD1C5] text-xs font-semibold uppercase tracking-wider mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 dark:bg-[#087F78]/30 border border-[#087F78]/20 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] text-xs font-bold font-mono uppercase tracking-wider mb-3">
                 <Radio className="w-3.5 h-3.5 animate-pulse text-[#EF4444]" />
                 Interactive Virtual Classroom
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0B1F3A] dark:text-white">
                 Live Classes & Workshops
               </h1>
-              <p className="mt-2 text-base text-[#94A3B8] max-w-2xl">
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
                 Attend interactive live sessions with Khalil and industry experts. Ask live questions, debug real-world architectures, and accelerate your engineering mastery.
               </p>
             </div>
@@ -139,7 +139,7 @@ export const LiveClassesPage: React.FC = () => {
               <div className="flex items-center gap-3 shrink-0">
                 <Link
                   to="/my-live-classes"
-                  className="px-4 py-2.5 rounded-xl bg-[#1A365D] hover:bg-[#23426A] text-[#4FD1C5] border border-[#4FD1C5]/30 font-medium text-sm transition-all flex items-center gap-2 shadow-sm"
+                  className="px-4 py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs transition-all flex items-center gap-2 shadow-xs"
                 >
                   <CalendarCheck className="w-4 h-4" />
                   My Registered Classes
@@ -153,25 +153,25 @@ export const LiveClassesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Global Notifications */}
         {successMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-[#064E3B]/80 border border-[#10B981] text-[#A7F3D0] flex items-center gap-3 animate-fadeIn">
-            <CheckCircle className="w-5 h-5 shrink-0 text-[#10B981]" />
-            <span className="text-sm font-medium">{successMessage}</span>
+          <div className="mb-6 p-4 rounded-xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-[#087F78] dark:text-[#14B8A6] flex items-center gap-3 animate-fadeIn font-bold text-xs">
+            <CheckCircle className="w-5 h-5 shrink-0 text-[#087F78] dark:text-[#14B8A6]" />
+            <span>{successMessage}</span>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-[#7F1D1D]/80 border border-[#EF4444] text-[#FECACA] flex items-center gap-3 animate-fadeIn">
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-[#EF4444] flex items-center gap-3 animate-fadeIn text-xs">
             <AlertCircle className="w-5 h-5 shrink-0 text-[#EF4444]" />
-            <span className="text-sm font-medium">{error}</span>
+            <span>{error}</span>
           </div>
         )}
 
         {/* Filter Controls Bar */}
-        <div className="bg-[#0D1E36] border border-[#23426A] rounded-2xl p-4 sm:p-5 mb-8 shadow-lg">
+        <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-4 sm:p-5 mb-8 shadow-xs">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
             {/* Search Input */}
             <div className="sm:col-span-6 relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search live classes, topics, or courses..."
@@ -180,7 +180,7 @@ export const LiveClassesPage: React.FC = () => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5] transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] transition-colors"
               />
             </div>
 
@@ -192,7 +192,7 @@ export const LiveClassesPage: React.FC = () => {
                   setSelectedCourse(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-sm text-white focus:outline-none focus:border-[#4FD1C5] transition-colors"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] transition-colors"
               >
                 <option value="">All Courses</option>
                 {courses.map((c) => (
@@ -204,7 +204,7 @@ export const LiveClassesPage: React.FC = () => {
             </div>
 
             {/* Status Tabs */}
-            <div className="sm:col-span-3 flex items-center bg-[#071326] border border-[#23426A] rounded-xl p-1">
+            <div className="sm:col-span-3 flex items-center bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl p-1">
               {[
                 { label: 'All', val: 'ALL' },
                 { label: 'Scheduled', val: 'SCHEDULED' },
@@ -217,10 +217,10 @@ export const LiveClassesPage: React.FC = () => {
                     setStatusFilter(tab.val);
                     setPage(1);
                   }}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-center ${
                     statusFilter === tab.val
-                      ? 'bg-[#1A365D] text-[#4FD1C5] shadow-sm'
-                      : 'text-[#94A3B8] hover:text-white'
+                      ? 'bg-[#087F78] text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white'
                   }`}
                 >
                   {tab.label}
@@ -236,17 +236,17 @@ export const LiveClassesPage: React.FC = () => {
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div
                 key={n}
-                className="h-80 rounded-2xl bg-[#0D1E36]/50 border border-[#23426A] animate-pulse"
+                className="h-80 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] animate-pulse shadow-xs"
               />
             ))}
           </div>
         ) : sessions.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-[#0D1E36]/40 border border-[#23426A] rounded-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-[#1A365D]/60 flex items-center justify-center mx-auto mb-4 text-[#4FD1C5]">
+          <div className="text-center py-16 px-4 bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-2xl shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4 text-[#087F78]">
               <Video className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">No live classes found</h3>
-            <p className="text-sm text-[#94A3B8] max-w-md mx-auto">
+            <h3 className="text-lg font-bold text-[#0B1F3A] dark:text-white mb-1">No live classes found</h3>
+            <p className="text-xs text-slate-500 dark:text-[#A9BACB] max-w-md mx-auto">
               There are currently no live classes matching your filter criteria. Check back soon or try clearing your filters.
             </p>
           </div>
@@ -266,30 +266,30 @@ export const LiveClassesPage: React.FC = () => {
               return (
                 <div
                   key={session.id}
-                  className="bg-[#0D1E36] border border-[#23426A] hover:border-[#4FD1C5]/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group shadow-lg"
+                  className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] hover:border-[#087F78]/50 dark:hover:border-[#14B8A6]/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 group shadow-xs hover:shadow-md"
                 >
                   <div>
                     {/* Header: Course badge & Status */}
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="text-[11px] font-semibold tracking-wide text-[#4FD1C5] bg-[#1A365D] px-2.5 py-1 rounded-md line-clamp-1">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#087F78] dark:text-[#14B8A6] bg-teal-50 dark:bg-[#087F78]/30 px-2.5 py-1 rounded-md line-clamp-1">
                         {session.course.title}
                       </span>
 
                       {session.dynamicStatus === 'LIVE' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EF4444]/20 border border-[#EF4444] text-[#F87171] text-xs font-bold animate-pulse">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-[#EF4444] text-[11px] font-bold animate-pulse">
                           <Radio className="w-3 h-3" />
                           LIVE NOW
                         </span>
                       ) : session.dynamicStatus === 'COMPLETED' ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#334155] text-[#94A3B8] text-xs font-medium">
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium">
                           Completed
                         </span>
                       ) : session.dynamicStatus === 'CANCELLED' ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#7F1D1D]/40 text-[#FCA5A5] text-xs font-medium">
+                        <span className="px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-[#EF4444] text-xs font-medium">
                           Cancelled
                         </span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#0369A1]/30 text-[#38BDF8] text-xs font-medium">
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 text-xs font-bold font-mono">
                           Scheduled
                         </span>
                       )}
@@ -298,32 +298,32 @@ export const LiveClassesPage: React.FC = () => {
                     {/* Title */}
                     <Link
                       to={`/live-classes/${session.id}`}
-                      className="text-lg font-bold text-white group-hover:text-[#4FD1C5] transition-colors line-clamp-2 mb-2"
+                      className="text-base font-bold text-[#0B1F3A] dark:text-white group-hover:text-[#087F78] dark:group-hover:text-[#14B8A6] transition-colors line-clamp-2 mb-2"
                     >
                       {session.title}
                     </Link>
 
                     {/* Description */}
                     {session.description && (
-                      <p className="text-xs text-[#94A3B8] line-clamp-2 mb-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
                         {session.description}
                       </p>
                     )}
 
                     {/* Schedule info */}
-                    <div className="space-y-2 mb-4 py-3 border-y border-[#23426A]/60 text-xs text-[#CBD5E1]">
+                    <div className="space-y-2 mb-4 py-3 border-y border-slate-100 dark:border-[#1E3A56] text-xs text-slate-600 dark:text-slate-400 font-medium">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-[#4FD1C5] shrink-0" />
-                        <span className="font-semibold">{timeDetails.date}</span>
+                        <Calendar className="w-3.5 h-3.5 text-[#087F78] dark:text-[#14B8A6] shrink-0" />
+                        <span className="font-bold text-[#0B1F3A] dark:text-white">{timeDetails.date}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-[#4FD1C5] shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-[#087F78] dark:text-[#14B8A6] shrink-0" />
                         <span>
                           {timeDetails.time} ({timeDetails.timezone})
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5 text-[#4FD1C5] shrink-0" />
+                        <Users className="w-3.5 h-3.5 text-[#087F78] dark:text-[#14B8A6] shrink-0" />
                         <span>Instructor: {session.instructor.name}</span>
                       </div>
                     </div>
@@ -331,12 +331,12 @@ export const LiveClassesPage: React.FC = () => {
                     {/* Capacity Indicator */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-[#94A3B8]">
+                        <span className="text-slate-500 dark:text-[#A9BACB]">
                           {session.registeredCount} / {session.maxParticipants} Registered
                         </span>
                         <span
-                          className={`font-semibold ${
-                            session.isFull ? 'text-[#EF4444]' : 'text-[#4FD1C5]'
+                          className={`font-bold ${
+                            session.isFull ? 'text-[#EF4444]' : 'text-[#087F78]'
                           }`}
                         >
                           {session.isFull
@@ -346,14 +346,14 @@ export const LiveClassesPage: React.FC = () => {
                               } left`}
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#071326] rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-slate-100 dark:bg-[#0B223D] rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all duration-500 rounded-full ${
                             session.isFull
                               ? 'bg-[#EF4444]'
                               : capacityPercent > 80
                               ? 'bg-[#F59E0B]'
-                              : 'bg-[#10B981]'
+                              : 'bg-[#087F78]'
                           }`}
                           style={{ width: `${capacityPercent}%` }}
                         />
@@ -366,7 +366,7 @@ export const LiveClassesPage: React.FC = () => {
                     {session.dynamicStatus === 'CANCELLED' ? (
                       <button
                         disabled
-                        className="w-full py-2.5 rounded-xl bg-[#1E293B] text-[#64748B] text-xs font-semibold cursor-not-allowed"
+                        className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] text-slate-400 text-xs font-bold cursor-not-allowed"
                       >
                         Session Cancelled
                       </button>
@@ -375,7 +375,7 @@ export const LiveClassesPage: React.FC = () => {
                         {session.isJoinable ? (
                           <Link
                             to={`/live-classes/${session.id}`}
-                            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white text-xs font-bold text-center transition-all shadow-md shadow-[#10B981]/20 flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold text-center transition-all shadow-xs flex items-center justify-center gap-1.5"
                           >
                             <Video className="w-4 h-4" />
                             Join Live Class
@@ -383,7 +383,7 @@ export const LiveClassesPage: React.FC = () => {
                         ) : (
                           <Link
                             to={`/live-classes/${session.id}`}
-                            className="flex-1 py-2.5 rounded-xl bg-[#1A365D] hover:bg-[#23426A] text-[#4FD1C5] border border-[#4FD1C5]/30 text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] text-[#0B1F3A] dark:text-white border border-slate-200 dark:border-[#1E3A56] text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5"
                           >
                             <CheckCircle className="w-4 h-4 text-[#10B981]" />
                             Registered (View Details)
@@ -393,11 +393,11 @@ export const LiveClassesPage: React.FC = () => {
                     ) : session.dynamicStatus === 'COMPLETED' ? (
                       <Link
                         to={`/live-classes/${session.id}`}
-                        className="w-full py-2.5 rounded-xl bg-[#1A365D] hover:bg-[#23426A] text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] text-[#0B1F3A] dark:text-white text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5 border border-slate-200 dark:border-[#1E3A56]"
                       >
                         {session.hasRecording ? (
                           <>
-                            <PlayCircle className="w-4 h-4 text-[#4FD1C5]" />
+                            <PlayCircle className="w-4 h-4 text-[#087F78]" />
                             Watch Recording
                           </>
                         ) : (
@@ -407,7 +407,7 @@ export const LiveClassesPage: React.FC = () => {
                     ) : session.isFull ? (
                       <button
                         disabled
-                        className="w-full py-2.5 rounded-xl bg-[#334155]/60 text-[#94A3B8] text-xs font-semibold cursor-not-allowed"
+                        className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] text-slate-400 text-xs font-bold cursor-not-allowed"
                       >
                         Session Full
                       </button>
@@ -415,7 +415,7 @@ export const LiveClassesPage: React.FC = () => {
                       <button
                         onClick={() => handleRegister(session)}
                         disabled={registeringId === session.id}
-                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white text-xs font-bold transition-all shadow-md shadow-[#0284C7]/20 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        className="w-full py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
                         {registeringId === session.id ? (
                           <span className="inline-flex items-center gap-2">
@@ -443,17 +443,17 @@ export const LiveClassesPage: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-xl bg-[#0D1E36] border border-[#23426A] text-sm text-[#94A3B8] hover:text-white disabled:opacity-40 transition-colors"
+              className="px-4 py-2 rounded-xl bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold text-slate-600 dark:text-[#A9BACB] hover:text-[#0B1F3A] disabled:opacity-40 transition-colors shadow-xs"
             >
               Previous
             </button>
-            <span className="text-xs text-[#94A3B8]">
+            <span className="text-xs font-mono text-slate-500 dark:text-[#A9BACB]">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-xl bg-[#0D1E36] border border-[#23426A] text-sm text-[#94A3B8] hover:text-white disabled:opacity-40 transition-colors"
+              className="px-4 py-2 rounded-xl bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold text-slate-600 dark:text-[#A9BACB] hover:text-[#0B1F3A] disabled:opacity-40 transition-colors shadow-xs"
             >
               Next
             </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Course, Category } from '../types';
@@ -70,85 +70,79 @@ export const CourseCatalogPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-[#0A1322] min-h-screen text-[#F8FAFC]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-[#F1F5F7] dark:bg-[#07182D] min-h-screen text-[#0B1F3A] dark:text-white transition-colors">
       
       {/* Header Banner */}
-      <div className="border-b border-[#23426A] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 text-[#4FD1C5] text-xs font-extrabold uppercase tracking-wider">
-            <Compass className="w-3.5 h-3.5" />
-            <span>Course Catalog</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC]">Explore Professional Courses</h1>
-          <p className="text-xs sm:text-sm text-[#CBD5E1]">
-            Build practical knowledge and develop the skills that matter for your career.
-          </p>
-        </div>
-
-        <div className="text-xs text-[#94A3B8] font-medium">
-          Showing <strong className="text-[#F8FAFC]">{pagination.total || courses.length}</strong> available courses
-        </div>
+      <div className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white tracking-tight">Course Catalog</h1>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          Explore our comprehensive professional development tracks and academic programs.
+        </p>
       </div>
 
-      {/* Category Chips Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <button
-          onClick={() => updateParam('category', '')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
-            !categoryFilter
-              ? 'bg-[#4FD1C5] text-[#0A1322] border-[#4FD1C5] shadow-md shadow-[#4FD1C5]/20 font-extrabold'
-              : 'bg-[#132742] text-[#CBD5E1] border-[#23426A] hover:text-[#4FD1C5] hover:border-[#4FD1C5]'
-          }`}
-        >
-          All Topics
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => updateParam('category', cat.slug || cat.name)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
-              categoryFilter === cat.slug || categoryFilter === cat.name
-                ? 'bg-[#4FD1C5] text-[#0A1322] border-[#4FD1C5] shadow-md shadow-[#4FD1C5]/20 font-extrabold'
-                : 'bg-[#132742] text-[#CBD5E1] border-[#23426A] hover:text-[#4FD1C5] hover:border-[#4FD1C5]'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Filter & Controls Bar */}
-      <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
-        
-        {/* Search Input */}
-        <div className="relative w-full md:w-80">
+      {/* Search Input Box */}
+      <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-4 shadow-xs space-y-4">
+        <div className="relative w-full">
           <input
             type="text"
-            placeholder="Search keywords, topics..."
+            placeholder="Search for courses, skills, or instructors..."
             value={searchQuery}
             onChange={(e) => updateParam('search', e.target.value)}
-            className="w-full bg-[#0E1D33] border border-[#23426A] rounded-xl py-2.5 pl-9 pr-8 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5] transition"
+            className="w-full bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-8 text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] focus:ring-1 focus:ring-[#087F78]/30 transition"
           />
-          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
           {searchQuery && (
             <button
               onClick={() => updateParam('search', '')}
-              className="absolute right-2.5 top-2.5 text-[#94A3B8] hover:text-[#F8FAFC]"
+              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        {/* Filters Row */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        {/* Category Chips Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            onClick={() => updateParam('category', '')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold whitespace-nowrap transition border ${
+              !categoryFilter
+                ? 'bg-[#087F78] text-white border-[#087F78] shadow-xs'
+                : 'bg-white dark:bg-[#152F4A] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+            }`}
+          >
+            All Categories
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => updateParam('category', cat.slug || cat.name)}
+              className={`px-4 py-2 rounded-xl text-xs font-mono font-bold whitespace-nowrap transition border ${
+                categoryFilter === cat.slug || categoryFilter === cat.name
+                  ? 'bg-[#087F78] text-white border-[#087F78] shadow-xs'
+                  : 'bg-white dark:bg-[#152F4A] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filter Row: Level & Sorting */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Showing <strong className="text-[#0B1F3A] dark:text-white">{pagination.total || courses.length}</strong> courses
+        </div>
+
+        <div className="flex items-center gap-2">
           {/* Level Dropdown */}
           <select
             value={levelFilter}
             onChange={(e) => updateParam('level', e.target.value)}
-            className="bg-[#0E1D33] border border-[#23426A] text-[#F8FAFC] text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#4FD1C5] font-medium"
+            className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-slate-700 text-[#0B1F3A] dark:text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#087F78] font-medium shadow-xs"
           >
-            <option value="">All Difficulty Levels</option>
+            <option value="">All Levels</option>
             <option value="BEGINNER">Beginner</option>
             <option value="INTERMEDIATE">Intermediate</option>
             <option value="ADVANCED">Advanced</option>
@@ -158,7 +152,7 @@ export const CourseCatalogPage: React.FC = () => {
           <select
             value={sortBy}
             onChange={(e) => updateParam('sortBy', e.target.value)}
-            className="bg-[#0E1D33] border border-[#23426A] text-[#F8FAFC] text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#4FD1C5] font-medium"
+            className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-slate-700 text-[#0B1F3A] dark:text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#087F78] font-medium shadow-xs"
           >
             <option value="newest">Sort by: Newest</option>
             <option value="popularity">Sort by: Most Popular</option>
@@ -166,14 +160,13 @@ export const CourseCatalogPage: React.FC = () => {
             <option value="priceDesc">Sort by: Price (High to Low)</option>
           </select>
         </div>
-
       </div>
 
       {/* Course Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="h-80 rounded-2xl bg-[#132742] animate-pulse border border-[#23426A]" />
+            <div key={n} className="h-80 rounded-2xl bg-white dark:bg-[#102A43] animate-pulse border border-slate-200 dark:border-[#1E3A56]" />
           ))}
         </div>
       ) : courses.length > 0 ? (
@@ -183,15 +176,15 @@ export const CourseCatalogPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-[#132742] rounded-2xl border border-[#23426A] space-y-4 p-8 shadow-xl">
-          <SlidersHorizontal className="w-10 h-10 text-[#94A3B8] mx-auto" />
+        <div className="text-center py-16 bg-white dark:bg-[#102A43] rounded-2xl border border-slate-200 dark:border-[#1E3A56] space-y-4 p-8 shadow-xs">
+          <SlidersHorizontal className="w-10 h-10 text-slate-400 dark:text-slate-500 mx-auto" />
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-[#F8FAFC]">No courses match your filter criteria</h3>
-            <p className="text-xs text-[#CBD5E1]">Try adjusting your search keywords, difficulty level, or topic filters.</p>
+            <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white">No courses match your filter criteria</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Try adjusting your search keywords or topic filters.</p>
           </div>
           <button
             onClick={handleResetFilters}
-            className="px-4 py-2 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] text-xs font-bold rounded-xl transition shadow-md"
+            className="px-4 py-2 bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold rounded-xl transition shadow-xs"
           >
             Reset All Filters
           </button>
@@ -200,22 +193,42 @@ export const CourseCatalogPage: React.FC = () => {
 
       {/* Pagination Controls */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-6">
+        <div className="flex items-center justify-center gap-2 pt-6">
           <button
             disabled={page <= 1}
             onClick={() => updateParam('page', (page - 1).toString())}
-            className="p-2.5 rounded-xl bg-[#132742] border border-[#23426A] text-[#CBD5E1] hover:text-[#4FD1C5] disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+            className="p-2 rounded-lg bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] text-slate-600 dark:text-slate-300 hover:text-[#087F78] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-xs text-xs"
             aria-label="Previous Page"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs font-semibold text-[#CBD5E1] px-3">
-            Page <strong className="text-[#F8FAFC]">{pagination.page}</strong> of {pagination.totalPages}
-          </span>
+
+          {Array.from({ length: Math.min(pagination.totalPages, 5) }).map((_, idx) => {
+            const pageNum = idx + 1;
+            const isCurrent = page === pageNum;
+            return (
+              <button
+                key={pageNum}
+                onClick={() => updateParam('page', pageNum.toString())}
+                className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition flex items-center justify-center border ${
+                  isCurrent
+                    ? 'bg-[#087F78] text-white border-[#087F78] shadow-xs'
+                    : 'bg-white dark:bg-[#102A43] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E3A56] hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          {pagination.totalPages > 5 && (
+            <span className="text-slate-400 dark:text-slate-500 font-mono text-xs px-1">..</span>
+          )}
+
           <button
             disabled={page >= pagination.totalPages}
             onClick={() => updateParam('page', (page + 1).toString())}
-            className="p-2.5 rounded-xl bg-[#132742] border border-[#23426A] text-[#CBD5E1] hover:text-[#4FD1C5] disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+            className="p-2 rounded-lg bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] text-slate-600 dark:text-slate-300 hover:text-[#087F78] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-xs text-xs"
             aria-label="Next Page"
           >
             <ChevronRight className="w-4 h-4" />

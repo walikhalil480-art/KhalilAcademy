@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -22,7 +22,7 @@ import {
   Settings,
   ExternalLink,
   ChevronRight,
-  Square,
+  Sparkles,
 } from 'lucide-react';
 
 export const InstructorLiveClassesPage: React.FC = () => {
@@ -99,19 +99,33 @@ export const InstructorLiveClassesPage: React.FC = () => {
     }
   };
 
+  const generateInstantRoomLink = () => {
+    const randomId = Math.random().toString(36).substring(2, 7) + Math.random().toString(36).substring(2, 6);
+    const roomName = `KhalilAcademy-Live-${randomId}`;
+    const generatedUrl = `https://meet.jit.si/${roomName}`;
+    setFormData((prev: any) => ({
+      ...prev,
+      meetingProvider: 'EXTERNAL',
+      meetingUrl: generatedUrl,
+      meetingId: roomName,
+    }));
+  };
+
   const handleOpenCreate = () => {
     setEditingSession(null);
+    const randomId = Math.random().toString(36).substring(2, 7) + Math.random().toString(36).substring(2, 6);
+    const defaultRoom = `KhalilAcademy-Live-${randomId}`;
     setFormData({
       title: '',
       description: '',
       courseId: courses[0]?.id || '',
       startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
       endTime: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString().slice(0, 16),
-      timezone: 'UTC',
+      timezone: 'Africa/Nairobi',
       maxParticipants: 50,
       meetingProvider: 'EXTERNAL',
-      meetingUrl: '',
-      meetingId: '',
+      meetingUrl: `https://meet.jit.si/${defaultRoom}`,
+      meetingId: defaultRoom,
       meetingPasscode: '',
       attendanceThresholdPercent: 70,
       joinBufferMinutes: 15,
@@ -127,7 +141,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
       courseId: sess.courseId,
       startTime: new Date(sess.startTime).toISOString().slice(0, 16),
       endTime: new Date(sess.endTime).toISOString().slice(0, 16),
-      timezone: sess.timezone || 'UTC',
+      timezone: sess.timezone || 'Africa/Nairobi',
       maxParticipants: sess.maxParticipants,
       meetingProvider: sess.meetingProvider,
       meetingUrl: sess.meetingUrl || '',
@@ -144,11 +158,18 @@ export const InstructorLiveClassesPage: React.FC = () => {
     setSubmittingForm(true);
     setError(null);
     try {
+      const submissionData = { ...formData };
+      if (!submissionData.meetingUrl || !submissionData.meetingUrl.trim()) {
+        const randomId = Math.random().toString(36).substring(2, 7) + Math.random().toString(36).substring(2, 6);
+        submissionData.meetingUrl = `https://meet.jit.si/KhalilAcademy-Live-${randomId}`;
+        submissionData.meetingId = `KhalilAcademy-Live-${randomId}`;
+      }
+
       if (editingSession) {
-        await liveSessionApi.updateSession(editingSession.id, formData);
+        await liveSessionApi.updateSession(editingSession.id, submissionData);
         setSuccessMessage('Live session updated successfully.');
       } else {
-        await liveSessionApi.createSession(formData);
+        await liveSessionApi.createSession(submissionData);
         setSuccessMessage('New live session scheduled successfully.');
       }
       setShowCreateModal(false);
@@ -169,18 +190,6 @@ export const InstructorLiveClassesPage: React.FC = () => {
       await loadData();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to cancel session.');
-    }
-  };
-
-  const handleEndSession = async (sess: LiveSession) => {
-    if (!window.confirm(`Are you sure you want to conclude and end "${sess.title}" for all students?`))
-      return;
-    try {
-      await liveSessionApi.endSession(sess.id);
-      setSuccessMessage(`Live class "${sess.title}" has been concluded.`);
-      await loadData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to end live class.');
     }
   };
 
@@ -246,26 +255,26 @@ export const InstructorLiveClassesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#071326] text-[#F8FAFC] pb-24">
+    <div className="min-h-screen bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white pb-24 font-sans transition-colors">
       {/* Top Banner */}
-      <div className="bg-gradient-to-b from-[#0A192F] to-[#071326] border-b border-[#23426A] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white dark:bg-[#102A43] border-b border-slate-200 dark:border-[#1E3A56] py-10 px-4 sm:px-6 lg:px-8 shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#4FD1C5] uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#087F78] uppercase tracking-wider mb-2 font-mono">
               <Shield className="w-4 h-4" />
               Instructor / Admin Console
             </div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-3xl font-extrabold text-[#0B1F3A] dark:text-white tracking-tight">
               Live Session Management
             </h1>
-            <p className="mt-1 text-sm text-[#94A3B8]">
+            <p className="mt-1 text-sm text-slate-500 dark:text-[#A9BACB]">
               Schedule live virtual classes, manage attendee capacity, track student attendance duration, and upload session recordings.
             </p>
           </div>
 
           <button
             onClick={handleOpenCreate}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white font-bold text-xs transition-all shadow-lg shadow-[#0284C7]/20 flex items-center gap-2 shrink-0"
+            className="px-5 py-3 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs transition-all shadow-xs flex items-center gap-2 shrink-0"
           >
             <Plus className="w-4 h-4" />
             Schedule New Live Class
@@ -276,135 +285,130 @@ export const InstructorLiveClassesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Feedback Notifications */}
         {successMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-[#064E3B]/80 border border-[#10B981] text-[#A7F3D0] flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 shrink-0 text-[#10B981]" />
+          <div className="mb-6 p-4 rounded-xl bg-teal-50 border border-teal-200 text-[#087F78] flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 shrink-0 text-[#087F78]" />
             <span className="text-sm font-medium">{successMessage}</span>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-[#7F1D1D]/80 border border-[#EF4444] text-[#FECACA] flex items-center gap-3">
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-[#EF4444] flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0 text-[#EF4444]" />
             <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
         {/* Sessions Table */}
-        <div className="bg-[#0D1E36] border border-[#23426A] rounded-2xl overflow-hidden shadow-xl">
-          <div className="p-5 border-b border-[#23426A] flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Video className="w-4 h-4 text-[#4FD1C5]" />
-              Scheduled Live Sessions ({sessions.length})
+        <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl overflow-hidden shadow-xs">
+          <div className="p-5 border-b border-slate-100 dark:border-[#1E3A56] flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+              <Video className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
+              <span>Scheduled Live Sessions ({sessions.length})</span>
             </h2>
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-sm text-[#94A3B8]">Loading live sessions...</div>
+            <div className="p-8 text-center text-sm text-slate-400">Loading live sessions...</div>
           ) : sessions.length === 0 ? (
             <div className="p-12 text-center">
-              <Video className="w-10 h-10 text-[#64748B] mx-auto mb-3" />
-              <h3 className="text-base font-bold text-white mb-1">No live classes scheduled</h3>
-              <p className="text-xs text-[#94A3B8] mb-4">
+              <Video className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white mb-1">No live classes scheduled</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                 You haven't scheduled any live sessions yet. Click below to create your first session.
               </p>
               <button
                 onClick={handleOpenCreate}
-                className="px-4 py-2 rounded-xl bg-[#0284C7] text-white text-xs font-bold"
+                className="px-4 py-2 rounded-xl bg-[#087F78] text-white text-xs font-bold shadow-xs"
               >
                 Schedule Session
               </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#CBD5E1]">
-                <thead className="bg-[#071326] text-[#94A3B8] uppercase text-[10px] tracking-wider border-b border-[#23426A]">
+              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                <thead className="bg-slate-50 dark:bg-[#152F4A] text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-700 font-mono">
                   <tr>
-                    <th className="py-3.5 px-4 font-semibold">Course & Title</th>
-                    <th className="py-3.5 px-4 font-semibold">Date & Time</th>
-                    <th className="py-3.5 px-4 font-semibold">Registered</th>
-                    <th className="py-3.5 px-4 font-semibold">Status</th>
-                    <th className="py-3.5 px-4 font-semibold">Meeting Provider</th>
-                    <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                    <th className="py-3.5 px-4 font-bold">Course & Title</th>
+                    <th className="py-3.5 px-4 font-bold">Date & Time</th>
+                    <th className="py-3.5 px-4 font-bold">Registered</th>
+                    <th className="py-3.5 px-4 font-bold">Status</th>
+                    <th className="py-3.5 px-4 font-bold">Meeting Provider</th>
+                    <th className="py-3.5 px-4 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#23426A]/50">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
                   {sessions.map((sess) => {
                     const start = new Date(sess.startTime);
                     return (
-                      <tr key={sess.id} className="hover:bg-[#1A365D]/30 transition-colors">
+                      <tr key={sess.id} className="hover:bg-slate-50 dark:bg-[#152F4A] dark:hover:bg-slate-800/60 transition-colors">
                         <td className="py-4 px-4">
-                          <div className="font-bold text-white text-sm line-clamp-1">{sess.title}</div>
-                          <div className="text-[11px] text-[#4FD1C5]">{sess.course?.title}</div>
+                          <div className="font-bold text-[#0B1F3A] dark:text-white text-sm line-clamp-1">{sess.title}</div>
+                          <div className="text-[11px] text-[#087F78] dark:text-[#14B8A6] font-semibold">{sess.course?.title}</div>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <div className="font-medium text-white">
+                          <div className="font-bold text-[#0B1F3A] dark:text-white">
                             {start.toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
                             })}
                           </div>
-                          <div className="text-[11px] text-[#94A3B8]">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
                             {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
                             ({sess.timezone || 'UTC'})
                           </div>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="font-bold text-white">
+                          <span className="font-bold text-[#0B1F3A] dark:text-white font-mono">
                             {sess.registeredCount} / {sess.maxParticipants}
                           </span>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
                           {sess.dynamicStatus === 'LIVE' ? (
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#EF4444]/20 border border-[#EF4444] text-[#F87171] text-[10px] font-bold">
+                            <span className="px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-[#EF4444] text-[10px] font-bold">
                               LIVE NOW
                             </span>
                           ) : sess.dynamicStatus === 'COMPLETED' ? (
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#334155] text-[#94A3B8] text-[10px] font-medium">
+                            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
                               Completed
                             </span>
                           ) : sess.dynamicStatus === 'CANCELLED' ? (
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#7F1D1D]/40 text-[#FCA5A5] text-[10px] font-medium">
+                            <span className="px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950/30 text-[#EF4444] text-[10px] font-bold">
                               Cancelled
                             </span>
                           ) : (
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#0369A1]/30 text-[#38BDF8] text-[10px] font-medium">
+                            <span className="px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-[#087F78]/20 text-[#087F78] dark:text-[#14B8A6] border border-teal-200 dark:border-teal-700/50 text-[10px] font-bold">
                               Scheduled
                             </span>
                           )}
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="text-[#CBD5E1]">
-                            {sess.meetingProvider === 'ZOOM'
-                              ? 'Zoom'
-                              : sess.meetingProvider === 'GOOGLE_MEET'
-                              ? 'Google Meet'
-                              : 'External Link'}
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-[#087F78]/20 text-[#087F78] dark:text-[#14B8A6] text-[10px] font-mono font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#087F78] dark:bg-[#14B8A6]" />
+                            <span>In-Platform Studio</span>
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               to={`/live-classes/${sess.id}`}
-                              title="Enter In-Screen Virtual Classroom"
-                              className="p-1.5 rounded-lg bg-[#071326] text-[#94A3B8] hover:text-[#4FD1C5] transition-colors"
+                              className="px-3 py-1.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-[11px] transition-all flex items-center gap-1.5 shadow-xs"
+                            >
+                              <Video className="w-3.5 h-3.5" />
+                              <span>Go Live</span>
+                            </Link>
+
+                            <Link
+                              to={`/live-classes/${sess.id}`}
+                              title="View Virtual Classroom"
+                              className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#152F4A] text-slate-500 dark:text-slate-400 hover:text-[#087F78] dark:hover:text-[#14B8A6] hover:bg-slate-100 dark:hover:bg-[#0B223D] transition-colors border border-slate-200 dark:border-slate-700"
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
 
-                            {sess.dynamicStatus === 'LIVE' && (
-                              <button
-                                onClick={() => handleEndSession(sess)}
-                                title="End Live Class Session"
-                                className="p-1.5 rounded-lg bg-[#EF4444]/20 text-[#EF4444] hover:bg-[#EF4444] hover:text-white transition-colors"
-                              >
-                                <Square className="w-4 h-4 fill-current" />
-                              </button>
-                            )}
-
                             <button
                               onClick={() => handleOpenAttendance(sess)}
                               title="Manage Attendance Duration"
-                              className="p-1.5 rounded-lg bg-[#1A365D] text-[#4FD1C5] hover:bg-[#23426A] transition-colors"
+                              className="p-1.5 rounded-lg bg-teal-50 dark:bg-[#087F78]/20 text-[#087F78] dark:text-[#14B8A6] hover:bg-teal-100 transition-colors border border-teal-200 dark:border-teal-700/50"
                             >
                               <Users className="w-4 h-4" />
                             </button>
@@ -412,7 +416,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
                             <button
                               onClick={() => handleOpenRecording(sess)}
                               title="Attach Session Recording"
-                              className="p-1.5 rounded-lg bg-[#064E3B]/50 text-[#10B981] hover:bg-[#064E3B] transition-colors"
+                              className="p-1.5 rounded-lg bg-teal-50 dark:bg-[#087F78]/20 text-[#087F78] dark:text-[#14B8A6] hover:bg-teal-100 transition-colors border border-teal-200 dark:border-teal-700/50"
                             >
                               <PlayCircle className="w-4 h-4" />
                             </button>
@@ -420,7 +424,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
                             <button
                               onClick={() => handleOpenEdit(sess)}
                               title="Edit Session"
-                              className="p-1.5 rounded-lg bg-[#071326] text-[#94A3B8] hover:text-white transition-colors"
+                              className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#152F4A] text-slate-500 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#0B223D] transition-colors border border-slate-200 dark:border-slate-700"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -429,7 +433,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
                               <button
                                 onClick={() => handleCancelSession(sess)}
                                 title="Cancel Session"
-                                className="p-1.5 rounded-lg bg-[#7F1D1D]/30 text-[#FCA5A5] hover:bg-[#7F1D1D] transition-colors"
+                                className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-[#EF4444] hover:bg-red-100 transition-colors border border-red-200 dark:border-red-800"
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -438,7 +442,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
                             <button
                               onClick={() => handleDeleteSession(sess)}
                               title="Delete Session"
-                              className="p-1.5 rounded-lg bg-[#7F1D1D]/20 text-[#EF4444] hover:bg-[#7F1D1D]/60 transition-colors"
+                              className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-[#EF4444] hover:bg-red-100 transition-colors border border-red-200 dark:border-red-800"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -456,16 +460,16 @@ export const InstructorLiveClassesPage: React.FC = () => {
 
       {/* CREATE / EDIT SESSION MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#0D1E36] border border-[#23426A] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#23426A] pb-4 mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Video className="w-5 h-5 text-[#4FD1C5]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] text-[#0B1F3A] dark:text-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl transition-colors">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E3A56] pb-4 mb-6">
+              <h3 className="text-lg font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                <Video className="w-5 h-5 text-[#087F78] dark:text-[#14B8A6]" />
                 {editingSession ? 'Edit Live Class' : 'Schedule Live Class'}
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-[#94A3B8] hover:text-white"
+                className="text-slate-400 hover:text-slate-700 dark:text-[#A9BACB] dark:hover:text-slate-200 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -473,24 +477,24 @@ export const InstructorLiveClassesPage: React.FC = () => {
 
             <form onSubmit={handleSaveSession} className="space-y-4 text-xs">
               <div>
-                <label className="block text-white font-semibold mb-1">Session Title *</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Session Title *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. AWS Live Workshop: Deploying Production Microservices"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                 />
               </div>
 
               <div>
-                <label className="block text-white font-semibold mb-1">Associated Course *</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Associated Course *</label>
                 <select
                   required
                   value={formData.courseId}
                   onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                 >
                   <option value="">Select Course</option>
                   {courses.map((c) => (
@@ -502,50 +506,50 @@ export const InstructorLiveClassesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-white font-semibold mb-1">Description</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Description</label>
                 <textarea
                   rows={3}
                   placeholder="What topics and hands-on exercises will be covered in this live session?"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5] resize-none"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-white font-semibold mb-1">Start Date & Time *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Start Date & Time *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1">End Date & Time *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">End Date & Time *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.endTime}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-white font-semibold mb-1">Timezone</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Timezone</label>
                   <select
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                   >
-                    <option value="UTC">UTC</option>
                     <option value="Africa/Nairobi">EAT (Nairobi / East Africa)</option>
+                    <option value="UTC">UTC</option>
                     <option value="Europe/London">GMT / London</option>
                     <option value="America/New_York">EST / New York</option>
                     <option value="America/Los_Angeles">PST / San Francisco</option>
@@ -553,7 +557,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1">Max Capacity</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Max Capacity</label>
                   <input
                     type="number"
                     min={1}
@@ -562,102 +566,43 @@ export const InstructorLiveClassesPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, maxParticipants: parseInt(e.target.value, 10) })
                     }
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1">Meeting Platform</label>
-                  <select
-                    value={formData.meetingProvider}
-                    onChange={(e) => {
-                      const provider = e.target.value;
-                      let updatedUrl = formData.meetingUrl;
-                      if (provider === 'EXTERNAL' && !formData.meetingUrl) {
-                        updatedUrl = `https://meet.jit.si/KhalilAcademy-Live-${Math.random().toString(36).substring(2, 9)}`;
-                      }
-                      setFormData({ ...formData, meetingProvider: provider, meetingUrl: updatedUrl });
-                    }}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
-                  >
-                    <option value="EXTERNAL">Khalil Academy Built-In Virtual Room (In-Screen)</option>
-                    <option value="GOOGLE_MEET">Google Meet (Companion Stage)</option>
-                    <option value="ZOOM">Zoom</option>
-                  </select>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1 uppercase tracking-wider">Virtual Classroom</label>
+                  <div className="p-3.5 rounded-xl bg-teal-50/70 dark:bg-[#087F78]/20 border border-teal-200/80 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] font-bold text-xs flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>In-Platform Live Classroom (Embedded inside Khalil Academy)</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-white font-semibold">
-                    Meeting URL *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const randomRoom = `https://meet.guifi.net/KhalilAcademy-Live-${Math.random().toString(36).substring(2, 9)}`;
-                      setFormData({ ...formData, meetingUrl: randomRoom, meetingProvider: 'EXTERNAL' });
-                    }}
-                    className="text-[11px] text-[#4FD1C5] hover:underline font-bold"
-                  >
-                    + Auto-Generate Built-In In-Screen Room
-                  </button>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                <div className="font-bold text-[#0B1F3A] dark:text-white flex items-center gap-1.5">
+                  <Video className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
+                  <span>Native Video & Screen Sharing Room</span>
                 </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="https://meet.jit.si/room-name or https://meet.google.com/xyz or https://zoom.us/j/..."
-                  value={formData.meetingUrl}
-                  onChange={(e) => {
-                    let val = e.target.value.trim();
-                    if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
-                      val = `https://${val}`;
-                    }
-                    setFormData({ ...formData, meetingUrl: val });
-                  }}
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] focus:border-[#4FD1C5] rounded-xl text-white focus:outline-none font-mono text-xs"
-                />
-                <span className="text-[10px] text-[#94A3B8] mt-1 block">
-                  💡 Tip: URLs with <strong>meet.jit.si</strong>, <strong>YouTube Live</strong>, or <strong>Vimeo</strong> embed directly inside the screen. <strong>Google Meet</strong> and <strong>Zoom</strong> run in synchronized companion mode with active in-app Q&A, chat, and attendance.
-                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  A private, secure virtual classroom with camera, mic, and screen sharing will be created automatically. Students will watch and participate directly inside Khalil Academy without third-party apps.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white font-semibold mb-1">Meeting ID (Optional)</label>
-                  <input
-                    type="text"
-                    value={formData.meetingId}
-                    onChange={(e) => setFormData({ ...formData, meetingId: e.target.value })}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-semibold mb-1">Passcode (Optional)</label>
-                  <input
-                    type="text"
-                    value={formData.meetingPasscode}
-                    onChange={(e) => setFormData({ ...formData, meetingPasscode: e.target.value })}
-                    className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#23426A]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#1E3A56]">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#334155] text-white font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingForm}
-                  className="px-5 py-2 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold disabled:opacity-50 shadow-xs"
                 >
-                  {submittingForm ? 'Saving...' : editingSession ? 'Update Session' : 'Create Session'}
+                  {submittingForm ? 'Saving...' : editingSession ? 'Update Session' : 'Schedule Session'}
                 </button>
               </div>
             </form>
@@ -667,34 +612,34 @@ export const InstructorLiveClassesPage: React.FC = () => {
 
       {/* ATTENDANCE MODAL */}
       {attendanceSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#0D1E36] border border-[#23426A] rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#23426A] pb-4 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E3A56] pb-4 mb-4">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#4FD1C5]" />
+                <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#087F78]" />
                   Attendance Tracking: {attendanceSession.title}
                 </h3>
-                <div className="text-xs text-[#94A3B8]">
+                <div className="text-xs text-slate-500 dark:text-[#A9BACB] font-mono">
                   Configured Threshold: {attendanceSession.attendanceThresholdPercent}% of class duration
                 </div>
               </div>
               <button
                 onClick={() => setAttendanceSession(null)}
-                className="text-[#94A3B8] hover:text-white"
+                className="text-slate-400 hover:text-slate-700 dark:text-[#A9BACB] p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {attendances.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#94A3B8]">
+              <div className="p-8 text-center text-xs text-slate-400">
                 No student has joined this virtual classroom yet.
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#071326] text-[#94A3B8] uppercase text-[10px]">
+                <table className="w-full text-left text-xs text-slate-600 dark:text-[#A9BACB]">
+                  <thead className="bg-slate-50 dark:bg-[#152F4A] text-slate-500 dark:text-[#A9BACB] uppercase text-[10px] font-mono">
                     <tr>
                       <th className="py-2.5 px-3">Student</th>
                       <th className="py-2.5 px-3">Joined</th>
@@ -703,30 +648,30 @@ export const InstructorLiveClassesPage: React.FC = () => {
                       <th className="py-2.5 px-3 text-right">Manual Override</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#23426A]/50">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
                     {attendances.map((att) => (
                       <tr key={att.id}>
                         <td className="py-3 px-3">
-                          <div className="font-bold text-white">{att.user?.name}</div>
-                          <div className="text-[10px] text-[#64748B]">{att.user?.email}</div>
+                          <div className="font-bold text-[#0B1F3A] dark:text-white">{att.user?.name}</div>
+                          <div className="text-[10px] text-slate-400">{att.user?.email}</div>
                         </td>
-                        <td className="py-3 px-3 text-[#CBD5E1]">
+                        <td className="py-3 px-3 text-slate-600 dark:text-[#A9BACB]">
                           {new Date(att.joinedAt).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </td>
-                        <td className="py-3 px-3 text-white font-mono">
+                        <td className="py-3 px-3 text-[#0B1F3A] dark:text-white font-mono font-bold">
                           {att.durationMinutes} mins
                         </td>
                         <td className="py-3 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
                               att.status === 'PRESENT'
-                                ? 'bg-[#064E3B] text-[#A7F3D0]'
+                                ? 'bg-teal-50 text-[#087F78]'
                                 : att.status === 'PARTIAL'
-                                ? 'bg-[#78350F] text-[#FDE68A]'
-                                : 'bg-[#7F1D1D] text-[#FECACA]'
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-red-50 text-[#EF4444]'
                             }`}
                           >
                             {att.status}
@@ -740,10 +685,10 @@ export const InstructorLiveClassesPage: React.FC = () => {
                                 onClick={() =>
                                   handleUpdateAttendanceStatus(att.userId, st, att.durationMinutes)
                                 }
-                                className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
                                   att.status === st
-                                    ? 'bg-[#4FD1C5] text-[#071326]'
-                                    : 'bg-[#071326] text-[#94A3B8] hover:text-white'
+                                    ? 'bg-[#087F78] text-white'
+                                    : 'bg-slate-100 dark:bg-[#0B223D] text-slate-600 dark:text-[#A9BACB] hover:text-[#0B1F3A]'
                                 }`}
                               >
                                 {st}
@@ -763,16 +708,16 @@ export const InstructorLiveClassesPage: React.FC = () => {
 
       {/* RECORDING ATTACH MODAL */}
       {recordingSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#0D1E36] border border-[#23426A] rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#23426A] pb-4 mb-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <PlayCircle className="w-5 h-5 text-[#4FD1C5]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E3A56] pb-4 mb-4">
+              <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-[#087F78]" />
                 Attach Recording: {recordingSession.title}
               </h3>
               <button
                 onClick={() => setRecordingSession(null)}
-                className="text-[#94A3B8] hover:text-white"
+                className="text-slate-400 hover:text-slate-700 dark:text-[#A9BACB] p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -780,7 +725,7 @@ export const InstructorLiveClassesPage: React.FC = () => {
 
             <form onSubmit={handleSaveRecording} className="space-y-4 text-xs">
               <div>
-                <label className="block text-white font-semibold mb-1">Recording URL *</label>
+                <label className="block text-slate-700 dark:text-[#A9BACB] font-bold mb-1 uppercase tracking-wider">Recording URL *</label>
                 <input
                   type="url"
                   required
@@ -789,24 +734,24 @@ export const InstructorLiveClassesPage: React.FC = () => {
                   onChange={(e) =>
                     setRecordingData({ ...recordingData, recordingUrl: e.target.value })
                   }
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                 />
               </div>
 
               <div>
-                <label className="block text-white font-semibold mb-1">Recording Title</label>
+                <label className="block text-slate-700 dark:text-[#A9BACB] font-bold mb-1 uppercase tracking-wider">Recording Title</label>
                 <input
                   type="text"
                   value={recordingData.recordingTitle}
                   onChange={(e) =>
                     setRecordingData({ ...recordingData, recordingTitle: e.target.value })
                   }
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                 />
               </div>
 
               <div>
-                <label className="block text-white font-semibold mb-1">Duration (Minutes)</label>
+                <label className="block text-slate-700 dark:text-[#A9BACB] font-bold mb-1 uppercase tracking-wider">Duration (Minutes)</label>
                 <input
                   type="number"
                   min={1}
@@ -817,21 +762,21 @@ export const InstructorLiveClassesPage: React.FC = () => {
                       durationMinutes: parseInt(e.target.value, 10),
                     })
                   }
-                  className="w-full p-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#23426A]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#1E3A56]">
                 <button
                   type="button"
                   onClick={() => setRecordingSession(null)}
-                  className="px-4 py-2 rounded-xl bg-[#334155] text-white font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#0B223D] text-slate-700 dark:text-[#A9BACB] font-bold border border-slate-200 dark:border-[#1E3A56]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold shadow-xs"
                 >
                   Attach & Notify Students
                 </button>

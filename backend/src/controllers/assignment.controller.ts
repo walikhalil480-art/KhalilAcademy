@@ -56,14 +56,54 @@ export const getAssignment = async (req: AuthenticatedRequest, res: Response, ne
     }
 
     let submission = null;
+    let isCheatingLocked = false;
+    let hasActiveRecertification = false;
+
     if (req.user) {
+      // Check if student has active re-certification requirement for this course
+      const activeRecertReq = await prisma.recertificationRequirement.findFirst({
+        where: {
+          userId: req.user.id,
+          courseId: assignment.courseId,
+          isCompleted: false,
+        },
+      });
+
+      if (activeRecertReq) {
+        hasActiveRecertification = true;
+      }
+
       submission = await prisma.assignmentSubmission.findFirst({
         where: { assignmentId: assignment.id, userId: req.user.id },
         orderBy: { submittedAt: 'desc' },
       });
+
+      // If active re-certification is underway, past cheating lockouts do not block re-certification retake
+      if (!hasActiveRecertification) {
+        if (
+          submission &&
+          submission.feedback?.includes('anti-cheating') &&
+          submission.submissionAttempts >= 3 &&
+          submission.status !== 'PASSED'
+        ) {
+          isCheatingLocked = true;
+        } else {
+          const risk = await prisma.studentRiskRecord.findFirst({
+            where: {
+              userId: req.user.id,
+              assignmentId: assignment.id,
+              title: { contains: 'Anti-Cheating' },
+              status: 'ACTIVE',
+            },
+          });
+          if (risk && (!submission || submission.status !== 'PASSED')) {
+            isCheatingLocked = true;
+          }
+        }
+      }
     }
 
-    res.json({ success: true, assignment, submission });
+    res.json({ success: true, assignment, submission, isCheatingLocked, hasActiveRecertification });
   } catch (error) {
     next(error);
   }
@@ -111,3 +151,28 @@ export const createAssignment = async (req: AuthenticatedRequest, res: Response,
     next(error);
   }
 };
+
+export const disqualifyAssignmentForCheating = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await assignmentService.disqualifyForCheating(req.user!.id, req.params.id);
+    res.json({ success: true, message: 'Assessment disqualified and locked due to integrity violations.', ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetAssignmentAttempts = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await assignmentService.resetAssignmentAttemptsForStudent(
+      req.params.id,
+      req.body.userId,
+      req.user!.id,
+      req.user!.role
+    );
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+

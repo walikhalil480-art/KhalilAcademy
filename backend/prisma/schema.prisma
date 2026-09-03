@@ -99,6 +99,9 @@ enum NotificationType {
   COURSE_COMPLETED
   CERTIFICATE_ELIGIBLE
   CERTIFICATE_ISSUED
+  CERTIFICATE_REVOKED
+  CERTIFICATE_SUSPENDED
+  CERTIFICATE_RESTORED
   ACCOUNT_VERIFICATION
   PASSWORD_RESET
   LIVE_CLASS_REMINDER_24H
@@ -170,6 +173,8 @@ model User {
   gamificationProfile    UserGamificationProfile?
   activityDays           UserActivityDay[]
   badges                 UserBadge[]
+  certificateAuditLogs   CertificateAuditLog[]
+  recertificationRequirements RecertificationRequirement[]
 }
 
 model RefreshToken {
@@ -239,6 +244,7 @@ model Course {
   aiConversations AIConversation[]
   liveSessions LiveSession[]
   riskRecords  StudentRiskRecord[]
+  recertificationRequirements RecertificationRequirement[]
 }
 
 model Module {
@@ -500,24 +506,126 @@ model Coupon {
   createdAt         DateTime     @default(now())
 }
 
+enum CertificateStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+  REPLACED
+  DELETED
+}
+
+enum CertificateAuditAction {
+  ISSUED
+  SUSPENDED
+  RESTORED
+  REVOKED
+  RE_CERTIFICATION_CREATED
+  RE_CERTIFICATION_COMPLETED
+  REPLACED
+  DELETED
+}
+
+enum RecertificationScope {
+  FULL_COURSE
+  SELECTED_LESSONS
+  SELECTED_ASSESSMENTS
+  FINAL_ASSIGNMENT
+  CUSTOM
+}
+
+enum RevocationReasonCategory {
+  REQUIREMENTS_BYPASSED
+  FINAL_ASSIGNMENT_IMPROPER
+  ACADEMIC_MISCONDUCT
+  SYSTEM_ERROR
+  ASSESSMENT_INVALIDATED
+  OTHER
+}
+
 model Certificate {
-  id                String   @id @default(uuid())
-  certificateNumber String   @unique
-  userId            String
-  courseId          String
-  studentName       String
-  courseTitle       String
-  instructorName    String
-  issueDate         DateTime @default(now())
-  isRevoked         Boolean  @default(false)
-  revocationReason  String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt
+  id                      String                    @id @default(uuid())
+  certificateNumber       String                    @unique
+  userId                  String
+  courseId                String
+  studentName             String
+  courseTitle             String
+  instructorName          String
+  issueDate               DateTime                  @default(now())
+  status                  CertificateStatus         @default(ACTIVE)
+  isRevoked               Boolean                   @default(false)
+  revocationReason        String?
+  revocationCategory      RevocationReasonCategory?
+  revokedAt               DateTime?
+  revokedBy               String?
+  suspendedAt             DateTime?
+  suspendedBy             String?
+  suspensionReason        String?
+  replacedByCertificateId String?
+  previousCertificateId   String?
+  deletedAt               DateTime?
+  deletedBy               String?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @default(now()) @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id])
-  course Course @relation(fields: [courseId], references: [id])
+  user                    User                      @relation(fields: [userId], references: [id])
+  course                  Course                    @relation(fields: [courseId], references: [id])
+  replacedBy              Certificate?              @relation("CertificateReplacement", fields: [replacedByCertificateId], references: [id])
+  replacedCertificates    Certificate[]             @relation("CertificateReplacement")
 
-  @@unique([userId, courseId])
+  auditLogs                   CertificateAuditLog[]
+  recertificationRequirements RecertificationRequirement[]
+
+  @@index([userId, courseId])
+  @@index([status])
+  @@index([certificateNumber])
+}
+
+model CertificateAuditLog {
+  id             String                 @id @default(uuid())
+  certificateId  String
+  action         CertificateAuditAction
+  performedBy    String?
+  performerName  String?
+  performerRole  String?
+  reason         String?
+  details        String?
+  previousStatus CertificateStatus?
+  newStatus      CertificateStatus
+  metadata       Json?
+  createdAt      DateTime               @default(now())
+
+  certificate    Certificate            @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  performer      User?                  @relation(fields: [performedBy], references: [id], onDelete: SetNull)
+
+  @@index([certificateId])
+  @@index([performedBy])
+  @@index([createdAt])
+}
+
+model RecertificationRequirement {
+  id                     String               @id @default(uuid())
+  certificateId          String
+  courseId               String
+  userId                 String
+  scope                  RecertificationScope @default(FULL_COURSE)
+  notes                  String?
+  requiredLessonIds      String[]             @default([])
+  requiredQuizIds        String[]             @default([])
+  requiredAssignmentIds  String[]             @default([])
+  requireFinalAssignment Boolean              @default(false)
+  isCompleted            Boolean              @default(false)
+  completedAt            DateTime?
+  newCertificateId       String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  certificate            Certificate          @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  course                 Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, courseId])
+  @@index([certificateId])
+  @@index([isCompleted])
 }
 
 model Review {

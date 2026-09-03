@@ -18,8 +18,10 @@ import {
   HelpCircle,
   BarChart3,
   BookOpen,
+  Unlock,
 } from 'lucide-react';
 import { resolveMediaUrl } from '../utils/media';
+import { CertificatesManagementTab } from './admin/CertificatesManagementTab';
 
 interface CourseAnalyticsModalProps {
   courseId: string;
@@ -35,7 +37,7 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'students' | 'assignments' | 'quizzes'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'assignments' | 'quizzes' | 'certificates'>('students');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
   const [expandedQuizAttemptId, setExpandedQuizAttemptId] = useState<string | null>(null);
@@ -107,6 +109,23 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
     }
   };
 
+  const handleResetAssignmentAttempts = async (assignmentId: string, userId: string, studentName: string) => {
+    if (!window.confirm(`Unlock and reset assignment attempts for ${studentName}? This will clear anti-cheating lockouts and allow the student to retake the assignment.`)) {
+      return;
+    }
+
+    try {
+      setResettingAttempts(true);
+      await api.post(`/assignments/${assignmentId}/reset-attempts`, { userId });
+      alert(`Assignment unlocked successfully! ${studentName} can now access and submit the assignment again.`);
+      await fetchAnalytics();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to reset assignment attempts.');
+    } finally {
+      setResettingAttempts(false);
+    }
+  };
+
   const openGradingModal = (sub: any) => {
     setSelectedSubmission(sub);
     setGradeScore(sub.score !== null && sub.score !== undefined ? String(sub.score) : String(sub.maxScore || 100));
@@ -139,7 +158,7 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#132742] rounded-xl transition"
+            className="p-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#152F4A] rounded-xl transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -277,6 +296,16 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
                   >
                     🎯 Quiz Attempts ({data.quizAttempts?.length || 0})
                   </button>
+                  <button
+                    onClick={() => setActiveTab('certificates')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 ${
+                      activeTab === 'certificates'
+                        ? 'bg-[#38BDF8] text-[#08152A] shadow-md shadow-[#38BDF8]/20 font-black'
+                        : 'bg-[#0D223F] text-[#94A3B8] hover:text-[#F8FAFC]'
+                    }`}
+                  >
+                    <span>🎓 Certificates ({data.stats?.certificatesIssuedCount || 0})</span>
+                  </button>
                 </div>
 
                 {activeTab === 'students' && (
@@ -320,7 +349,7 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
                               const isExpanded = expandedStudentId === s.studentId;
                               return (
                                 <React.Fragment key={s.studentId}>
-                                  <tr className="hover:bg-[#132742]/50 transition">
+                                  <tr className="hover:bg-[#152F4A]/50 transition">
                                     {/* Student Name & Avatar */}
                                     <td className="p-3.5 font-bold text-[#F8FAFC]">
                                       <div className="flex items-center space-x-2.5">
@@ -622,16 +651,29 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
                             </div>
                           )}
 
-                          <div className="pt-2 border-t border-[#23426A]/60 flex items-center justify-between">
+                          <div className="pt-2 border-t border-[#23426A]/60 flex items-center justify-between flex-wrap gap-2">
                             <span className="text-[10px] text-[#94A3B8]">
                               Submitted {new Date(sub.submittedAt).toLocaleDateString()}
                             </span>
-                            <button
-                              onClick={() => openGradingModal(sub)}
-                              className="px-3 py-1.5 bg-[#38BDF8] text-[#08152A] hover:bg-[#0284c7] hover:text-white rounded-xl text-xs font-extrabold shadow-md shadow-[#38BDF8]/10 transition"
-                            >
-                              Grade / Edit Score
-                            </button>
+                            <div className="flex items-center gap-2">
+                              {(sub.submissionAttempts >= 3 || sub.feedback?.includes('anti-cheating') || sub.status === 'RETURNED') && (
+                                <button
+                                  onClick={() => handleResetAssignmentAttempts(sub.assignmentId, sub.studentId, sub.studentName)}
+                                  disabled={resettingAttempts}
+                                  className="px-2.5 py-1.5 bg-[#22C55E]/15 hover:bg-[#22C55E]/25 text-[#22C55E] border border-[#22C55E]/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                                  title="Clear anti-cheating lockout and reset attempts so student can retake"
+                                >
+                                  <Unlock className="w-3.5 h-3.5" />
+                                  <span>Unlock & Reset</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => openGradingModal(sub)}
+                                className="px-3 py-1.5 bg-[#38BDF8] text-[#08152A] hover:bg-[#0284c7] hover:text-white rounded-xl text-xs font-extrabold shadow-md shadow-[#38BDF8]/10 transition"
+                              >
+                                Grade / Edit Score
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -679,6 +721,15 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
                                   </span>
                                 </div>
                                 <button
+                                  onClick={() => handleResetQuizAttempts(attempt.quizId, attempt.userId)}
+                                  disabled={resettingAttempts}
+                                  className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-[#F59E0B] border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow-xs"
+                                  title="Clear anti-cheating lockout and reset attempts so student can retake quiz"
+                                >
+                                  <Unlock className="w-3 h-3" />
+                                  <span>Reset Attempts</span>
+                                </button>
+                                <button
                                   onClick={() => setExpandedQuizAttemptId(isExpanded ? null : attempt.id)}
                                   className="p-2 hover:bg-[#1A365D] rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] transition"
                                 >
@@ -719,6 +770,13 @@ export const CourseAnalyticsModal: React.FC<CourseAnalyticsModalProps> = ({
                       })}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Tab 4: Course Certificates & Governance */}
+              {activeTab === 'certificates' && (
+                <div className="pt-2">
+                  <CertificatesManagementTab courseId={courseId} isInstructorView={true} />
                 </div>
               )}
             </>

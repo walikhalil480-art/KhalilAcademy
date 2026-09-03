@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { liveSessionApi, LiveSession, LiveSessionQuestion } from '../services/liveSessionApi';
-import { NativeClassroomStage } from '../components/live/NativeClassroomStage';
 import {
   Calendar,
   Clock,
@@ -19,20 +18,15 @@ import {
   Pin,
   Send,
   Trash2,
+  Lock,
+  ExternalLink,
+  Copy,
   ChevronLeft,
   CalendarCheck,
   Shield,
   HelpCircle,
-  Square,
-  Sparkles,
-  FileText,
-  MessageCircle,
-  BookOpen,
-  Film,
-  Upload,
-  Play,
-  ExternalLink,
 } from 'lucide-react';
+import { NativeLiveClassroom } from '../components/live/NativeLiveClassroom';
 
 export const LiveSessionDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,29 +35,9 @@ export const LiveSessionDetailPage: React.FC = () => {
 
   const [session, setSession] = useState<LiveSession | null>(null);
   const [questions, setQuestions] = useState<LiveSessionQuestion[]>([]);
-  const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Classroom Player / Stage State
-  const [hasJoined, setHasJoined] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'qa' | 'chat' | 'attendees' | 'resources'>('qa');
-
-  // Recording Publishing State (for completed sessions)
-  const [recordingUrlInput, setRecordingUrlInput] = useState('');
-  const [recordingTitleInput, setRecordingTitleInput] = useState('');
-  const [publishingRecording, setPublishingRecording] = useState(false);
-
-  // Session Duration Timer
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-  // Live In-Class Chat Messages State
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; time: string; isHost?: boolean }>>([
-    { id: '1', sender: 'Khalil Academy System', text: 'Welcome to the live virtual classroom! Ask questions or chat with peers here.', time: 'Just now', isHost: true }
-  ]);
-  const [chatInput, setChatInput] = useState('');
 
   // Q&A State
   const [newQuestion, setNewQuestion] = useState('');
@@ -72,14 +46,17 @@ export const LiveSessionDetailPage: React.FC = () => {
   const [answerText, setAnswerText] = useState('');
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
 
-  // End Session Confirmation Modal State
-  const [showEndModal, setShowEndModal] = useState(false);
-  const [endingSession, setEndingSession] = useState(false);
+  // Join / Leave State
+  const [joining, setJoining] = useState(false);
+  const [meetingData, setMeetingData] = useState<any>(null);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [copiedPasscode, setCopiedPasscode] = useState(false);
 
   const isInstructorOrAdmin =
     user &&
     (user.role === 'ADMIN' ||
       user.role === 'SUPER_ADMIN' ||
+      user.role === 'INSTRUCTOR' ||
       (session && session.instructorId === user.id));
 
   useEffect(() => {
@@ -87,16 +64,6 @@ export const LiveSessionDetailPage: React.FC = () => {
       loadSessionData();
     }
   }, [id, isAuthenticated]);
-
-  // Elapsed Timer ticker for live session
-  useEffect(() => {
-    if (session?.dynamicStatus === 'LIVE' || hasJoined) {
-      const interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [session?.dynamicStatus, hasJoined]);
 
   const loadSessionData = async () => {
     if (!id) return;
@@ -109,28 +76,6 @@ export const LiveSessionDetailPage: React.FC = () => {
       ]);
       setSession(sessData);
       setQuestions(qData);
-
-      if (sessData.recordingTitle) {
-        setRecordingTitleInput(sessData.recordingTitle);
-      } else {
-        setRecordingTitleInput(`${sessData.title} — Full Class Recording`);
-      }
-
-      if (sessData.recordingUrl) {
-        setRecordingUrlInput(sessData.recordingUrl);
-      }
-
-      if (isInstructorOrAdmin) {
-        try {
-          const parts = await liveSessionApi.getParticipants(id);
-          setParticipants(parts || []);
-        } catch (e) {}
-      }
-
-      // Auto-join if session is live and user is registered or host
-      if (sessData.isJoinable && (sessData.isRegistered || isInstructorOrAdmin)) {
-        setHasJoined(true);
-      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load live session details.');
     } finally {
@@ -167,15 +112,15 @@ export const LiveSessionDetailPage: React.FC = () => {
     }
   };
 
-  // Join Classroom Inside Khalil Academy Screen
   const handleJoin = async () => {
     if (!id) return;
     setJoining(true);
     setError(null);
     try {
-      await liveSessionApi.join(id);
+      const data = await liveSessionApi.join(id);
+      setMeetingData(data);
       setHasJoined(true);
-      setSuccessMessage(`Connected to live classroom as ${user?.name}. Your attendance is recording.`);
+      setSuccessMessage('Connected to in-platform live classroom.');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to join session.');
     } finally {
@@ -188,63 +133,10 @@ export const LiveSessionDetailPage: React.FC = () => {
     try {
       await liveSessionApi.leave(id);
       setHasJoined(false);
+      setMeetingData(null);
       setSuccessMessage('Left virtual classroom. Attendance duration recorded.');
       await loadSessionData();
     } catch (err: any) {}
-  };
-
-  // Instructor/Admin: End Live Class Platform-wide
-  const handleConfirmEndSession = async () => {
-    if (!id) return;
-    setEndingSession(true);
-    try {
-      const updated = await liveSessionApi.endSession(id);
-      setSession(updated);
-      setHasJoined(false);
-      setShowEndModal(false);
-      setSuccessMessage('Live class concluded successfully. Attendance has been finalized.');
-      await loadSessionData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to end live class.');
-    } finally {
-      setEndingSession(false);
-    }
-  };
-
-  // Instructor/Admin: Attach / Publish Class Video Recording
-  const handlePublishRecording = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id || !recordingUrlInput.trim()) return;
-
-    setPublishingRecording(true);
-    setError(null);
-    try {
-      const updated = await liveSessionApi.attachRecording(id, {
-        recordingUrl: recordingUrlInput.trim(),
-        recordingTitle: recordingTitleInput.trim() || `${session?.title} - Full Recording`,
-      });
-      setSession(updated.session || { ...session, recordingUrl: recordingUrlInput.trim() });
-      setSuccessMessage('Session recording published successfully! The video is now playing for students.');
-      await loadSessionData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to attach video recording.');
-    } finally {
-      setPublishingRecording(false);
-    }
-  };
-
-  const handleSendChatMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    const newMsg = {
-      id: Date.now().toString(),
-      sender: user?.name || 'Student',
-      text: chatInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isHost: !!isInstructorOrAdmin,
-    };
-    setChatMessages((prev) => [...prev, newMsg]);
-    setChatInput('');
   };
 
   const handleAskQuestion = async (e: React.FormEvent) => {
@@ -312,69 +204,18 @@ export const LiveSessionDetailPage: React.FC = () => {
     } catch (err: any) {}
   };
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    const hrs = Math.floor(mins / 60);
-    const displayMins = mins % 60;
-    if (hrs > 0) {
-      return `${hrs.toString().padStart(2, '0')}:${displayMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${displayMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Helper: Render Video Recording Frame (Supports YouTube, Vimeo, and Direct Video Files)
-  const renderRecordingPlayer = (url: string) => {
-    const trimmed = url.trim();
-
-    // 1. YouTube Video
-    const ytMatch = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    if (ytMatch && ytMatch[1]) {
-      return (
-        <iframe
-          src={`https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&rel=0`}
-          title="Session Video Recording"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          className="w-full h-full min-h-[440px] sm:min-h-[520px] rounded-2xl border-0"
-        />
-      );
-    }
-
-    // 2. Vimeo Video
-    const vimeoMatch = trimmed.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/);
-    if (vimeoMatch && vimeoMatch[3]) {
-      return (
-        <iframe
-          src={`https://player.vimeo.com/video/${vimeoMatch[3]}?autoplay=1`}
-          title="Session Video Recording"
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          className="w-full h-full min-h-[440px] sm:min-h-[520px] rounded-2xl border-0"
-        />
-      );
-    }
-
-    // 3. Direct HTML5 Video Player (MP4, WebM, HLS)
-    return (
-      <video
-        controls
-        autoPlay
-        playsInline
-        src={trimmed}
-        className="w-full h-full min-h-[440px] sm:min-h-[520px] rounded-2xl bg-black object-contain shadow-2xl"
-      >
-        Your browser does not support the video tag.
-      </video>
-    );
+  const copyPasscode = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPasscode(true);
+    setTimeout(() => setCopiedPasscode(false), 2000);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#071326] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F1F5F7] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-[#4FD1C5] border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-[#94A3B8]">Loading virtual classroom...</span>
+          <div className="w-10 h-10 border-3 border-[#087F78] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-bold text-slate-500 dark:text-[#A9BACB]">Loading virtual classroom...</span>
         </div>
       </div>
     );
@@ -382,10 +223,10 @@ export const LiveSessionDetailPage: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#071326] text-white flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F1F5F7] text-[#0B1F3A] dark:text-white flex flex-col items-center justify-center p-4">
         <AlertCircle className="w-12 h-12 text-[#EF4444] mb-3" />
-        <h2 className="text-xl font-bold mb-2">Live Session Not Found</h2>
-        <p className="text-sm text-[#94A3B8] mb-6">
+        <h2 className="text-xl font-bold mb-2 text-[#0B1F3A] dark:text-white">Live Session Not Found</h2>
+        <p className="text-xs text-slate-500 dark:text-[#A9BACB] mb-6">
           This live class session does not exist or has been removed.
         </p>
         <Link
@@ -411,691 +252,595 @@ export const LiveSessionDetailPage: React.FC = () => {
     minute: '2-digit',
   })} – ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-  const isClassLive = session.dynamicStatus === 'LIVE';
-  const isClassCompleted = session.dynamicStatus === 'COMPLETED';
-
   return (
-    <div className="min-h-screen bg-[#071326] text-[#F8FAFC] flex flex-col">
-      {/* Top Header & Classroom Navigation */}
-      <header className="bg-[#0A192F] border-b border-[#23426A] py-3.5 px-4 sm:px-6 lg:px-8 shrink-0">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/live-classes"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#94A3B8] hover:text-[#4FD1C5] transition-colors p-1.5 rounded-lg bg-[#071326] border border-[#23426A]"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Back</span>
-            </Link>
+    <div className="min-h-screen bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white pb-24 transition-colors">
+      {/* Breadcrumb & Navigation */}
+      <div className="bg-white dark:bg-[#0B223D] border-b border-slate-200 dark:border-[#1E3A56] py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link
+            to="/live-classes"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[#087F78] dark:hover:text-[#14B8A6] transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Live Classes Catalog
+          </Link>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-extrabold text-[#4FD1C5] uppercase tracking-wider">
+          {isInstructorOrAdmin && (
+            <Link
+              to="/instructor/live-classes"
+              className="text-xs font-bold text-[#087F78] dark:text-[#14B8A6] hover:underline flex items-center gap-1.5"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Manage Session (Instructor Console)
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Messages */}
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-[#087F78] dark:text-[#14B8A6] flex items-center gap-3 animate-fadeIn font-bold text-xs">
+            <CheckCircle className="w-5 h-5 shrink-0 text-[#087F78] dark:text-[#14B8A6]" />
+            <span className="text-sm font-medium">{successMessage}</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-[#EF4444] flex items-center gap-3 animate-fadeIn text-xs">
+            <AlertCircle className="w-5 h-5 shrink-0 text-[#EF4444]" />
+            <span className="text-sm font-medium">{error}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Column */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Native 100% In-House WebRTC Virtual Classroom */}
+            {hasJoined && (
+              <NativeLiveClassroom
+                session={session}
+                isHost={!!isInstructorOrAdmin}
+                currentUser={{
+                  id: user?.id || 'guest',
+                  name: user?.name || 'Student',
+                  avatar: user?.avatar,
+                  role: user?.role,
+                }}
+                onLeave={handleLeave}
+              />
+            )}
+
+            {/* Session Header Card */}
+            <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-6 sm:p-8 shadow-xs">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#087F78] bg-[#E6F7F5] px-3 py-1 rounded-lg">
                   {session.course?.title}
                 </span>
-                <span>•</span>
-                {isClassLive ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EF4444]/20 border border-[#EF4444] text-[#F87171] text-[10px] font-extrabold animate-pulse">
-                    <Radio className="w-3 h-3" />
-                    LIVE CLASSROOM
+
+                {session.dynamicStatus === 'LIVE' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-[#EF4444] text-xs font-bold animate-pulse">
+                    <Radio className="w-3.5 h-3.5" />
+                    LIVE NOW
                   </span>
-                ) : isClassCompleted ? (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30 text-[10px] font-bold">
-                    ✓ Class Completed & Recorded
+                ) : session.dynamicStatus === 'COMPLETED' ? (
+                  <span className="px-3 py-0.5 rounded-full bg-slate-100 dark:bg-[#0B223D] text-slate-600 dark:text-[#A9BACB] text-xs font-medium">
+                    Completed
+                  </span>
+                ) : session.dynamicStatus === 'CANCELLED' ? (
+                  <span className="px-3 py-0.5 rounded-full bg-red-50 text-[#EF4444] text-xs font-medium">
+                    Cancelled
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#0369A1]/30 text-[#38BDF8] text-[10px] font-bold">
-                    Scheduled
+                  <span className="px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold font-mono">
+                    Scheduled Session
                   </span>
                 )}
               </div>
-              <h1 className="text-base sm:text-lg font-extrabold text-white truncate max-w-md sm:max-w-xl">
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white mb-4">
                 {session.title}
               </h1>
-            </div>
-          </div>
 
-          {/* Action Bar (End Class for Instructor, Timer, Attendance badge) */}
-          <div className="flex items-center gap-3">
-            {isClassLive && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#071326] border border-[#23426A] text-xs text-[#CBD5E1]">
-                <Clock className="w-3.5 h-3.5 text-[#4FD1C5]" />
-                <span className="font-mono font-bold text-white">{formatTimer(elapsedSeconds)}</span>
-              </div>
-            )}
-
-            {/* Instructor / Admin "End Live Class" Button */}
-            {isInstructorOrAdmin && !isClassCompleted && session.dynamicStatus !== 'CANCELLED' && (
-              <button
-                type="button"
-                onClick={() => setShowEndModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-[#EF4444] hover:bg-[#DC2626] text-white font-extrabold text-xs transition-all shadow-md shadow-[#EF4444]/20 flex items-center gap-1.5"
-              >
-                <Square className="w-3.5 h-3.5 fill-current" />
-                <span>End Live Class</span>
-              </button>
-            )}
-
-            {isInstructorOrAdmin && (
-              <Link
-                to="/instructor/live-classes"
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1A365D] hover:bg-[#23426A] text-[#4FD1C5] text-xs font-bold transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span>Instructor Console</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Notifications */}
-      {successMessage && (
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="p-3.5 rounded-xl bg-[#064E3B]/80 border border-[#10B981] text-[#A7F3D0] flex items-center justify-between gap-3 text-xs font-semibold animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-[#10B981] shrink-0" />
-              <span>{successMessage}</span>
-            </div>
-            <button onClick={() => setSuccessMessage(null)} className="text-[#A7F3D0] hover:text-white">✕</button>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="p-3.5 rounded-xl bg-[#7F1D1D]/80 border border-[#EF4444] text-[#FECACA] flex items-center justify-between gap-3 text-xs font-semibold animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0" />
-              <span>{error}</span>
-            </div>
-            <button onClick={() => setError(null)} className="text-[#FECACA] hover:text-white">✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Classroom Layout */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col gap-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-          
-          {/* Main Stage: Native WebRTC Video Player OR Session HD Recording */}
-          <div className="lg:col-span-8 flex flex-col space-y-4">
-            
-            {isClassCompleted ? (
-              /* Class Concluded Stage with Video Player & Recording Publisher */
-              <div className="w-full bg-[#0D1E36] border border-[#23426A] rounded-3xl overflow-hidden shadow-2xl flex flex-col min-h-[480px]">
-                
-                {/* Header Bar */}
-                <div className="bg-[#0A192F] border-b border-[#23426A] px-4 py-2.5 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <Film className="w-4 h-4 text-[#4FD1C5]" />
-                    <span className="font-bold text-white">Class Recording & Summary</span>
+              {/* Schedule Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-slate-100 dark:border-[#1E3A56] text-xs text-slate-600 dark:text-[#A9BACB] font-medium mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-[#087F78] shrink-0">
+                    <Calendar className="w-5 h-5" />
                   </div>
-                  {session.recordingUrl && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] text-[10px] font-bold">
-                      ✓ HD Video Available
-                    </span>
-                  )}
+                  <div>
+                    <div className="text-[11px] text-slate-400">Date</div>
+                    <div className="font-bold text-[#0B1F3A] dark:text-white">{dateFormatted}</div>
+                  </div>
                 </div>
 
-                {/* Video Stage Content */}
-                <div className="w-full flex-1 bg-[#050C17] flex items-center justify-center p-2 relative min-h-[440px] sm:min-h-[500px]">
-                  {session.recordingUrl ? (
-                    /* High Definition Video Player */
-                    <div className="w-full h-full flex flex-col justify-center animate-fadeIn">
-                      {renderRecordingPlayer(session.recordingUrl)}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-[#087F78] shrink-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-400">Time & Timezone</div>
+                    <div className="font-bold text-[#0B1F3A] dark:text-white">
+                      {timeFormatted} ({session.timezone || 'UTC'})
                     </div>
-                  ) : isInstructorOrAdmin ? (
-                    /* Instructor Inline Video Publisher Card */
-                    <div className="p-6 sm:p-8 max-w-lg w-full text-center space-y-5 animate-fadeIn">
-                      <div className="w-16 h-16 rounded-3xl bg-[#1A365D] border border-[#4FD1C5]/30 flex items-center justify-center text-[#4FD1C5] mx-auto shadow-xl">
-                        <Upload className="w-8 h-8" />
-                      </div>
-
-                      <div>
-                        <h3 className="text-xl font-extrabold text-white">Publish Class Video Recording</h3>
-                        <p className="text-xs text-[#94A3B8] mt-1">
-                          Paste your recording link below (MP4, YouTube, Vimeo, or S3 video URL) so students can watch the recording immediately.
-                        </p>
-                      </div>
-
-                      <form onSubmit={handlePublishRecording} className="space-y-3 text-left">
-                        <div>
-                          <label className="text-[11px] font-bold text-[#CBD5E1] block mb-1">
-                            Video Recording URL *
-                          </label>
-                          <input
-                            type="url"
-                            placeholder="e.g. https://www.youtube.com/watch?v=... or https://.../class-recording.mp4"
-                            required
-                            value={recordingUrlInput}
-                            onChange={(e) => setRecordingUrlInput(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-bold text-[#CBD5E1] block mb-1">
-                            Recording Title
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Docker & DevOps Masterclass — Live Session Recording"
-                            value={recordingTitleInput}
-                            onChange={(e) => setRecordingTitleInput(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-[#071326] border border-[#23426A] rounded-xl text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5]"
-                          />
-                        </div>
-
-                        {/* Quick Presets / Samples */}
-                        <div className="flex items-center gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRecordingUrlInput('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
-                              setRecordingTitleInput(`${session.title} — Official Video Recording`);
-                            }}
-                            className="text-[10px] text-[#4FD1C5] hover:underline font-bold"
-                          >
-                            + Insert Demo MP4 Video
-                          </button>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={publishingRecording || !recordingUrlInput.trim()}
-                          className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white font-extrabold text-xs transition shadow-lg shadow-[#0284C7]/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          <Play className="w-4 h-4 fill-current" />
-                          <span>{publishingRecording ? 'Publishing Recording...' : 'Save & Publish Video Now'}</span>
-                        </button>
-                      </form>
-                    </div>
-                  ) : (
-                    /* Student Waiting Screen with Quick Demo */
-                    <div className="p-8 text-center max-w-md space-y-4 animate-fadeIn">
-                      <div className="w-16 h-16 rounded-3xl bg-[#1A365D] border border-[#4FD1C5]/30 flex items-center justify-center text-[#4FD1C5] mx-auto shadow-xl">
-                        <PlayCircle className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-extrabold text-white">This Live Class Has Concluded</h3>
-                        <p className="text-xs text-[#94A3B8] mt-1">
-                          The instructor is processing the recording video. As soon as it's published, you can watch it right on this screen!
-                        </p>
-                      </div>
-                      <div className="p-3.5 rounded-2xl bg-[#071326] border border-[#23426A] text-xs text-[#CBD5E1] flex items-center justify-between">
-                        <span>Your Attendance:</span>
-                        <span className="font-bold text-[#10B981]">✓ Recorded & Validated</span>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
-            ) : session.dynamicStatus === 'CANCELLED' ? (
-              /* Cancelled Stage */
-              <div className="w-full bg-[#0D1E36] border border-[#23426A] rounded-3xl p-8 text-center space-y-3 min-h-[440px] flex flex-col items-center justify-center">
-                <AlertCircle className="w-12 h-12 text-[#EF4444] mx-auto" />
-                <h3 className="text-lg font-bold text-white">Session Cancelled</h3>
-                <p className="text-xs text-[#94A3B8]">
-                  This session was cancelled by the instructor. Please check back for rescheduled dates.
-                </p>
-              </div>
-            ) : hasJoined || isInstructorOrAdmin ? (
-              /* 100% Native WebRTC Classroom Video Stage (Zero 3rd-party links) */
-              <NativeClassroomStage
-                sessionId={session.id}
-                sessionTitle={session.title}
-                user={user}
-                isInstructor={Boolean(isInstructorOrAdmin)}
-                onEndSession={() => setShowEndModal(true)}
-                onLeaveSession={handleLeave}
-              />
-            ) : (
-              /* Pre-Join / Lobby Stage */
-              <div className="w-full bg-[#0D1E36] border border-[#23426A] rounded-3xl p-8 text-center space-y-5 animate-fadeIn min-h-[440px] flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-3xl bg-[#1A365D] border border-[#4FD1C5]/30 flex items-center justify-center text-[#4FD1C5] mx-auto">
-                  <Video className="w-8 h-8" />
-                </div>
 
+              {/* Instructor Details */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-[#087F78] text-white flex items-center justify-center text-lg font-bold shadow-xs">
+                  {session.instructor?.name?.charAt(0) || 'K'}
+                </div>
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A365D] text-[#4FD1C5] text-xs font-extrabold mb-2">
-                    {isClassLive ? '🔴 Session Live Now' : 'Virtual Classroom Lobby'}
+                  <div className="text-[11px] text-slate-400">Instructor</div>
+                  <div className="font-bold text-[#0B1F3A] dark:text-white text-sm sm:text-base">
+                    {session.instructor?.name}
                   </div>
-                  <h2 className="text-2xl font-extrabold text-white">{session.title}</h2>
-                  <p className="text-xs text-[#94A3B8] mt-1">
-                    Instructor: <strong>{session.instructor?.name}</strong> • {dateFormatted} ({timeFormatted})
+                  {session.instructor?.bio && (
+                    <div className="text-xs text-slate-500 dark:text-[#A9BACB] line-clamp-1">
+                      {session.instructor?.bio}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              {session.description && (
+                <div className="mb-6">
+                  <h3 className="text-xs font-bold text-[#0B1F3A] dark:text-white uppercase tracking-wider mb-2">
+                    About this Live Class
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
+                    {session.description}
                   </p>
                 </div>
+              )}
+            </div>
 
-                {session.isRegistered || isInstructorOrAdmin ? (
-                  <div className="space-y-3 max-w-sm w-full">
-                    <button
-                      type="button"
-                      onClick={handleJoin}
-                      disabled={joining}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-extrabold text-sm transition-all shadow-xl shadow-[#10B981]/25 flex items-center justify-center gap-2"
-                    >
-                      <Video className="w-5 h-5 animate-pulse" />
-                      <span>{joining ? 'Connecting to Room...' : 'Enter Live Classroom'}</span>
-                    </button>
-                    <p className="text-[11px] text-[#94A3B8]">
-                      Joining as <strong>{user?.name || 'Student'}</strong> with real-time video, audio, and attendance recording.
-                    </p>
+            {/* Live Recording Section (If Completed and Recording Attached) */}
+            {session.dynamicStatus === 'COMPLETED' && (
+              <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-6 sm:p-8 shadow-xs">
+                <div className="flex items-center gap-2 mb-4">
+                  <PlayCircle className="w-5 h-5 text-[#087F78] dark:text-[#14B8A6]" />
+                  <h2 className="text-lg font-bold text-[#0B1F3A] dark:text-white">Session Recording</h2>
+                </div>
+
+                {session.recordingUrl ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="font-bold text-[#0B1F3A] dark:text-white">
+                          {session.recordingTitle || `${session.title} - Recording`}
+                        </div>
+                        {session.recordingDurationMinutes && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Duration: {session.recordingDurationMinutes} minutes
+                          </div>
+                        )}
+                      </div>
+                      <a
+                        href={session.recordingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-5 py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shrink-0 shadow-xs"
+                      >
+                        <PlayCircle className="w-4 h-4" />
+                        Watch Full Recording
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-w-sm w-full">
-                    <button
-                      type="button"
-                      onClick={handleRegister}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white font-extrabold text-sm transition-all shadow-xl shadow-[#0284C7]/25 flex items-center justify-center gap-2"
-                    >
-                      <CalendarCheck className="w-5 h-5" />
-                      <span>Register for Live Class</span>
-                    </button>
-                    <p className="text-[11px] text-[#94A3B8]">
-                      Free enrollment for registered students. Secure your seat now!
+                  <div className="p-6 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Recording not available yet. The instructor will upload the recording shortly after processing.
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Session Overview & Curriculum Notes Below Screen */}
-            <div className="bg-[#0D1E36] border border-[#23426A] rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#4FD1C5]" />
-                  <span>Session Description & Learning Agenda</span>
-                </h3>
-                <span className="text-xs text-[#94A3B8]">{session.maxParticipants - session.registeredCount} seats left</span>
+            {/* Q&A Section */}
+            <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-6 sm:p-8 shadow-xs">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-[#087F78] dark:text-[#14B8A6]" />
+                  <h2 className="text-lg font-bold text-[#0B1F3A] dark:text-white">Live Session Q&A</h2>
+                  <span className="text-xs bg-[#E6F7F5] dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] px-2.5 py-0.5 rounded-full font-bold font-mono">
+                    {questions.length}
+                  </span>
+                </div>
               </div>
 
-              {session.description ? (
-                <p className="text-xs sm:text-sm text-[#CBD5E1] whitespace-pre-line leading-relaxed">
-                  {session.description}
-                </p>
+              {/* Ask Question Form */}
+              <form onSubmit={handleAskQuestion} className="mb-8">
+                <div className="relative">
+                  <textarea
+                    rows={3}
+                    placeholder={
+                      isAuthenticated
+                        ? 'Ask a question for Khalil or the live class audience...'
+                        : 'Please log in to ask a question in this session...'
+                    }
+                    disabled={!isAuthenticated || submittingQuestion}
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    className="w-full p-4 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] transition-colors resize-none disabled:opacity-50"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <button
+                      type="submit"
+                      disabled={!isAuthenticated || !newQuestion.trim() || submittingQuestion}
+                      className="px-4 py-2 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-40 shadow-xs"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {submittingQuestion ? 'Posting...' : 'Post Question'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Questions List */}
+              {questions.length === 0 ? (
+                <div className="text-center py-10 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                  <HelpCircle className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    No questions asked yet. Be the first to ask!
+                  </p>
+                </div>
               ) : (
-                <p className="text-xs text-[#94A3B8]">
-                  Join instructor {session.instructor?.name} for this live interactive session covering practical skills and real-world implementations.
-                </p>
-              )}
+                <div className="space-y-4">
+                  {questions.map((q) => (
+                    <div
+                      key={q.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        q.isPinned
+                          ? 'bg-teal-50/50 dark:bg-teal-950/30 border-[#087F78]/40 dark:border-teal-700/50'
+                          : 'bg-slate-50 dark:bg-[#152F4A] border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-[#087F78] text-white font-bold text-xs flex items-center justify-center">
+                            {q.user?.name?.charAt(0) || 'S'}
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-[#0B1F3A] dark:text-white">
+                              {q.user?.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-2">
+                              {new Date(q.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[#23426A] text-xs">
-                <div className="p-3 rounded-2xl bg-[#071326] border border-[#23426A]">
-                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Classroom Mode</span>
-                  <span className="font-extrabold text-white mt-0.5 block">Native HD Video Room</span>
+                        <div className="flex items-center gap-2">
+                          {q.isPinned && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#087F78] text-white text-[10px] font-bold">
+                              <Pin className="w-3 h-3" /> Pinned
+                            </span>
+                          )}
+
+                          {isInstructorOrAdmin && (
+                            <>
+                              <button
+                                onClick={() => handlePinQuestion(q.id)}
+                                title={q.isPinned ? 'Unpin question' : 'Pin question'}
+                                className="p-1 text-slate-400 hover:text-[#087F78] transition-colors"
+                              >
+                                <Pin className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteQuestion(q.id)}
+                                title="Delete question"
+                                className="p-1 text-slate-400 hover:text-[#EF4444] transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Question Text */}
+                      <p className="text-xs text-[#0B1F3A] dark:text-white mb-3 pl-9">{q.question}</p>
+
+                      {/* Instructor Answer */}
+                      {q.isAnswered && q.answer && (
+                        <div className="ml-9 p-3 rounded-lg bg-white dark:bg-[#102A43] border border-[#087F78]/30 mb-3">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#087F78] mb-1">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Answer from {q.answeredBy || 'Instructor'}
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-[#A9BACB] whitespace-pre-line">
+                            {q.answer}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Answer Input for Instructor */}
+                      {isInstructorOrAdmin && answeringQuestionId === q.id && (
+                        <div className="ml-9 p-3 rounded-lg bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] mb-3 space-y-2">
+                          <textarea
+                            rows={2}
+                            placeholder="Write official instructor answer..."
+                            value={answerText}
+                            onChange={(e) => setAnswerText(e.target.value)}
+                            className="w-full p-2.5 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] rounded-lg text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:border-[#087F78]"
+                          />
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setAnsweringQuestionId(null);
+                                setAnswerText('');
+                              }}
+                              className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-[#0B223D] text-xs text-slate-700 dark:text-[#A9BACB]"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleAnswerQuestion(q.id)}
+                              disabled={submittingAnswer || !answerText.trim()}
+                              className="px-3 py-1 rounded-lg bg-[#087F78] hover:bg-[#076E6A] text-xs font-bold text-white disabled:opacity-50"
+                            >
+                              {submittingAnswer ? 'Saving...' : 'Publish Answer'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions Bar */}
+                      <div className="flex items-center justify-between pl-9 pt-1 text-xs">
+                        <button
+                          onClick={() => handleUpvoteQuestion(q.id)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
+                            q.hasUpvoted
+                              ? 'bg-teal-50 border-[#087F78] text-[#087F78]'
+                              : 'bg-white dark:bg-[#102A43] border-slate-200 dark:border-[#1E3A56] text-slate-600 dark:text-[#A9BACB] hover:text-[#0B1F3A]'
+                          }`}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                          <span>{q.upvotes}</span>
+                        </button>
+
+                        {isInstructorOrAdmin && !q.isAnswered && answeringQuestionId !== q.id && (
+                          <button
+                            onClick={() => {
+                              setAnsweringQuestionId(q.id);
+                              setAnswerText('');
+                            }}
+                            className="text-xs text-[#087F78] hover:underline font-bold"
+                          >
+                            Reply / Answer
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-3 rounded-2xl bg-[#071326] border border-[#23426A]">
-                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Attendance Required</span>
-                  <span className="font-extrabold text-white mt-0.5 block">{session.attendanceThresholdPercent || 70}% of class</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#071326] border border-[#23426A]">
-                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Enrolled Students</span>
-                  <span className="font-extrabold text-white mt-0.5 block">{session.registeredCount} / {session.maxParticipants}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Right Sidebar: Multi-Tab Classroom Side Panel */}
-          <div className="lg:col-span-4 flex flex-col space-y-4">
-            <div className="bg-[#0D1E36] border border-[#23426A] rounded-3xl p-5 shadow-xl flex-1 flex flex-col">
-              
-              {/* Tab Navigation */}
-              <div className="grid grid-cols-4 gap-1 p-1 bg-[#071326] rounded-2xl border border-[#23426A] mb-4">
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab('qa')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                    activeSidebarTab === 'qa'
-                      ? 'bg-[#4FD1C5] text-[#0A1322] shadow'
-                      : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Q&A ({questions.length})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab('chat')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                    activeSidebarTab === 'chat'
-                      ? 'bg-[#4FD1C5] text-[#0A1322] shadow'
-                      : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Chat</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab('attendees')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                    activeSidebarTab === 'attendees'
-                      ? 'bg-[#4FD1C5] text-[#0A1322] shadow'
-                      : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Roster</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab('resources')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                    activeSidebarTab === 'resources'
-                      ? 'bg-[#4FD1C5] text-[#0A1322] shadow'
-                      : 'text-[#94A3B8] hover:text-white'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Notes</span>
-                </button>
-              </div>
+          {/* Right Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Join / Registration Action Card */}
+            <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-6 shadow-xs sticky top-24">
+              <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white mb-4">
+                Virtual Room Access
+              </h3>
 
-              {/* Tab 1: Live Q&A */}
-              {activeSidebarTab === 'qa' && (
-                <div className="flex-1 flex flex-col space-y-4">
-                  {/* Ask Question Form */}
-                  <form onSubmit={handleAskQuestion} className="space-y-2">
-                    <textarea
-                      rows={2}
-                      placeholder={
-                        isAuthenticated
-                          ? 'Ask a question for Khalil or the audience...'
-                          : 'Log in to ask questions in this live session...'
-                      }
-                      disabled={!isAuthenticated || submittingQuestion}
-                      value={newQuestion}
-                      onChange={(e) => setNewQuestion(e.target.value)}
-                      className="w-full p-3 bg-[#071326] border border-[#23426A] rounded-2xl text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5] resize-none"
-                    />
-                    <div className="flex justify-end">
+              {/* Dynamic Status / Join Logic */}
+              {session.dynamicStatus === 'CANCELLED' ? (
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-[#EF4444] text-xs font-medium text-center">
+                  This live class has been cancelled.
+                </div>
+              ) : isInstructorOrAdmin ? (
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-2xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-[#087F78] dark:text-[#14B8A6] text-xs flex items-center gap-2 font-bold shadow-xs">
+                    <Shield className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6] shrink-0" />
+                    <span>Host / Instructor Access</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {!hasJoined ? (
                       <button
-                        type="submit"
-                        disabled={!isAuthenticated || !newQuestion.trim() || submittingQuestion}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-40"
+                        onClick={handleJoin}
+                        disabled={joining}
+                        className="w-full py-4 rounded-2xl bg-[#087F78] hover:bg-[#076E6A] text-white font-extrabold text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.02]"
                       >
-                        <Send className="w-3 h-3" />
-                        <span>{submittingQuestion ? 'Posting...' : 'Ask Question'}</span>
+                        <Video className="w-5 h-5 animate-pulse" />
+                        <span>{joining ? 'Connecting...' : 'Start Live Broadcast / Enter Room'}</span>
                       </button>
-                    </div>
-                  </form>
-
-                  {/* Question Feed */}
-                  <div className="flex-1 overflow-y-auto max-h-[460px] space-y-3 pr-1">
-                    {questions.length === 0 ? (
-                      <div className="text-center py-8 text-xs text-[#94A3B8]">
-                        <HelpCircle className="w-6 h-6 mx-auto text-[#64748B] mb-1.5" />
-                        No questions yet. Be the first to ask!
-                      </div>
                     ) : (
-                      questions.map((q) => (
-                        <div
-                          key={q.id}
-                          className={`p-3.5 rounded-2xl border text-xs space-y-2 ${
-                            q.isPinned ? 'bg-[#1A365D]/40 border-[#4FD1C5]/60' : 'bg-[#071326] border-[#23426A]'
-                          }`}
+                      <div className="p-4 rounded-2xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-center space-y-3">
+                        <span className="text-xs font-bold text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                          Live Broadcast Active
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleLeave}
+                          className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs"
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-lg bg-[#1A365D] text-[#4FD1C5] font-bold text-[10px] flex items-center justify-center">
-                                {q.user?.name?.charAt(0) || 'S'}
-                              </div>
-                              <span className="font-bold text-white text-[11px]">{q.user?.name}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              {q.isPinned && (
-                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-[#4FD1C5] bg-[#4FD1C5]/10 px-1.5 py-0.5 rounded">
-                                  <Pin className="w-2.5 h-2.5" /> Pinned
-                                </span>
-                              )}
-                              {isInstructorOrAdmin && (
-                                <button
-                                  type="button"
-                                  onClick={() => handlePinQuestion(q.id)}
-                                  className="text-[#94A3B8] hover:text-[#4FD1C5]"
-                                >
-                                  <Pin className="w-3 h-3" />
-                                </button>
-                              )}
-                              {isInstructorOrAdmin && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteQuestion(q.id)}
-                                  className="text-[#94A3B8] hover:text-[#EF4444]"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-
-                          <p className="text-white text-xs leading-relaxed">{q.question}</p>
-
-                          {q.isAnswered && q.answer && (
-                            <div className="p-2.5 rounded-xl bg-[#0D1E36] border border-[#4FD1C5]/30 text-[11px] space-y-1">
-                              <div className="font-bold text-[#4FD1C5] flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                <span>Answer from Instructor:</span>
-                              </div>
-                              <p className="text-[#CBD5E1]">{q.answer}</p>
-                            </div>
-                          )}
-
-                          {isInstructorOrAdmin && answeringQuestionId === q.id && (
-                            <div className="p-2.5 rounded-xl bg-[#0D1E36] border border-[#23426A] space-y-2">
-                              <textarea
-                                rows={2}
-                                placeholder="Type answer for student..."
-                                value={answerText}
-                                onChange={(e) => setAnswerText(e.target.value)}
-                                className="w-full p-2 bg-[#071326] border border-[#23426A] rounded-lg text-xs text-white"
-                              />
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setAnsweringQuestionId(null)}
-                                  className="px-2 py-1 bg-[#334155] rounded text-[10px]"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAnswerQuestion(q.id)}
-                                  disabled={submittingAnswer || !answerText.trim()}
-                                  className="px-2 py-1 bg-[#10B981] rounded text-[10px] font-bold text-white"
-                                >
-                                  Publish
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between pt-1">
-                            <button
-                              type="button"
-                              onClick={() => handleUpvoteQuestion(q.id)}
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] ${
-                                q.hasUpvoted ? 'bg-[#1A365D] border-[#4FD1C5] text-[#4FD1C5]' : 'bg-[#0D1E36] border-[#23426A] text-[#94A3B8]'
-                              }`}
-                            >
-                              <ThumbsUp className="w-2.5 h-2.5" />
-                              <span>{q.upvotes}</span>
-                            </button>
-
-                            {isInstructorOrAdmin && !q.isAnswered && answeringQuestionId !== q.id && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAnsweringQuestionId(q.id);
-                                  setAnswerText('');
-                                }}
-                                className="text-[10px] text-[#4FD1C5] font-bold hover:underline"
-                              >
-                                Answer Question
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))
+                          End Broadcast / Leave Room
+                        </button>
+                      </div>
                     )}
                   </div>
-                </div>
-              )}
 
-              {/* Tab 2: Live In-Class Chat */}
-              {activeSidebarTab === 'chat' && (
-                <div className="flex-1 flex flex-col justify-between space-y-3">
-                  <div className="flex-1 overflow-y-auto max-h-[460px] space-y-2.5 pr-1">
-                    {chatMessages.map((msg) => (
-                      <div key={msg.id} className="p-3 rounded-2xl bg-[#071326] border border-[#23426A] text-xs space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className={`font-bold ${msg.isHost ? 'text-[#4FD1C5]' : 'text-white'}`}>
-                            {msg.sender} {msg.isHost && '★ (Host)'}
+                  {/* Calendar Export */}
+                  <a
+                    href={liveSessionApi.getSessionIcsUrl(session.id)}
+                    download={`live-class-${session.id}.ics`}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Calendar (.ics)
+                  </a>
+                </div>
+              ) : session.isRegistered ? (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-[#087F78] dark:text-[#14B8A6] text-xs flex items-center gap-2 font-bold">
+                    <CheckCircle className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6] shrink-0" />
+                    <span>You are registered for this session.</span>
+                  </div>
+
+                  {/* Join / Active Classroom Actions */}
+                  {session.isJoinable || session.dynamicStatus === 'LIVE' ? (
+                    <div className="space-y-3">
+                      {!hasJoined ? (
+                        <button
+                          onClick={handleJoin}
+                          disabled={joining}
+                          className="w-full py-3.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-2"
+                        >
+                          <Video className="w-5 h-5 animate-pulse" />
+                          {joining ? 'Connecting to Virtual Room...' : 'Enter Live Classroom'}
+                        </button>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-teal-50 dark:bg-[#087F78]/20 border border-teal-200 dark:border-teal-700 text-center">
+                          <span className="text-xs font-bold text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#087F78] animate-ping" />
+                            Connected to Live Classroom (Attendance Active)
                           </span>
-                          <span className="text-[10px] text-[#64748B]">{msg.time}</span>
                         </div>
-                        <p className="text-[#CBD5E1] text-[11px] leading-relaxed">{msg.text}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <form onSubmit={handleSendChatMessage} className="flex gap-2 pt-2 border-t border-[#23426A]">
-                    <input
-                      type="text"
-                      placeholder="Type a message to the class..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-[#071326] border border-[#23426A] rounded-xl text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5]"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!chatInput.trim()}
-                      className="px-3 py-2 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] rounded-xl font-bold text-xs transition disabled:opacity-40"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Tab 3: Attendees Roster */}
-              {activeSidebarTab === 'attendees' && (
-                <div className="flex-1 flex flex-col space-y-3">
-                  <div className="flex items-center justify-between text-xs text-[#94A3B8] pb-2 border-b border-[#23426A]">
-                    <span>Registered Attendees</span>
-                    <span className="font-extrabold text-white">{session.registeredCount} Students</span>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto max-h-[460px] space-y-2">
-                    {/* Host */}
-                    <div className="p-3 rounded-2xl bg-[#1A365D]/30 border border-[#4FD1C5]/30 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-[#1A365D] border border-[#4FD1C5] flex items-center justify-center text-xs font-extrabold text-[#4FD1C5]">
-                          {session.instructor?.name?.charAt(0) || 'K'}
-                        </div>
-                        <div>
-                          <span className="font-bold text-white block">{session.instructor?.name}</span>
-                          <span className="text-[10px] text-[#4FD1C5] font-bold uppercase">Class Host & Instructor</span>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded bg-[#10B981]/20 text-[#10B981] text-[10px] font-bold">HOST</span>
+                      )}
                     </div>
-
-                    {participants.map((p, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-[#071326] border border-[#23426A] flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-[#0E1D33] text-white flex items-center justify-center text-[10px] font-bold">
-                            {p.user?.name?.charAt(0) || 'S'}
-                          </div>
-                          <span className="text-white text-xs">{p.user?.name}</span>
-                        </div>
-                        <span className="text-[10px] text-[#94A3B8]">Enrolled</span>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 text-center space-y-1">
+                      <div className="font-bold text-[#0B1F3A] dark:text-white">Join Button Status</div>
+                      <div>
+                        Will activate {session.joinBufferMinutes || 15} minutes before class starts.
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  {/* Active Join Meeting Details */}
+                  {meetingData && (
+                    <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-[#087F78]/20 border border-teal-200/80 dark:border-teal-700/50 space-y-3 animate-fadeIn">
+                      <div className="text-xs font-bold text-[#087F78] dark:text-[#14B8A6] uppercase tracking-wider flex items-center gap-1.5">
+                        <Video className="w-4 h-4" />
+                        <span>In-Platform Virtual Classroom</span>
+                      </div>
+
+                      <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                        <p className="font-semibold">
+                          Live streaming directly inside Khalil Academy. Your attendance is being tracked live.
+                        </p>
+                      </div>
+
+                      {hasJoined && (
+                        <button
+                          type="button"
+                          onClick={handleLeave}
+                          className="w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 text-[#EF4444] hover:bg-red-100 dark:hover:bg-red-900/40 text-xs font-bold transition-colors border border-red-200 dark:border-red-800 shadow-xs"
+                        >
+                          Leave Live Classroom (Record Attendance)
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Calendar Export */}
+                  <a
+                    href={liveSessionApi.getSessionIcsUrl(session.id)}
+                    download={`live-class-${session.id}.ics`}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] text-slate-700 dark:text-[#A9BACB] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Add to Calendar (.ics)
+                  </a>
+
+                  {session.dynamicStatus === 'SCHEDULED' && (
+                    <button
+                      onClick={handleUnregister}
+                      className="w-full py-2 text-xs text-slate-500 dark:text-[#A9BACB] hover:text-[#EF4444] transition-colors text-center"
+                    >
+                      Unregister from session
+                    </button>
+                  )}
+                </div>
+              ) : session.dynamicStatus === 'COMPLETED' ? (
+                <div className="space-y-3 text-center">
+                  <div className="p-3 rounded-xl bg-slate-100 dark:bg-[#0B223D] text-slate-500 dark:text-[#A9BACB] text-xs">
+                    This live session has ended.
                   </div>
+                </div>
+              ) : session.isFull ? (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-[#EF4444] text-xs text-center font-bold">
+                  This live class is currently full (50 / 50 seats taken).
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleRegister}
+                    className="w-full py-3.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-2"
+                  >
+                    <CalendarCheck className="w-5 h-5" />
+                    Register for Live Class
+                  </button>
+
+                  <a
+                    href={liveSessionApi.getSessionIcsUrl(session.id)}
+                    download={`live-class-${session.id}.ics`}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] text-slate-700 dark:text-[#A9BACB] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Calendar (.ics)
+                  </a>
                 </div>
               )}
 
-              {/* Tab 4: Class Notes & Resources */}
-              {activeSidebarTab === 'resources' && (
-                <div className="flex-1 flex flex-col space-y-4 text-xs">
-                  <div className="p-4 rounded-2xl bg-[#071326] border border-[#23426A] space-y-2">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Download className="w-3.5 h-3.5 text-[#4FD1C5]" />
-                      <span>Calendar Integration</span>
-                    </span>
-                    <p className="text-[11px] text-[#94A3B8]">
-                      Sync this session directly with your Google Calendar, Apple iCal, or Outlook.
-                    </p>
-                    <a
-                      href={liveSessionApi.getSessionIcsUrl(session.id)}
-                      download={`live-class-${session.id}.ics`}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1A365D] hover:bg-[#23426A] text-[#4FD1C5] font-bold text-xs transition"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Download .ics File</span>
-                    </a>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#071326] border border-[#23426A] space-y-2">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-[#4FD1C5]" />
-                      <span>Related Course Curriculum</span>
-                    </span>
-                    <p className="text-[11px] text-[#94A3B8]">
-                      Master prerequisites and course modules for {session.course?.title}.
-                    </p>
-                    <Link
-                      to={`/courses/${session.course?.slug}`}
-                      className="text-xs text-[#4FD1C5] font-bold hover:underline block"
-                    >
-                      View Course Outline →
-                    </Link>
-                  </div>
+              {/* Capacity Progress Bar */}
+              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-[#1E3A56]">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-slate-500 dark:text-[#A9BACB]">
+                    {session.registeredCount} / {session.maxParticipants} Registered
+                  </span>
+                  <span
+                    className={`font-bold ${
+                      session.isFull ? 'text-[#EF4444]' : 'text-[#087F78]'
+                    }`}
+                  >
+                    {session.isFull ? 'Full' : `${session.availableSeats} seats left`}
+                  </span>
                 </div>
-              )}
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-[#0B223D] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      session.isFull ? 'bg-[#EF4444]' : 'bg-[#087F78]'
+                    }`}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (session.registeredCount / session.maxParticipants) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Provider Info Badge */}
+              <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] text-xs text-slate-500 dark:text-[#A9BACB] flex items-center justify-between">
+                <span>Meeting Platform</span>
+                <span className="font-bold text-[#0B1F3A] dark:text-white">
+                  {session.meetingProvider === 'ZOOM'
+                    ? 'Zoom Room'
+                    : session.meetingProvider === 'GOOGLE_MEET'
+                    ? 'Google Meet'
+                    : 'External Virtual Room'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Confirmation Modal: End Live Class */}
-      {showEndModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0D1E36] border border-[#EF4444]/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 animate-scaleUp">
-            <div className="w-12 h-12 rounded-2xl bg-[#EF4444]/20 border border-[#EF4444] text-[#EF4444] flex items-center justify-center mx-auto">
-              <Square className="w-6 h-6 fill-current" />
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-extrabold text-white">End Live Class Session?</h3>
-              <p className="text-xs text-[#94A3B8] mt-1.5">
-                Ending the class will conclude the session for all enrolled students, record final attendance durations, and update the status to <strong>Completed</strong>.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowEndModal(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#1E293B] hover:bg-[#334155] text-[#CBD5E1] text-xs font-bold transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmEndSession}
-                disabled={endingSession}
-                className="px-6 py-2.5 rounded-xl bg-[#EF4444] hover:bg-[#DC2626] text-white text-xs font-extrabold transition shadow-lg shadow-[#EF4444]/30"
-              >
-                {endingSession ? 'Concluding...' : 'Yes, End Class Now'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

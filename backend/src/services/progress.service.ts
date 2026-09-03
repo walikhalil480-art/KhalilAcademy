@@ -4,6 +4,7 @@ import { checkAndProcessCourseCompletion } from './certificate.service';
 import { recordAuditLog } from './auditLog.service';
 import { EnrollmentStatus } from '@prisma/client';
 import { appEventBus, AcademyEvent } from '../events/eventBus';
+import { recordUserActivity } from './gamification.service';
 
 export interface PlaybackData {
   lastWatchedPosition: number;
@@ -124,6 +125,13 @@ export const recordLessonPlayback = async (userId: string, lessonId: string, dat
       progressPercentage: courseProgressPercentage,
     },
   });
+
+  // Record daily learning activity and streak
+  recordUserActivity(userId, isCompleted ? 'LESSON_COMPLETED' : 'DAILY_LOGIN', {
+    lessonId,
+    courseId,
+    durationMinutes: Math.max(1, Math.round(newWatchTime / 60)),
+  }).catch(() => {});
 
   // Emit event when student starts their first completed lesson in a course
   if (completedLessons === 1 && isCompleted && (!existingProgress || !existingProgress.isCompleted)) {
@@ -278,6 +286,13 @@ export const updateLessonProgress = async (userId: string, lessonId: string, dat
       completedAt: newCompletedAt,
     },
   });
+
+  // Record lesson completion activity, XP, and streak progression
+  recordUserActivity(userId, 'LESSON_COMPLETED', {
+    lessonId,
+    courseId,
+    durationMinutes: Math.max(1, Math.round(targetDuration / 60)),
+  }).catch(() => {});
 
   // Check course completion status & certificate issuance if 100% completed
   let completionResult = null;

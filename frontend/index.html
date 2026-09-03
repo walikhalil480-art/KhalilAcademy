@@ -7,15 +7,29 @@
     <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1A365D" />
-    <title>Khalil Academy - Professional Career Development & Cloud Tech LMS</title>
-    <meta name="description" content="Khalil Academy is a premier learning management system offering world-class courses in Cloud Computing, DevOps, DevSecOps, AWS, Kubernetes, and Web Development." />
+    <meta name="theme-color" content="#087F78" />
+    <title>Khalil Academy - Learn • Grow • Succeed</title>
+    <meta name="description" content="Khalil Academy is a premier learning management system offering world-class courses and professional certifications." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('khalil_theme') || localStorage.getItem('theme');
+          var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#0A1322] text-[#F8FAFC] font-['Plus_Jakarta_Sans',sans-serif] antialiased selection:bg-[#4FD1C5] selection:text-[#0A1322]">
+  <body class="bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-slate-100 font-sans antialiased selection:bg-[#087F78] selection:text-white transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

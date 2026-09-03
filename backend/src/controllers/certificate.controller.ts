@@ -24,17 +24,31 @@ export const verifyCertificate = async (req: Request, res: Response, next: NextF
   try {
     const cert = await certService.getCertificateByNumber(req.params.id);
     
-    // Public verification payload: Only safe public fields, no sensitive data or user IDs
+    // Public verification payload: Only safe public fields, no internal notes or sensitive data
+    const isValid = cert.status === 'ACTIVE' && !cert.isRevoked;
+
     res.json({
       success: true,
-      isValid: !cert.isRevoked,
+      isValid,
       certificate: {
         certificateNumber: cert.certificateNumber,
         studentName: cert.studentName,
         courseTitle: cert.courseTitle,
         instructorName: cert.instructorName,
         issueDate: cert.issueDate,
-        status: cert.isRevoked ? 'REVOKED' : 'VALID',
+        status: cert.status,
+        revokedAt: cert.revokedAt,
+        revocationReason:
+          cert.status === 'REVOKED'
+            ? cert.revocationReason || 'Certification requirements were not legitimately satisfied.'
+            : null,
+        revocationCategory: cert.revocationCategory || null,
+        suspendedAt: cert.suspendedAt,
+        suspendedReason:
+          cert.status === 'SUSPENDED'
+            ? cert.suspensionReason || 'Credential is under administrative review.'
+            : null,
+        replacedByCertificateNumber: cert.replacedByCertificateNumber || null,
         verificationUrl: cert.verificationUrl,
         qrCodeUrl: cert.qrCodeUrl,
       },
@@ -67,9 +81,20 @@ export const getUserCertificates = async (req: AuthenticatedRequest, res: Respon
     await certService.syncUserCertificates(req.user!.id);
 
     const certs = await prisma.certificate.findMany({
-      where: { userId: req.user!.id },
+      where: {
+        userId: req.user!.id,
+        status: { not: 'DELETED' },
+      },
       orderBy: { createdAt: 'desc' },
-      include: { course: { select: { id: true, title: true, slug: true, thumbnail: true } } },
+      include: {
+        course: { select: { id: true, title: true, slug: true, thumbnail: true } },
+        replacedBy: { select: { id: true, certificateNumber: true, status: true } },
+        recertificationRequirements: {
+          where: { isCompleted: false },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     });
 
     const formattedCerts = certs.map((c) => ({
@@ -81,8 +106,18 @@ export const getUserCertificates = async (req: AuthenticatedRequest, res: Respon
       courseTitle: c.courseTitle,
       instructorName: c.instructorName,
       issueDate: c.issueDate,
-      isRevoked: c.isRevoked,
+      status: c.status,
+      isRevoked: c.status === 'REVOKED' || c.status === 'REPLACED' || c.isRevoked,
+      revokedAt: c.revokedAt,
+      revocationReason: c.revocationReason,
+      revocationCategory: c.revocationCategory,
+      suspendedAt: c.suspendedAt,
+      suspensionReason: c.suspensionReason,
+      replacedByCertificateId: c.replacedByCertificateId,
+      replacedByCertificateNumber: c.replacedBy?.certificateNumber || null,
+      previousCertificateId: c.previousCertificateId,
       course: c.course,
+      activeRecertificationRequirement: c.recertificationRequirements[0] || null,
       verificationUrl: `${env.APP_URL}/certificates/verify/${c.certificateNumber}`,
     }));
 
@@ -117,10 +152,79 @@ export const claimCertificate = async (req: AuthenticatedRequest, res: Response,
   }
 };
 
+export const listCertificates = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await certService.listCertificatesAdmin(req.query, req.user!.id, req.user!.role);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const suspendCert = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await certService.suspendCertificate(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+      req.body.reason
+    );
+    res.json({ success: true, message: 'Certificate suspended successfully.', certificate: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const restoreCert = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await certService.restoreCertificate(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+      req.body.reason
+    );
+    res.json({ success: true, message: 'Certificate restored successfully to ACTIVE.', certificate: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const revokeCert = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const cert = await certService.revokeCertificate(req.params.id, req.user!.id, req.body.reason);
-    res.json({ success: true, message: 'Certificate revoked successfully.', certificate: cert });
+    const result = await certService.revokeCertificateWithRequirements(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+      req.body
+    );
+    res.json({
+      success: true,
+      message: 'Certificate revoked and re-certification requirements initialized.',
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const softDeleteCert = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    await certService.softDeleteCertificate(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+      req.body.reason
+    );
+    res.json({ success: true, message: 'Certificate archived and soft-deleted successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAuditHistory = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const logs = await certService.getCertificateAuditLogs(req.params.id, req.user!.id, req.user!.role);
+    res.json({ success: true, auditLogs: logs });
   } catch (error) {
     next(error);
   }
