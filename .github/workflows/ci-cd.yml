@@ -45,8 +45,8 @@ jobs:
         run: |
           cd backend
           npm ci
-          npx prisma db push --skip-generate
           npx prisma generate
+          npx prisma db push --skip-generate
           npm run build
           npm test
 
