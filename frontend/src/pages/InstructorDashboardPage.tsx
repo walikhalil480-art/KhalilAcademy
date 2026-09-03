@@ -19,12 +19,6 @@ import {
   Clock,
   Layers,
   Search,
-  HelpCircle,
-  FileCheck,
-  RotateCcw,
-  X,
-  ChevronDown,
-  ChevronUp,
   BarChart3,
 } from 'lucide-react';
 import { resolveMediaUrl, DEFAULT_COURSE_THUMBNAIL } from '../utils/media';
@@ -41,16 +35,7 @@ export const InstructorDashboardPage: React.FC = () => {
   // Course Delete State
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  // Analytics Modal State
-  const [selectedCourseForAnalytics, setSelectedCourseForAnalytics] = useState<Course | null>(null);
-
-  // Assessment Submissions State
-  const [selectedCourseForSubmissions, setSelectedCourseForSubmissions] = useState<Course | null>(null);
-  const [submissionsData, setSubmissionsData] = useState<any>(null);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
-  const [resettingAttempts, setResettingAttempts] = useState(false);
+  const [selectedAnalyticsCourse, setSelectedAnalyticsCourse] = useState<Course | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -228,49 +213,6 @@ export const InstructorDashboardPage: React.FC = () => {
     }
   };
 
-  const openSubmissionsModal = async (course: Course) => {
-    setSelectedCourseForSubmissions(course);
-    setExpandedAttemptId(null);
-    setLoadingSubmissions(true);
-    try {
-      const res = await api.get(`/courses/${course.id}`);
-      const cData = res.data.course;
-      const qId = cData.finalAssessmentQuizId || (cData.quizzes && cData.quizzes[0]?.id) || (cData.modules?.flatMap((m: any) => m.quizzes || [])[0]?.id);
-      if (qId) {
-        const subRes = await api.get(`/quizzes/${qId}/submissions`);
-        setSubmissionsData({ ...subRes.data, quizId: qId });
-      } else {
-        setSubmissionsData({ attempts: [], totalSubmissions: 0, quizTitle: 'Course Assessment' });
-      }
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to load assessment submissions.');
-      setSubmissionsData({ attempts: [], totalSubmissions: 0 });
-    } finally {
-      setLoadingSubmissions(false);
-    }
-  };
-
-  const handleResetAttemptsForStudent = async (userId?: string) => {
-    if (!submissionsData?.quizId) return;
-    const confirmMsg = userId
-      ? 'Are you sure you want to reset all attempts for this student?'
-      : 'Are you sure you want to reset attempts for ALL students on this assessment?';
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      setResettingAttempts(true);
-      await api.post(`/quizzes/${submissionsData.quizId}/reset-attempts`, { userId });
-      alert('Attempts successfully reset!');
-      if (selectedCourseForSubmissions) {
-        await openSubmissionsModal(selectedCourseForSubmissions);
-      }
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to reset attempts.');
-    } finally {
-      setResettingAttempts(false);
-    }
-  };
-
   const filteredCourses = courses.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.category?.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -281,34 +223,34 @@ export const InstructorDashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#071326] text-[#F8FAFC]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#4F46E5] border-t-transparent"></div>
+      <div className="flex items-center justify-center min-h-screen bg-[#F1F5F7] text-[#0B1F3A] dark:text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#087F78] border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1322] text-[#F8FAFC] p-4 sm:p-8 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white p-4 sm:p-8 lg:p-10 font-sans pb-24 transition-colors">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Top Header & Quick Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#23426A] pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#1E3A56] pb-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1A365D] border border-[#4FD1C5]/30 text-[#4FD1C5] text-[11px] font-extrabold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 dark:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] text-[11px] font-bold uppercase tracking-wider mb-2 font-mono">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Instructor Studio</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white tracking-tight">
               Course Management Dashboard
             </h1>
-            <p className="text-xs sm:text-sm text-[#CBD5E1] mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
               Create, edit, manage your curriculum, upload videos, and track enrolled students.
             </p>
           </div>
 
           <button
             onClick={() => setShowWizard(true)}
-            className="flex items-center justify-center space-x-2 px-5 py-3 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-extrabold rounded-xl shadow-lg shadow-[#4FD1C5]/20 transition text-xs flex-shrink-0"
+            className="flex items-center justify-center space-x-2 px-5 py-3 bg-[#087F78] hover:bg-[#076E6A] text-white font-bold rounded-xl shadow-xs transition text-xs flex-shrink-0"
           >
             <Plus className="h-4 w-4" />
             <span>Create New Course</span>
@@ -317,84 +259,84 @@ export const InstructorDashboardPage: React.FC = () => {
 
         {/* 4 Metric Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#94A3B8]">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
               <span className="text-[11px] font-bold uppercase tracking-wider">Total Courses</span>
-              <BookOpen className="w-4 h-4 text-[#4FD1C5]" />
+              <BookOpen className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
             </div>
-            <div className="text-2xl font-extrabold text-[#F8FAFC]">{courses.length}</div>
-            <span className="text-[10px] text-[#CBD5E1]">{totalPublished} currently published</span>
+            <div className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">{courses.length}</div>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">{totalPublished} currently published</span>
           </div>
 
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#94A3B8]">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
               <span className="text-[11px] font-bold uppercase tracking-wider">Active Students</span>
-              <Users className="w-4 h-4 text-[#4FD1C5]" />
+              <Users className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
             </div>
-            <div className="text-2xl font-extrabold text-[#F8FAFC]">{totalEnrollments}</div>
-            <span className="text-[10px] text-[#CBD5E1]">Across all created courses</span>
+            <div className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">{totalEnrollments}</div>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">Across all created courses</span>
           </div>
 
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#94A3B8]">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
               <span className="text-[11px] font-bold uppercase tracking-wider">Estimated Revenue</span>
-              <DollarSign className="w-4 h-4 text-[#22C55E]" />
+              <DollarSign className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
             </div>
-            <div className="text-2xl font-extrabold text-[#22C55E]">
+            <div className="text-2xl font-extrabold text-[#087F78] dark:text-[#14B8A6] font-mono">
               {courses.reduce((sum, c) => sum + (c.isFree ? 0 : (c.price * (c._count?.enrollments || 0))), 0).toFixed(0)} KSH
             </div>
-            <span className="text-[10px] text-[#CBD5E1]">Platform earnings</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">Platform earnings</span>
           </div>
 
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#94A3B8]">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
               <span className="text-[11px] font-bold uppercase tracking-wider">Average Rating</span>
-              <TrendingUp className="w-4 h-4 text-[#F59E0B]" />
+              <TrendingUp className="w-4 h-4 text-amber-500" />
             </div>
-            <div className="text-2xl font-extrabold text-[#F8FAFC]">5.0 ★</div>
-            <span className="text-[10px] text-[#CBD5E1]">Student feedback score</span>
+            <div className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">5.0 ★</div>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">Student feedback score</span>
           </div>
         </div>
 
         {/* Courses Table & Controls */}
-        <div className="bg-[#132742] border border-[#23426A] rounded-2xl shadow-xl overflow-hidden space-y-0">
+        <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl shadow-xs overflow-hidden space-y-0">
           {/* Table Header & Search */}
-          <div className="p-5 border-b border-[#23426A] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0E1D33]/60">
+          <div className="p-5 border-b border-slate-100 dark:border-[#1E3A56] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 dark:bg-[#0B223D]">
             <div className="flex items-center space-x-2">
-              <h2 className="text-base font-extrabold text-[#F8FAFC]">My Authored Courses</h2>
-              <span className="px-2 py-0.5 rounded-full bg-[#1A365D] border border-[#23426A] text-[11px] font-bold text-[#CBD5E1]">
+              <h2 className="text-base font-extrabold text-[#0B1F3A] dark:text-white">My Authored Courses</h2>
+              <span className="px-2 py-0.5 rounded-full bg-white dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-600 dark:text-slate-300 font-mono">
                 {courses.length}
               </span>
             </div>
 
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-[#0A1322] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5]"
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#087F78]"
               />
             </div>
           </div>
 
           {/* Courses List */}
-          <div className="divide-y divide-[#23426A]">
+          <div className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
             {filteredCourses.length === 0 ? (
               <div className="p-12 text-center space-y-3">
-                <BookOpen className="w-10 h-10 text-[#94A3B8] mx-auto" />
-                <h3 className="text-sm font-bold text-[#F8FAFC]">No courses found</h3>
-                <p className="text-xs text-[#CBD5E1]">
+                <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+                <h3 className="text-sm font-bold text-[#0B1F3A] dark:text-white">No courses found</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {searchQuery ? 'No course matching your search query.' : 'Click "Create New Course" above to start authoring your first course.'}
                 </p>
               </div>
             ) : (
               filteredCourses.map((c) => (
-                <div key={c.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#1A365D]/40 transition group">
+                <div key={c.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 dark:bg-[#152F4A] dark:hover:bg-slate-850 transition group">
                   {/* Left: Thumbnail & Course Info */}
                   <div className="flex items-center space-x-4 min-w-0 flex-1">
-                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-[#0A1322] border border-[#23426A] flex-shrink-0 relative">
+                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0 relative">
                       <img
                         src={resolveMediaUrl(c.thumbnail)}
                         alt={c.title}
@@ -406,30 +348,30 @@ export const InstructorDashboardPage: React.FC = () => {
                     </div>
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
                           c.status === 'PUBLISHED'
-                            ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30'
-                            : 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30'
+                            ? 'bg-teal-50 dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] border border-teal-200 dark:border-teal-700/50'
+                            : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700/50'
                         }`}>
                           {c.status}
                         </span>
-                        <span className="text-[11px] font-semibold text-[#4FD1C5]">
+                        <span className="text-[11px] font-bold text-[#087F78] dark:text-[#14B8A6]">
                           {c.category?.name || 'DevOps & Cloud'}
                         </span>
-                        <span className="text-[11px] text-[#94A3B8]">•</span>
-                        <span className="text-[11px] font-medium text-[#CBD5E1]">
+                        <span className="text-[11px] text-slate-300 dark:text-slate-600">•</span>
+                        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
                           {c.level}
                         </span>
                       </div>
 
-                      <h3 className="text-sm sm:text-base font-extrabold text-[#F8FAFC] truncate">
+                      <h3 className="text-sm sm:text-base font-extrabold text-[#0B1F3A] dark:text-white truncate">
                         {c.title}
                       </h3>
 
-                      <div className="flex items-center space-x-4 text-[11px] text-[#94A3B8]">
+                      <div className="flex items-center space-x-4 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                         <span>{c._count?.enrollments || 0} students enrolled</span>
                         <span>•</span>
-                        <span className="font-bold text-[#F8FAFC]">
+                        <span className="font-bold text-[#0B1F3A] dark:text-white">
                           {c.isFree || c.price === 0 ? 'Free' : `${c.price.toFixed(0)} KSH`}
                         </span>
                       </div>
@@ -438,29 +380,27 @@ export const InstructorDashboardPage: React.FC = () => {
 
                   {/* Right: Actions Button Group */}
                   <div className="flex items-center space-x-2.5 flex-shrink-0 pt-2 md:pt-0">
+                    <button
+                      onClick={() => setSelectedAnalyticsCourse(c)}
+                      className="px-3.5 py-2 bg-teal-50 dark:bg-[#087F78]/20 hover:bg-teal-100 dark:hover:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-xs"
+                      title="View Student Submissions, Grading & Proctor Analytics"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Submissions & Grading</span>
+                    </button>
+
                     <Link
                       to={`/courses/${c.slug}`}
-                      className="px-3.5 py-2 bg-[#0E1D33] hover:bg-[#1A365D] border border-[#23426A] text-[#CBD5E1] hover:text-[#4FD1C5] font-bold rounded-xl text-xs transition flex items-center space-x-1.5"
+                      className="px-3.5 py-2 bg-slate-50 dark:bg-[#152F4A] hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-[#087F78] font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-xs"
                       title="Preview Course"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Preview</span>
                     </Link>
 
-                    {/* View Course Performance & Student Analytics Button */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCourseForAnalytics(c)}
-                      className="px-3.5 py-2 bg-[#0284c7]/20 hover:bg-[#0284c7]/30 border border-[#38BDF8]/50 hover:border-[#38BDF8] text-[#38BDF8] font-black rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm shadow-[#0284c7]/10"
-                      title="Course Completion Rate, Average Quiz Scores, Student Progress & Assignments"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5 text-[#38BDF8]" />
-                      <span>Analytics & Students</span>
-                    </button>
-
                     <Link
                       to={`/instructor/courses/${c.id}/manage`}
-                      className="px-4 py-2 bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-bold rounded-xl text-xs transition shadow-md shadow-[#4FD1C5]/20 flex items-center space-x-1.5"
+                      className="px-4 py-2 bg-[#087F78] hover:bg-[#076E6A] text-white font-bold rounded-xl text-xs transition shadow-xs flex items-center space-x-1.5"
                     >
                       <Settings className="w-3.5 h-3.5" />
                       <span>Manage Curriculum</span>
@@ -469,7 +409,7 @@ export const InstructorDashboardPage: React.FC = () => {
                     {/* Delete Course Button */}
                     <button
                       onClick={() => setCourseToDelete(c)}
-                      className="p-2 bg-[#0E1D33] hover:bg-[#EF4444]/20 border border-[#23426A] hover:border-[#EF4444]/40 text-[#94A3B8] hover:text-[#EF4444] rounded-xl transition"
+                      className="p-2 bg-slate-50 dark:bg-[#152F4A] hover:bg-red-50 dark:hover:bg-red-950/40 border border-slate-200 dark:border-slate-700 hover:border-red-200 text-slate-500 dark:text-slate-400 hover:text-[#EF4444] rounded-xl transition shadow-xs"
                       title="Delete Course"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -481,217 +421,27 @@ export const InstructorDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Course Analytics & Student Performance Modal */}
-        {selectedCourseForAnalytics && (
-          <CourseAnalyticsModal
-            courseId={selectedCourseForAnalytics.id}
-            courseTitle={selectedCourseForAnalytics.title}
-            onClose={() => setSelectedCourseForAnalytics(null)}
-          />
-        )}
-
-        {/* Assessment Submissions & Student Answers Inspector Modal */}
-        {selectedCourseForSubmissions && (
-          <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 max-w-4xl w-full my-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-              
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-[#23426A] pb-4">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A365D] border border-[#38BDF8]/30 text-[#38BDF8] text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
-                    <FileCheck className="w-3.5 h-3.5" />
-                    <span>Student Assessment Review & Grading</span>
-                  </div>
-                  <h2 className="text-lg font-extrabold text-[#F8FAFC]">
-                    {selectedCourseForSubmissions.title}
-                  </h2>
-                  <p className="text-xs text-[#CBD5E1] mt-0.5">
-                    Inspect all student submissions, answers chosen, scores, and manage attempt resets.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCourseForSubmissions(null)}
-                  className="p-2 text-[#94A3B8] hover:text-white rounded-xl hover:bg-[#1A365D] transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Assessment Stats Banner */}
-              {submissionsData && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
-                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Total Submissions</span>
-                    <span className="text-base font-extrabold text-white mt-0.5 block">{submissionsData.totalSubmissions || 0}</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
-                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Passing Grade</span>
-                    <span className="text-base font-extrabold text-[#10B981] mt-0.5 block">{submissionsData.passingScore || 80}%</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A]">
-                    <span className="text-[10px] text-[#94A3B8] uppercase font-extrabold block">Total Questions</span>
-                    <span className="text-base font-extrabold text-[#38BDF8] mt-0.5 block">{submissionsData.totalQuestions || 5} Questions</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-[#0E1D33] border border-[#23426A] flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleResetAttemptsForStudent()}
-                      disabled={resettingAttempts || !submissionsData.totalSubmissions}
-                      className="w-full py-2.5 px-3 rounded-xl bg-[#EF4444]/15 hover:bg-[#EF4444]/25 border border-[#EF4444]/30 text-[#EF4444] text-xs font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-40"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>{resettingAttempts ? 'Resetting...' : 'Reset All Attempts'}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Submissions List */}
-              {loadingSubmissions ? (
-                <div className="py-12 flex flex-col items-center justify-center gap-3">
-                  <div className="w-8 h-8 border-3 border-[#4FD1C5] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-xs text-[#94A3B8]">Loading student submissions...</span>
-                </div>
-              ) : !submissionsData?.attempts || submissionsData.attempts.length === 0 ? (
-                <div className="p-8 text-center bg-[#0E1D33] rounded-2xl border border-[#23426A] space-y-2">
-                  <HelpCircle className="w-8 h-8 text-[#94A3B8] mx-auto opacity-50" />
-                  <p className="text-xs font-bold text-[#CBD5E1]">No student submissions recorded yet.</p>
-                  <p className="text-[11px] text-[#94A3B8]">When students complete this course's assessment, their full answer sheet and scores will appear here in real time.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {submissionsData.attempts.map((att: any, idx: number) => {
-                    const isExpanded = expandedAttemptId === att.id;
-                    const isPassed = att.passed || att.percentage >= (submissionsData.passingScore || 80);
-
-                    return (
-                      <div
-                        key={att.id}
-                        className={`rounded-2xl border transition-all overflow-hidden ${
-                          isPassed ? 'bg-[#0E1D33] border-[#10B981]/40' : 'bg-[#0E1D33] border-[#EF4444]/40'
-                        }`}
-                      >
-                        {/* Summary Row */}
-                        <div
-                          onClick={() => setExpandedAttemptId(isExpanded ? null : att.id)}
-                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[#132742]/80 transition"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm ${
-                              isPassed ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#EF4444]/20 text-[#EF4444]'
-                            }`}>
-                              #{idx + 1}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="text-xs sm:text-sm font-extrabold text-white truncate">
-                                {att.user?.name || 'Student'} ({att.user?.email || 'N/A'})
-                              </h4>
-                              <span className="text-[10px] text-[#94A3B8]">
-                                Submitted: {new Date(att.completedAt).toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 justify-between sm:justify-end">
-                            <div className="text-right">
-                              <div className={`text-xs sm:text-sm font-black ${isPassed ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
-                                {att.percentage}% ({isPassed ? 'PASSED' : 'FAILED'})
-                              </div>
-                              <div className="text-[10px] text-[#94A3B8]">
-                                Score: {att.score} / {att.maxScore} pts
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleResetAttemptsForStudent(att.userId);
-                              }}
-                              className="px-2.5 py-1.5 rounded-lg bg-[#071326] border border-[#23426A] hover:border-[#EF4444] text-[10px] font-bold text-[#CBD5E1] hover:text-[#EF4444] transition flex items-center gap-1"
-                              title="Reset attempts for this student"
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                              <span className="hidden sm:inline">Reset</span>
-                            </button>
-
-                            <div className="text-[#94A3B8]">
-                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Detailed Question & Answer Breakdown when Expanded */}
-                        {isExpanded && (
-                          <div className="p-4 pt-0 border-t border-[#23426A]/60 space-y-3 bg-[#071326]/50">
-                            <h5 className="text-[11px] font-extrabold text-[#38BDF8] uppercase tracking-wider pt-3">
-                              Student Answer Breakdown ({att.answers?.length || 0} Questions)
-                            </h5>
-
-                            <div className="space-y-2.5">
-                              {att.answers?.map((ans: any, aIdx: number) => {
-                                const isCorrect = ans.selectedOption?.isCorrect;
-                                return (
-                                  <div
-                                    key={ans.id || aIdx}
-                                    className={`p-3 rounded-xl border text-xs space-y-1.5 ${
-                                      isCorrect
-                                        ? 'bg-[#0D1E36] border-[#10B981]/30'
-                                        : 'bg-[#0D1E36] border-[#EF4444]/30'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <strong className="text-white">Q{aIdx + 1}. {ans.question?.questionText}</strong>
-                                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase ${
-                                        isCorrect ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#EF4444]/20 text-[#EF4444]'
-                                      }`}>
-                                        {isCorrect ? '✓ Correct' : '✕ Incorrect'}
-                                      </span>
-                                    </div>
-
-                                    <div className="text-[11px] text-[#CBD5E1] pl-2 border-l-2 border-[#23426A]">
-                                      <span className="text-[#94A3B8]">Selected Answer: </span>
-                                      <strong className={isCorrect ? 'text-[#10B981]' : 'text-[#EF4444]'}>
-                                        {ans.selectedOption?.optionText || 'No Answer'}
-                                      </strong>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Delete Confirmation Modal */}
         {courseToDelete && (
-          <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EF4444]/15 border border-[#EF4444]/30 text-[#EF4444] flex items-center justify-center">
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-[#EF4444] flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               
               <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-[#F8FAFC]">Delete Course?</h3>
-                <p className="text-xs text-[#CBD5E1] leading-relaxed">
-                  Are you sure you want to permanently delete <strong className="text-[#F8FAFC]">"{courseToDelete.title}"</strong>? All associated modules, lessons, and records will be removed. This action cannot be undone.
+                <h3 className="text-base font-extrabold text-[#0B1F3A] dark:text-white">Delete Course?</h3>
+                <p className="text-xs text-slate-600 dark:text-[#A9BACB] leading-relaxed">
+                  Are you sure you want to permanently delete <strong className="text-[#0B1F3A] dark:text-white">"{courseToDelete.title}"</strong>? All associated modules, lessons, and records will be removed. This action cannot be undone.
                 </p>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#23426A]">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-[#1E3A56]">
                 <button
                   type="button"
                   onClick={() => setCourseToDelete(null)}
                   disabled={deleting}
-                  className="px-4 py-2 bg-[#0E1D33] hover:bg-[#1A365D] border border-[#23426A] text-[#CBD5E1] font-bold rounded-xl text-xs transition"
+                  className="px-4 py-2 bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] text-slate-700 dark:text-[#A9BACB] font-bold rounded-xl text-xs transition"
                 >
                   Cancel
                 </button>
@@ -699,7 +449,7 @@ export const InstructorDashboardPage: React.FC = () => {
                   type="button"
                   onClick={handleDeleteCourse}
                   disabled={deleting}
-                  className="px-5 py-2 bg-[#EF4444] hover:bg-[#DC2626] disabled:opacity-50 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-[#EF4444]/25 transition"
+                  className="px-5 py-2 bg-[#EF4444] hover:bg-[#DC2626] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-xs transition"
                 >
                   {deleting ? 'Deleting...' : 'Delete Permanently'}
                 </button>
@@ -710,17 +460,17 @@ export const InstructorDashboardPage: React.FC = () => {
 
         {/* Create Course Modal Wizard */}
         {showWizard && (
-          <div className="fixed inset-0 bg-[#0A1322]/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 max-w-2xl w-full my-8 shadow-2xl space-y-6">
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl p-6 sm:p-8 max-w-2xl w-full my-8 shadow-2xl space-y-6">
               
-              <div className="flex items-center justify-between border-b border-[#23426A] pb-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E3A56] pb-4">
                 <div>
-                  <h2 className="text-lg font-extrabold text-[#F8FAFC]">Create New Course</h2>
-                  <p className="text-xs text-[#CBD5E1] mt-0.5">Define core course information and add your first module.</p>
+                  <h2 className="text-lg font-extrabold text-[#0B1F3A] dark:text-white">Create New Course</h2>
+                  <p className="text-xs text-slate-500 dark:text-[#A9BACB] mt-0.5">Define core course information and add your first module.</p>
                 </div>
                 <button
                   onClick={() => setShowWizard(false)}
-                  className="text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC]"
+                  className="text-xs font-bold text-slate-400 hover:text-slate-700 dark:text-[#A9BACB]"
                 >
                   ✕
                 </button>
@@ -729,7 +479,7 @@ export const InstructorDashboardPage: React.FC = () => {
               <form onSubmit={handleCreateCourse} className="space-y-5">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                       Course Title
                     </label>
                     <input
@@ -738,12 +488,12 @@ export const InstructorDashboardPage: React.FC = () => {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g. Modern Linux Administration & Shell Scripting"
-                      className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5]"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                       Description
                     </label>
                     <textarea
@@ -752,19 +502,19 @@ export const InstructorDashboardPage: React.FC = () => {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Comprehensive overview of skills students will gain..."
-                      className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5]"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                         Category
                       </label>
                       <select
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                       >
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>
@@ -775,13 +525,13 @@ export const InstructorDashboardPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                         Difficulty Level
                       </label>
                       <select
                         value={level}
                         onChange={(e) => setLevel(e.target.value as Level)}
-                        className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                       >
                         <option value="BEGINNER">Beginner</option>
                         <option value="INTERMEDIATE">Intermediate</option>
@@ -792,25 +542,25 @@ export const InstructorDashboardPage: React.FC = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                         Pricing Option
                       </label>
                       <div className="flex items-center space-x-4 mt-2">
-                        <label className="flex items-center space-x-2 text-xs text-[#F8FAFC] cursor-pointer">
+                        <label className="flex items-center space-x-2 text-xs text-[#0B1F3A] dark:text-white cursor-pointer">
                           <input
                             type="radio"
                             checked={!isFree}
                             onChange={() => setIsFree(false)}
-                            className="accent-[#4FD1C5]"
+                            className="accent-[#087F78]"
                           />
                           <span>Paid ($)</span>
                         </label>
-                        <label className="flex items-center space-x-2 text-xs text-[#F8FAFC] cursor-pointer">
+                        <label className="flex items-center space-x-2 text-xs text-[#0B1F3A] dark:text-white cursor-pointer">
                           <input
                             type="radio"
                             checked={isFree}
                             onChange={() => setIsFree(true)}
-                            className="accent-[#4FD1C5]"
+                            className="accent-[#087F78]"
                           />
                           <span>Free Access</span>
                         </label>
@@ -819,7 +569,7 @@ export const InstructorDashboardPage: React.FC = () => {
 
                     {!isFree && (
                       <div>
-                        <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider mb-1.5">
                           Tuition Price (KSH)
                         </label>
                         <input
@@ -828,7 +578,7 @@ export const InstructorDashboardPage: React.FC = () => {
                           min="1"
                           value={price}
                           onChange={(e) => setPrice(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5]"
+                          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                         />
                       </div>
                     )}
@@ -836,12 +586,12 @@ export const InstructorDashboardPage: React.FC = () => {
 
                   {/* Thumbnail Upload with Live Image Preview */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-extrabold text-[#F8FAFC] uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider">
                       Course Thumbnail Image
                     </label>
                     <div className="flex items-center space-x-4">
                       {thumbnailUrl && (
-                        <div className="w-20 h-14 rounded-xl overflow-hidden bg-[#0A1322] border border-[#23426A] flex-shrink-0">
+                        <div className="w-20 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] flex-shrink-0">
                           <img
                             src={resolveMediaUrl(thumbnailUrl)}
                             alt="Preview"
@@ -854,37 +604,37 @@ export const InstructorDashboardPage: React.FC = () => {
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
                           onChange={handleThumbnailUpload}
-                          className="text-xs text-[#CBD5E1] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#4FD1C5] file:text-[#0A1322] hover:file:bg-[#38B2AC] cursor-pointer"
+                          className="text-xs text-slate-600 dark:text-[#A9BACB] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#087F78] file:text-white hover:file:bg-[#076E6A] cursor-pointer"
                         />
-                        {uploadingThumbnail && <p className="text-xs text-[#4FD1C5] mt-1 font-medium">Uploading image...</p>}
-                        {thumbnailUrl && <p className="text-xs text-[#22C55E] mt-1 font-medium">✓ Image uploaded successfully</p>}
+                        {uploadingThumbnail && <p className="text-xs text-[#087F78] mt-1 font-medium">Uploading image...</p>}
+                        {thumbnailUrl && <p className="text-xs text-[#087F78] mt-1 font-bold">✓ Image uploaded successfully</p>}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Lesson 1 Wizard Section */}
-                <div className="border-t border-[#23426A] pt-5 space-y-4">
-                  <h4 className="text-xs font-extrabold text-[#4FD1C5] uppercase tracking-wider">
+                <div className="border-t border-slate-100 dark:border-[#1E3A56] pt-5 space-y-4">
+                  <h4 className="text-xs font-bold text-[#087F78] uppercase tracking-wider font-mono">
                     Initial Lesson 1 Configuration
                   </h4>
 
                   <div className="flex items-center space-x-6">
-                    <label className="flex items-center space-x-2 text-xs text-[#F8FAFC] cursor-pointer">
+                    <label className="flex items-center space-x-2 text-xs text-[#0B1F3A] dark:text-white cursor-pointer">
                       <input
                         type="radio"
                         checked={videoSource === 'YOUTUBE'}
                         onChange={() => setVideoSource('YOUTUBE')}
-                        className="accent-[#4FD1C5]"
+                        className="accent-[#087F78]"
                       />
                       <span>YouTube Video</span>
                     </label>
-                    <label className="flex items-center space-x-2 text-xs text-[#F8FAFC] cursor-pointer">
+                    <label className="flex items-center space-x-2 text-xs text-[#0B1F3A] dark:text-white cursor-pointer">
                       <input
                         type="radio"
                         checked={videoSource === 'UPLOAD'}
                         onChange={() => setVideoSource('UPLOAD')}
-                        className="accent-[#4FD1C5]"
+                        className="accent-[#087F78]"
                       />
                       <span>Upload Video File (MP4/WebM)</span>
                     </label>
@@ -892,7 +642,7 @@ export const InstructorDashboardPage: React.FC = () => {
 
                   {videoSource === 'YOUTUBE' ? (
                     <div>
-                      <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase mb-1">
                         YouTube URL (Optional)
                       </label>
                       <input
@@ -900,53 +650,53 @@ export const InstructorDashboardPage: React.FC = () => {
                         value={youtubeUrl}
                         onChange={(e) => setYoutubeUrl(e.target.value)}
                         placeholder="https://www.youtube.com/watch?v=VIDEO_ID"
-                        className="w-full px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5]"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                       />
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase mb-1">
                         Upload Video (MP4 / WebM)
                       </label>
                       <input
                         type="file"
                         accept="video/mp4,video/webm"
                         onChange={handleVideoFileUpload}
-                        className="text-xs text-[#CBD5E1] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#4FD1C5] file:text-[#0A1322] hover:file:bg-[#38B2AC] cursor-pointer"
+                        className="text-xs text-slate-600 dark:text-[#A9BACB] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#087F78] file:text-white hover:file:bg-[#076E6A] cursor-pointer"
                       />
-                      {uploadingVideo && <p className="text-xs text-[#4FD1C5] mt-1">Uploading video file...</p>}
+                      {uploadingVideo && <p className="text-xs text-[#087F78] mt-1">Uploading video file...</p>}
                       {uploadedFileName && (
-                        <p className="text-xs text-[#22C55E] mt-1 font-medium">
+                        <p className="text-xs text-[#087F78] mt-1 font-bold">
                           ✓ Uploaded: {uploadedFileName} ({Math.round(uploadedFileSize / (1024 * 1024))} MB)
                         </p>
                       )}
                     </div>
                   )}
 
-                  <label className="flex items-center space-x-2 text-xs text-[#CBD5E1] cursor-pointer pt-1">
+                  <label className="flex items-center space-x-2 text-xs text-slate-600 dark:text-[#A9BACB] cursor-pointer pt-1">
                     <input
                       type="checkbox"
                       checked={isPreview}
                       onChange={(e) => setIsPreview(e.target.checked)}
-                      className="accent-[#4FD1C5]"
+                      className="accent-[#087F78]"
                     />
                     <span>Free Preview (Students can watch without enrollment)</span>
                   </label>
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex justify-end space-x-3 border-t border-[#23426A] pt-4">
+                <div className="flex justify-end space-x-3 border-t border-slate-100 dark:border-[#1E3A56] pt-4">
                   <button
                     type="button"
                     onClick={() => setShowWizard(false)}
-                    className="px-5 py-2.5 bg-[#0E1D33] hover:bg-[#1A365D] text-[#CBD5E1] font-bold rounded-xl text-xs transition"
+                    className="px-5 py-2.5 bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] text-slate-700 dark:text-[#A9BACB] font-bold rounded-xl text-xs transition border border-slate-200 dark:border-[#1E3A56]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || uploadingThumbnail || uploadingVideo}
-                    className="px-6 py-2.5 bg-[#4FD1C5] hover:bg-[#38B2AC] disabled:opacity-50 text-[#0A1322] font-extrabold rounded-xl text-xs shadow-lg shadow-[#4FD1C5]/20 transition"
+                    className="px-6 py-2.5 bg-[#087F78] hover:bg-[#076E6A] disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-xs transition"
                   >
                     {submitting ? 'Creating Course...' : 'Create & Open Studio'}
                   </button>
@@ -954,6 +704,14 @@ export const InstructorDashboardPage: React.FC = () => {
               </form>
             </div>
           </div>
+        )}
+        {/* Course Analytics & Student Submissions Modal */}
+        {selectedAnalyticsCourse && (
+          <CourseAnalyticsModal
+            courseId={selectedAnalyticsCourse.id}
+            courseTitle={selectedAnalyticsCourse.title}
+            onClose={() => setSelectedAnalyticsCourse(null)}
+          />
         )}
       </div>
     </div>

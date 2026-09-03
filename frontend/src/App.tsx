@@ -7,6 +7,7 @@ import { setNotifications } from './store/notificationSlice';
 
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { BottomNavBar } from './components/BottomNavBar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 import { LandingPage } from './pages/LandingPage';
@@ -66,7 +67,7 @@ export const App: React.FC = () => {
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#071326] text-[#F8FAFC] font-sans">
+    <div className="min-h-screen flex flex-col bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white font-sans pb-16 md:pb-0 transition-colors duration-200">
       <Navbar />
       
       <main className="flex-1">
@@ -120,6 +121,7 @@ export const App: React.FC = () => {
       </main>
 
       <Footer />
+      <BottomNavBar />
     </div>
   );
 };

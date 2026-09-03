@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import { AppError } from '../middlewares/errorHandler';
-import { SubmissionStatus } from '@prisma/client';
+import { SubmissionStatus, CertificateStatus, RecertificationScope } from '@prisma/client';
 
 export interface EligibilityRequirementSummary {
   lessons: {
@@ -76,11 +76,23 @@ export interface CourseEligibilityResult {
   certificationProgressPercentage: number;
   requirements: EligibilityRequirementSummary;
   missingRequirements: string[];
+  pendingAssignmentId?: string | null;
+  pendingAssignmentTitle?: string | null;
+  pendingQuizId?: string | null;
+  pendingQuizTitle?: string | null;
   certificate: {
     id: string;
     certificateNumber: string;
     issueDate: Date;
+    status?: string;
     verificationUrl: string;
+  } | null;
+  isRecertification?: boolean;
+  recertificationRequirement?: {
+    id: string;
+    scope: string;
+    notes?: string | null;
+    createdAt: Date;
   } | null;
 }
 
@@ -113,6 +125,16 @@ export class CertificateEligibilityService {
 
     const missingRequirements: string[] = [];
 
+    // Check if the student has an active re-certification requirement for this course
+    const activeRecertReq = await prisma.recertificationRequirement.findFirst({
+      where: {
+        userId,
+        courseId: course.id,
+        isCompleted: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
     // -------------------------------------------------------------
     // 1. EVALUATE PUBLISHED LESSONS (Required vs Optional)
     // -------------------------------------------------------------
@@ -135,17 +157,33 @@ export class CertificateEligibilityService {
     const progressMap = new Map(lessonProgresses.map((p) => [p.lessonId, p]));
 
     const totalLessons = publishedLessons.length;
-    const completedLessons = publishedLessons.filter((l) => progressMap.get(l.id)?.isCompleted).length;
+    const completedLessons = publishedLessons.filter((l) => {
+      const p = progressMap.get(l.id);
+      if (!p?.isCompleted) return false;
+      if (activeRecertReq && (activeRecertReq.scope === RecertificationScope.FULL_COURSE || activeRecertReq.requiredLessonIds.includes(l.id))) {
+        return p.updatedAt >= activeRecertReq.createdAt;
+      }
+      return true;
+    }).length;
 
     const requiredLessons = publishedLessons.filter((l) => l.isRequired !== false);
     const requiredTotal = requiredLessons.length;
-    const requiredCompleted = requiredLessons.filter((l) => progressMap.get(l.id)?.isCompleted).length;
+    const requiredCompleted = requiredLessons.filter((l) => {
+      const p = progressMap.get(l.id);
+      if (!p?.isCompleted) return false;
+      if (activeRecertReq && (activeRecertReq.scope === RecertificationScope.FULL_COURSE || activeRecertReq.requiredLessonIds.includes(l.id))) {
+        return p.updatedAt >= activeRecertReq.createdAt;
+      }
+      return true;
+    }).length;
 
     const lessonsSatisfied = requiredTotal === 0 || requiredCompleted >= requiredTotal;
     if (!lessonsSatisfied && course.requireAllLessons !== false) {
       const incompleteCount = requiredTotal - requiredCompleted;
       missingRequirements.push(
-        `Complete all required lessons (${requiredCompleted}/${requiredTotal} completed, ${incompleteCount} remaining).`
+        activeRecertReq
+          ? `Re-certification: Complete required lessons (${requiredCompleted}/${requiredTotal} completed, ${incompleteCount} remaining).`
+          : `Complete all required lessons (${requiredCompleted}/${requiredTotal} completed, ${incompleteCount} remaining).`
       );
     }
 
@@ -173,7 +211,17 @@ export class CertificateEligibilityService {
     const quizItems = standardQuizzes.map((q) => {
       const requiredScore = course.quizPassingScore || q.passingScore || 70.0;
       const bestAttempt = q.attempts[0] || null;
-      const passed = q.attempts.some((a) => a.passed && a.percentage >= requiredScore);
+      const passed = q.attempts.some((a) => {
+        if (!a.passed || a.percentage < requiredScore) return false;
+        if (
+          activeRecertReq &&
+          (activeRecertReq.scope === RecertificationScope.FULL_COURSE ||
+            activeRecertReq.requiredQuizIds.includes(q.id))
+        ) {
+          return a.completedAt >= activeRecertReq.createdAt;
+        }
+        return true;
+      });
       const isRequired = course.requireQuizzes ? true : q.isRequired !== false;
       const attemptsCount = q.attempts.length;
 
@@ -197,7 +245,9 @@ export class CertificateEligibilityService {
       const failedQuizzes = requiredQuizItems.filter((q) => !q.passed);
       failedQuizzes.forEach((fq) => {
         missingRequirements.push(
-          `Pass quiz "${fq.title}" (Score: ${fq.bestScore !== null ? Math.round(fq.bestScore) : 0}%, Required: ${fq.passingScore}%).`
+          activeRecertReq
+            ? `Re-certification: Pass required quiz "${fq.title}" (Score: ${fq.bestScore !== null ? Math.round(fq.bestScore) : 0}%, Required: ${fq.passingScore}%).`
+            : `Pass quiz "${fq.title}" (Score: ${fq.bestScore !== null ? Math.round(fq.bestScore) : 0}%, Required: ${fq.passingScore}%).`
         );
       });
     }
@@ -218,7 +268,7 @@ export class CertificateEligibilityService {
 
     const assignmentItems = allAssignments.map((a) => {
       const isRequired = course.requireAssignments ? true : a.isRequired !== false;
-      const requiredScore = course.assignmentPassingScore || a.passingScore || 70.0;
+      const requiredScore = course.assignmentPassingScore || a.passingScore || 80.0;
       const latestSubmission = a.submissions[0] || null;
 
       let passed = false;
@@ -231,9 +281,16 @@ export class CertificateEligibilityService {
             ? (latestSubmission.score / a.maxScore) * 100
             : 0;
 
-        if (latestSubmission.status === SubmissionStatus.PASSED) {
+        const isPostRevocation =
+          !activeRecertReq ||
+          (activeRecertReq.scope !== RecertificationScope.FULL_COURSE &&
+            activeRecertReq.scope !== RecertificationScope.FINAL_ASSIGNMENT &&
+            !activeRecertReq.requiredAssignmentIds.includes(a.id)) ||
+          (latestSubmission.submittedAt && latestSubmission.submittedAt >= activeRecertReq.createdAt);
+
+        if (latestSubmission.status === SubmissionStatus.PASSED && isPostRevocation) {
           passed = true;
-        } else if (latestSubmission.status === SubmissionStatus.GRADED && percentage >= requiredScore) {
+        } else if (latestSubmission.status === SubmissionStatus.GRADED && percentage >= requiredScore && isPostRevocation) {
           passed = true;
         }
       }
@@ -297,7 +354,17 @@ export class CertificateEligibilityService {
       const passingScore = course.finalAssessmentPassingScore || finalAssessmentQuiz?.passingScore || 70.0;
       const bestAttempt = finalAssessmentQuiz?.attempts[0] || null;
       const passed =
-        finalAssessmentQuiz?.attempts.some((a) => a.passed && a.percentage >= passingScore) || false;
+        finalAssessmentQuiz?.attempts.some((a) => {
+          if (!a.passed || a.percentage < passingScore) return false;
+          if (
+            activeRecertReq &&
+            (activeRecertReq.scope === RecertificationScope.FULL_COURSE ||
+              activeRecertReq.requireFinalAssignment)
+          ) {
+            return a.completedAt >= activeRecertReq.createdAt;
+          }
+          return true;
+        }) || false;
       const attemptsCount = finalAssessmentQuiz?.attempts.length || 0;
       const maxAttempts = finalAssessmentQuiz?.maxAttempts || 3;
 
@@ -316,9 +383,13 @@ export class CertificateEligibilityService {
 
       if (!passed) {
         missingRequirements.push(
-          `Pass Final Assessment "${finalAssessmentQuiz?.title || 'Comprehensive Final Exam'}" (Score: ${
-            bestAttempt ? Math.round(bestAttempt.percentage) : 0
-          }%, Required: ${passingScore}%).`
+          activeRecertReq
+            ? `Re-certification: Pass Final Assessment "${finalAssessmentQuiz?.title || 'Comprehensive Final Exam'}" (Score: ${
+                bestAttempt ? Math.round(bestAttempt.percentage) : 0
+              }%, Required: ${passingScore}%).`
+            : `Pass Final Assessment "${finalAssessmentQuiz?.title || 'Comprehensive Final Exam'}" (Score: ${
+                bestAttempt ? Math.round(bestAttempt.percentage) : 0
+              }%, Required: ${passingScore}%).`
         );
       }
     }
@@ -380,19 +451,30 @@ export class CertificateEligibilityService {
     const certificationProgressPercentage =
       totalCriteria > 0 ? parseFloat(((satisfiedCriteria / totalCriteria) * 100).toFixed(1)) : isEligible ? 100.0 : 0.0;
 
-    // Look up existing certificate
-    const existingCert = await prisma.certificate.findFirst({
-      where: { userId, courseId: course.id },
+    // Look up existing certificate (prioritize ACTIVE, then latest)
+    const activeCert = await prisma.certificate.findFirst({
+      where: { userId, courseId: course.id, status: CertificateStatus.ACTIVE },
     });
+
+    const existingCert =
+      activeCert ||
+      (await prisma.certificate.findFirst({
+        where: { userId, courseId: course.id, status: { not: CertificateStatus.DELETED } },
+        orderBy: { createdAt: 'desc' },
+      }));
 
     const certData = existingCert
       ? {
           id: existingCert.id,
           certificateNumber: existingCert.certificateNumber,
           issueDate: existingCert.issueDate,
+          status: existingCert.status,
           verificationUrl: `https://khalilacademy.com/verify/${existingCert.certificateNumber}`,
         }
       : null;
+
+    const firstIncompleteAssignment = requiredAssignmentItems.find((a) => !a.passed);
+    const firstIncompleteQuiz = requiredQuizItems.find((q) => !q.passed);
 
     return {
       eligible: isEligible,
@@ -402,6 +484,10 @@ export class CertificateEligibilityService {
       certificateEnabled: course.certificateEnabled !== false,
       learningProgressPercentage,
       certificationProgressPercentage,
+      pendingAssignmentId: firstIncompleteAssignment?.id || null,
+      pendingAssignmentTitle: firstIncompleteAssignment?.title || null,
+      pendingQuizId: firstIncompleteQuiz?.id || finalAssessmentSummary.quizId || null,
+      pendingQuizTitle: firstIncompleteQuiz?.title || finalAssessmentSummary.quizTitle || null,
       requirements: {
         lessons: {
           required: course.requireAllLessons !== false,
@@ -438,6 +524,23 @@ export class CertificateEligibilityService {
       },
       missingRequirements,
       certificate: certData,
+      isRecertification: !!activeRecertReq,
+      recertificationRequirement: activeRecertReq
+        ? {
+            id: activeRecertReq.id,
+            scope: activeRecertReq.scope,
+            notes: activeRecertReq.notes,
+            createdAt: activeRecertReq.createdAt,
+          }
+        : null,
     };
   }
 }
+
+/**
+ * Centralized certification eligibility service function.
+ * Verifies all course enrollment and coursework requirements server-side.
+ */
+export const canIssueCertificate = async (studentId: string, courseId: string) => {
+  return CertificateEligibilityService.evaluateEligibility(studentId, courseId);
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -31,7 +31,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md shadow-2xl">
+        <div className="bg-slate-900 dark:bg-[#07182D] border border-slate-800 rounded-3xl p-8 max-w-md shadow-2xl">
           <h2 className="text-2xl font-black text-rose-400 mb-2">403 Forbidden</h2>
           <p className="text-slate-300 text-sm mb-6">You do not have permission to access this administrative section.</p>
           <a href="/dashboard" className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs">

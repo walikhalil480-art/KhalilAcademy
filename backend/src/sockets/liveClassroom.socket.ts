@@ -105,12 +105,13 @@ export const initLiveClassroomSocket = (httpServer: HTTPServer) => {
       });
     });
 
-    // 5. Media State Controls (Audio / Video / Screen Share)
-    socket.on('toggle-media', ({ sessionId, isMuted, isVideoOff, isScreenSharing }: {
+    // 5. Media State Controls (Audio / Video / Screen Share / Whiteboard)
+    socket.on('toggle-media', ({ sessionId, isMuted, isVideoOff, isScreenSharing, isWhiteboardActive }: {
       sessionId: string;
       isMuted?: boolean;
       isVideoOff?: boolean;
       isScreenSharing?: boolean;
+      isWhiteboardActive?: boolean;
     }) => {
       const room = activeRooms.get(sessionId);
       if (room && room.has(socket.id)) {
@@ -125,6 +126,7 @@ export const initLiveClassroomSocket = (httpServer: HTTPServer) => {
           isMuted: userObj.isMuted,
           isVideoOff: userObj.isVideoOff,
           isScreenSharing: userObj.isScreenSharing,
+          isWhiteboardActive: typeof isWhiteboardActive === 'boolean' ? isWhiteboardActive : false,
         });
       }
     });
@@ -161,6 +163,20 @@ export const initLiveClassroomSocket = (httpServer: HTTPServer) => {
       };
 
       io.to(sessionId).emit('new-chat-message', message);
+    });
+
+    // 7b. Live Whiteboard Sync
+    socket.on('whiteboard-draw', ({ sessionId, data }: { sessionId: string; data: any }) => {
+      socket.to(sessionId).emit('whiteboard-draw', data);
+    });
+
+    socket.on('whiteboard-clear', ({ sessionId }: { sessionId: string }) => {
+      socket.to(sessionId).emit('whiteboard-clear', {});
+    });
+
+    // 7c. Live Floating Emoji Reactions
+    socket.on('send-emoji', ({ sessionId, emoji, x }: { sessionId: string; emoji: string; x: number }) => {
+      io.to(sessionId).emit('new-emoji-reaction', { emoji, x });
     });
 
     // 8. End Live Session Broadcast

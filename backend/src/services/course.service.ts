@@ -260,30 +260,19 @@ export const getCourseBySlug = async (slug: string, userId?: string, userRole?: 
   const instructorReviewCount = instructorReviewAgg._count._all || 0;
   const instructorAverageRating = instructorReviewCount > 0 ? parseFloat((instructorReviewAgg._avg.rating || 0).toFixed(1)) : 0;
 
-  // 6. Format modules with strict sequential access control:
-  // - Unenrolled students: ONLY the first published lesson is previewable
-  // - Enrolled students: Must complete preceding lessons to unlock subsequent lessons
-  // - Admins/Instructors: All lessons unlocked
+  // 6. Access Control:
+  // - Enrolled students & privileged staff: Full access to all lessons in the course
+  // - Unenrolled visitors: Free preview access to the 1st lesson only; subsequent lessons locked
   const flatPublishedLessons = course.modules.flatMap((m) => m.lessons.filter((l) => l.isPublished));
-  let runningPrereqsMet = true;
 
   const lessonLockMap = new Map<string, boolean>();
   flatPublishedLessons.forEach((l, idx) => {
-    if (isPrivilegedStaff) {
+    if (hasFullAccess) {
+      // Enrolled student or staff -> Full course access, never locked
       lessonLockMap.set(l.id, false);
-    } else if (!isEnrolled) {
-      lessonLockMap.set(l.id, idx !== 0);
     } else {
-      // First lesson is always unlocked for enrolled students
-      if (idx === 0) {
-        lessonLockMap.set(l.id, false);
-      } else {
-        lessonLockMap.set(l.id, !runningPrereqsMet);
-      }
-      // If this lesson is NOT completed, subsequent lessons cannot be unlocked yet
-      if (!completedLessonIdSet.has(l.id)) {
-        runningPrereqsMet = false;
-      }
+      // Unenrolled visitor -> 1st lesson free preview, all others locked
+      lessonLockMap.set(l.id, idx !== 0);
     }
   });
 

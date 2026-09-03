@@ -11,6 +11,10 @@ export enum AcademyEvent {
   QUIZ_COMPLETED = 'QUIZ_COMPLETED',
   COURSE_COMPLETED = 'COURSE_COMPLETED',
   CERTIFICATE_ISSUED = 'CERTIFICATE_ISSUED',
+  CERTIFICATE_REVOKED = 'CERTIFICATE_REVOKED',
+  CERTIFICATE_SUSPENDED = 'CERTIFICATE_SUSPENDED',
+  CERTIFICATE_RESTORED = 'CERTIFICATE_RESTORED',
+  CERTIFICATE_REPLACED = 'CERTIFICATE_REPLACED',
   LIVE_CLASS_REMINDER_24H = 'LIVE_CLASS_REMINDER_24H',
   LIVE_CLASS_STARTING_SOON = 'LIVE_CLASS_STARTING_SOON',
   LIVE_CLASS_MISSED = 'LIVE_CLASS_MISSED',
@@ -165,6 +169,53 @@ export interface InactiveStudentReminderPayload {
   courseTitle: string;
   lastActiveDays: number;
   progressPercentage: number;
+}
+
+export interface CertificateRevokedPayload {
+  certificateId: string;
+  certificateNumber: string;
+  userId: string;
+  studentEmail: string;
+  studentName: string;
+  courseId: string;
+  courseTitle: string;
+  reason: string;
+  revocationCategory?: string;
+  recertificationScope: string;
+  revokedAt: Date;
+}
+
+export interface CertificateSuspendedPayload {
+  certificateId: string;
+  certificateNumber: string;
+  userId: string;
+  studentEmail: string;
+  studentName: string;
+  courseId: string;
+  courseTitle: string;
+  reason: string;
+  suspendedAt: Date;
+}
+
+export interface CertificateRestoredPayload {
+  certificateId: string;
+  certificateNumber: string;
+  userId: string;
+  studentEmail: string;
+  studentName: string;
+  courseId: string;
+  courseTitle: string;
+  restoredAt: Date;
+}
+
+export interface CertificateReplacedPayload {
+  oldCertificateNumber: string;
+  newCertificateNumber: string;
+  userId: string;
+  studentEmail: string;
+  studentName: string;
+  courseId: string;
+  courseTitle: string;
 }
 
 // -------------------------------------------------------------

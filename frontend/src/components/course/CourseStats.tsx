@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface CourseStatsProps {
   level?: string;
@@ -30,22 +30,22 @@ export const CourseStats: React.FC<CourseStatsProps> = ({
     : lessonCount === 1 ? '1 Lesson' : `${lessonCount} Lessons`;
 
   return (
-    <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center shadow-xl">
-      <div className="border-r border-[#23426A] last:border-none">
-        <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">Skill Level</span>
-        <span className="text-xs sm:text-sm font-extrabold text-[#F8FAFC] mt-0.5 block capitalize">{level.toLowerCase()}</span>
+    <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56]/90 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center shadow-xs">
+      <div className="border-r border-slate-100 dark:border-[#1E3A56] last:border-none">
+        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">Skill Level</span>
+        <span className="text-xs sm:text-sm font-bold text-[#0B1F3A] dark:text-white mt-0.5 block capitalize">{level.toLowerCase()}</span>
       </div>
-      <div className="border-r border-[#23426A] last:border-none">
-        <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">Curriculum</span>
-        <span className="text-xs sm:text-sm font-extrabold text-[#F8FAFC] mt-0.5 block">{formattedCurriculum}</span>
+      <div className="border-r border-slate-100 dark:border-[#1E3A56] last:border-none">
+        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">Curriculum</span>
+        <span className="text-xs sm:text-sm font-bold text-[#0B1F3A] dark:text-white mt-0.5 block">{formattedCurriculum}</span>
       </div>
-      <div className="border-r border-[#23426A] last:border-none">
-        <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">Total Duration</span>
-        <span className="text-xs sm:text-sm font-extrabold text-[#F8FAFC] mt-0.5 block">{formatDuration(totalDurationMinutes)}</span>
+      <div className="border-r border-slate-100 dark:border-[#1E3A56] last:border-none">
+        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">Total Duration</span>
+        <span className="text-xs sm:text-sm font-bold text-[#0B1F3A] dark:text-white mt-0.5 block">{formatDuration(totalDurationMinutes)}</span>
       </div>
       <div>
-        <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">Learners Enrolled</span>
-        <span className="text-xs sm:text-sm font-extrabold text-[#F8FAFC] mt-0.5 block">{formattedStudents}</span>
+        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">Learners Enrolled</span>
+        <span className="text-xs sm:text-sm font-bold text-[#0B1F3A] dark:text-white mt-0.5 block">{formattedStudents}</span>
       </div>
     </div>
   );

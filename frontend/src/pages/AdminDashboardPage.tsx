@@ -36,19 +36,18 @@ import {
   CheckCircle,
   AlertCircle,
   MessageSquare,
-  BarChart3,
 } from 'lucide-react';
-import { CourseAnalyticsModal } from '../components/CourseAnalyticsModal';
+
+import { CertificatesManagementTab } from '../components/admin/CertificatesManagementTab';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
 
   const [data, setData] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedCourseForAnalytics, setSelectedCourseForAnalytics] = useState<{ id: string; title: string } | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'audit' | 'at-risk'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'audit' | 'at-risk' | 'certificates'>('overview');
 
   // Reset Password Modal State
   const [resetModalUser, setResetModalUser] = useState<User | null>(null);
@@ -285,9 +284,9 @@ export const AdminDashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-[#0A1322] text-[#F8FAFC]">
-        <div className="w-10 h-10 border-4 border-[#4FD1C5] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-semibold text-[#CBD5E1]">Loading platform operations...</p>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 bg-[#F1F5F7] text-[#0B1F3A] dark:text-white">
+        <div className="w-10 h-10 border-4 border-[#087F78] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-500 dark:text-[#A9BACB]">Loading platform operations...</p>
       </div>
     );
   }
@@ -296,30 +295,31 @@ export const AdminDashboardPage: React.FC = () => {
   const atRiskStats = atRiskData?.stats;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 bg-[#0A1322] min-h-screen text-[#F8FAFC]">
-      {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#23426A] pb-6">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#1A365D] text-[#4FD1C5] border border-[#4FD1C5]/30 uppercase tracking-wider">
+    <div className="min-h-screen bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white p-4 sm:p-8 lg:p-10 font-sans pb-24 transition-colors">
+      
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-[#1E3A56] mb-8">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] border border-teal-200 dark:border-teal-700/50 uppercase tracking-wider font-mono">
             <Shield className="w-3.5 h-3.5" />
             <span>Super Administrator Console</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white tracking-tight">
             Platform Operations
           </h1>
-          <p className="text-xs sm:text-sm text-[#CBD5E1]">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Monitor academy activity, detect at-risk students, manage user accounts, and oversee learning health.
           </p>
         </div>
 
         {/* Modern Segmented Tab Control */}
-        <div className="flex items-center gap-1.5 bg-[#0E1D33] p-1.5 rounded-2xl border border-[#23426A] self-start md:self-auto shadow-inner overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-white dark:bg-[#102A43] p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 self-start md:self-auto shadow-xs overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === 'overview'
-                ? 'bg-[#4FD1C5] text-[#0A1322] font-extrabold shadow-md shadow-[#4FD1C5]/20'
-                : 'text-[#CBD5E1] hover:text-white'
+                ? 'bg-[#087F78] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
             }`}
           >
             Metrics Overview
@@ -328,14 +328,14 @@ export const AdminDashboardPage: React.FC = () => {
             onClick={() => setActiveTab('at-risk')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
               activeTab === 'at-risk'
-                ? 'bg-[#4FD1C5] text-[#0A1322] font-extrabold shadow-md shadow-[#4FD1C5]/20'
-                : 'text-[#CBD5E1] hover:text-white'
+                ? 'bg-[#087F78] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
             }`}
           >
-            <AlertTriangle className={`w-3.5 h-3.5 ${activeTab === 'at-risk' ? 'text-[#0A1322]' : 'text-[#EF4444]'}`} />
+            <AlertTriangle className={`w-3.5 h-3.5 ${activeTab === 'at-risk' ? 'text-white' : 'text-[#EF4444]'}`} />
             <span>At-Risk Students</span>
             {atRiskStats && atRiskStats.highRisk > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-[#EF4444] text-white text-[10px] font-extrabold">
+              <span className="px-1.5 py-0.2 rounded-full bg-[#EF4444] text-white text-[10px] font-bold">
                 {atRiskStats.highRisk}
               </span>
             )}
@@ -344,8 +344,8 @@ export const AdminDashboardPage: React.FC = () => {
             onClick={() => setActiveTab('users')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === 'users'
-                ? 'bg-[#4FD1C5] text-[#0A1322] font-extrabold shadow-md shadow-[#4FD1C5]/20'
-                : 'text-[#CBD5E1] hover:text-white'
+                ? 'bg-[#087F78] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
             }`}
           >
             User Management
@@ -354,11 +354,22 @@ export const AdminDashboardPage: React.FC = () => {
             onClick={() => setActiveTab('audit')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === 'audit'
-                ? 'bg-[#4FD1C5] text-[#0A1322] font-extrabold shadow-md shadow-[#4FD1C5]/20'
-                : 'text-[#CBD5E1] hover:text-white'
+                ? 'bg-[#087F78] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
             }`}
           >
             Audit Logs
+          </button>
+          <button
+            onClick={() => setActiveTab('certificates')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+              activeTab === 'certificates'
+                ? 'bg-[#087F78] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
+            }`}
+          >
+            <Award className={`w-3.5 h-3.5 ${activeTab === 'certificates' ? 'text-white' : 'text-[#F59E0B]'}`} />
+            <span>Certificates</span>
           </button>
         </div>
       </div>
@@ -368,58 +379,63 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="space-y-8">
           {/* 4 Statistics Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] hover:border-[#4FD1C5]/60 transition space-y-3 shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#1A365D] border border-[#4FD1C5]/30 text-[#4FD1C5] flex items-center justify-center">
-                <Users className="w-5 h-5" />
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] hover:border-[#087F78]/40 transition space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center shadow-xs">
+                  <Users className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-teal-50 dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] px-2 py-0.5 rounded-full border border-teal-200/60 dark:border-teal-700/50">
+                  {metrics.totalStudents || 0} Students
+                </span>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">
                   {metrics.totalUsers || 0}
                 </div>
-                <div className="text-[11px] text-[#94A3B8] font-semibold uppercase tracking-wider mt-0.5">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                   Total Registered Users
                 </div>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] hover:border-[#22C55E]/60 transition space-y-3 shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#22C55E]/15 border border-[#22C55E]/30 text-[#22C55E] flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] hover:border-[#087F78]/40 transition space-y-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center shadow-xs">
                 <DollarSign className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#22C55E]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#087F78] dark:text-[#14B8A6] font-mono">
                   {metrics.totalRevenue || 0} KSH
                 </div>
-                <div className="text-[11px] text-[#94A3B8] font-semibold uppercase tracking-wider mt-0.5">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                   Total Gross Revenue
                 </div>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] hover:border-[#4FD1C5]/60 transition space-y-3 shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#1A365D] border border-[#4FD1C5]/30 text-[#4FD1C5] flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] hover:border-[#087F78]/40 transition space-y-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 text-[#087F78] dark:text-[#14B8A6] flex items-center justify-center shadow-xs">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">
                   {metrics.publishedCourses || 0}{' '}
-                  <span className="text-sm font-normal text-[#94A3B8]">/ {metrics.totalCourses || 0}</span>
+                  <span className="text-sm font-normal text-slate-400">/ {metrics.totalCourses || 0}</span>
                 </div>
-                <div className="text-[11px] text-[#94A3B8] font-semibold uppercase tracking-wider mt-0.5">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                   Courses Published
                 </div>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#132742] border border-[#23426A] hover:border-[#F59E0B]/60 transition space-y-3 shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/30 text-[#F59E0B] flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] hover:border-amber-500/40 transition space-y-3 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/50 text-amber-500 flex items-center justify-center shadow-xs">
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC]">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white font-mono">
                   {metrics.certificatesIssued || 0}
                 </div>
-                <div className="text-[11px] text-[#94A3B8] font-semibold uppercase tracking-wider mt-0.5">
+                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                   Certificates Issued
                 </div>
               </div>
@@ -428,26 +444,26 @@ export const AdminDashboardPage: React.FC = () => {
 
           {/* At-Risk Callout Widget in Overview */}
           {atRiskStats && atRiskStats.totalAtRisk > 0 && (
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-[#1A365D] to-[#132742] border border-[#EF4444]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="p-5 rounded-2xl bg-white dark:bg-[#102A43] border border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-[#EF4444]/20 border border-[#EF4444]/40 text-[#EF4444] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-200 text-[#EF4444] flex items-center justify-center shrink-0 shadow-xs">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
+                  <div className="text-sm font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
                     <span>{atRiskStats.totalAtRisk} Students Flagged as At-Risk</span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#EF4444]/20 text-[#F87171] text-[10px] font-extrabold">
+                    <span className="px-2 py-0.5 rounded-md bg-red-50 text-[#EF4444] text-[10px] font-bold">
                       {atRiskStats.highRisk} High Priority
                     </span>
                   </div>
-                  <p className="text-xs text-[#94A3B8]">
+                  <p className="text-xs text-slate-500 dark:text-[#A9BACB]">
                     Inactivity, stalled course progression, repeated quiz failures, and overdue assignments detected.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveTab('at-risk')}
-                className="px-4 py-2 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
+                className="px-4 py-2 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0"
               >
                 Review & Intervene
                 <ArrowRight className="w-4 h-4" />
@@ -456,61 +472,61 @@ export const AdminDashboardPage: React.FC = () => {
           )}
 
           {/* Auditable Academy Public Statistics Breakdown */}
-          <div className="p-6 sm:p-7 rounded-2xl bg-[#0E1D33] border border-[#23426A] space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#23426A] pb-4">
+          <div className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-[#1E3A56] pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-[#F8FAFC] flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#4FD1C5]" />
+                <h3 className="text-base font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#087F78] dark:text-[#14B8A6]" />
                   <span>Public Statistics & Database Audit</span>
                 </h3>
-                <p className="text-xs text-[#94A3B8] mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Real-time database metrics that drive the public homepage and course discovery pages.
                 </p>
               </div>
-              <span className="text-[10px] font-mono px-3 py-1 bg-[#132742] text-[#4FD1C5] border border-[#23426A] rounded-full self-start sm:self-auto">
+              <span className="text-[10px] font-mono font-bold px-3 py-1 bg-teal-50 dark:bg-[#087F78]/30 text-[#087F78] dark:text-[#14B8A6] border border-teal-200 dark:border-teal-700/50 rounded-full self-start sm:self-auto">
                 100% Database-Driven
               </span>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-[#132742] border border-[#23426A] rounded-xl space-y-1">
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">
+              <div className="p-4 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Active Students
                 </span>
-                <span className="text-xl font-extrabold text-[#F8FAFC] block">
+                <span className="text-xl font-extrabold text-[#0B1F3A] dark:text-white font-mono block">
                   {metrics.totalStudents || 0}
                 </span>
-                <span className="text-[10px] text-[#CBD5E1]">Role: STUDENT</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Role: STUDENT</span>
               </div>
 
-              <div className="p-4 bg-[#132742] border border-[#23426A] rounded-xl space-y-1">
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">
+              <div className="p-4 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Published Courses
                 </span>
-                <span className="text-xl font-extrabold text-[#F8FAFC] block">
+                <span className="text-xl font-extrabold text-[#0B1F3A] dark:text-white font-mono block">
                   {metrics.publishedCourses || 0}
                 </span>
-                <span className="text-[10px] text-[#CBD5E1]">Status: PUBLISHED</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Status: PUBLISHED</span>
               </div>
 
-              <div className="p-4 bg-[#132742] border border-[#23426A] rounded-xl space-y-1">
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">
+              <div className="p-4 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Completed Courses
                 </span>
-                <span className="text-xl font-extrabold text-[#22C55E] block">
+                <span className="text-xl font-extrabold text-[#087F78] dark:text-[#14B8A6] font-mono block">
                   {metrics.completedCourses || 0}
                 </span>
-                <span className="text-[10px] text-[#CBD5E1]">Enrollment status: COMPLETED</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Enrollment status: COMPLETED</span>
               </div>
 
-              <div className="p-4 bg-[#132742] border border-[#23426A] rounded-xl space-y-1">
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">
+              <div className="p-4 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Total Enrollments
                 </span>
-                <span className="text-xl font-extrabold text-[#F8FAFC] block">
+                <span className="text-xl font-extrabold text-[#0B1F3A] dark:text-white font-mono block">
                   {metrics.totalEnrollments || 0}
                 </span>
-                <span className="text-[10px] text-[#CBD5E1]">Active & completed</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Active & completed</span>
               </div>
             </div>
           </div>
@@ -523,11 +539,11 @@ export const AdminDashboardPage: React.FC = () => {
           {/* Top Control Bar & Run Scan Trigger */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A] dark:text-white flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
                 At-Risk Student Detection & Learning Health
               </h2>
-              <p className="text-xs text-[#94A3B8] mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Automated multi-factor risk detection: Inactivity (10+ days), Stalled progress, 3+ Quiz failures, Overdue assignments, and Low scores.
               </p>
             </div>
@@ -535,7 +551,7 @@ export const AdminDashboardPage: React.FC = () => {
             <button
               onClick={handleTriggerScan}
               disabled={atRiskScanning}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white text-xs font-bold transition-all shadow-md shadow-[#0284C7]/20 flex items-center gap-2 self-start sm:self-auto disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 self-start sm:self-auto disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${atRiskScanning ? 'animate-spin' : ''}`} />
               {atRiskScanning ? 'Analyzing Students...' : 'Run Risk Analysis Scan'}
@@ -544,63 +560,63 @@ export const AdminDashboardPage: React.FC = () => {
 
           {/* KPI Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-            <div className="p-4 rounded-2xl bg-[#132742] border border-[#23426A] space-y-1">
-              <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block">
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] shadow-xs space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                 Total At-Risk
               </span>
-              <span className="text-2xl font-extrabold text-white block">
+              <span className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white font-mono block">
                 {atRiskStats?.totalAtRisk || 0}
               </span>
-              <span className="text-[10px] text-[#94A3B8]">Active flags</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Active flags</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#7F1D1D]/30 border border-[#EF4444]/40 space-y-1">
-              <span className="text-[10px] font-bold text-[#FCA5A5] uppercase tracking-wider block flex items-center gap-1">
+            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 space-y-1 shadow-xs">
+              <span className="text-[10px] font-bold text-[#EF4444] uppercase tracking-wider block flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> High Risk
               </span>
-              <span className="text-2xl font-extrabold text-[#EF4444] block">
+              <span className="text-2xl font-extrabold text-[#EF4444] font-mono block">
                 {atRiskStats?.highRisk || 0}
               </span>
-              <span className="text-[10px] text-[#FCA5A5]">Immediate attention</span>
+              <span className="text-[10px] text-red-600 dark:text-red-400">Immediate attention</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#78350F]/30 border border-[#F59E0B]/40 space-y-1">
-              <span className="text-[10px] font-bold text-[#FDE68A] uppercase tracking-wider block flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#F59E0B]" /> Medium Risk
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/60 space-y-1 shadow-xs">
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500" /> Medium Risk
               </span>
-              <span className="text-2xl font-extrabold text-[#F59E0B] block">
+              <span className="text-2xl font-extrabold text-amber-700 dark:text-amber-400 font-mono block">
                 {atRiskStats?.mediumRisk || 0}
               </span>
-              <span className="text-[10px] text-[#FDE68A]">Single major blocker</span>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400">Single major blocker</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#064E3B]/30 border border-[#10B981]/40 space-y-1">
-              <span className="text-[10px] font-bold text-[#A7F3D0] uppercase tracking-wider block flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#10B981]" /> Low Risk
+            <div className="p-4 rounded-2xl bg-teal-50 dark:bg-[#087F78]/30 border border-teal-200 dark:border-teal-700/50 space-y-1 shadow-xs">
+              <span className="text-[10px] font-bold text-[#087F78] dark:text-[#14B8A6] uppercase tracking-wider block flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#087F78]" /> Low Risk
               </span>
-              <span className="text-2xl font-extrabold text-[#10B981] block">
+              <span className="text-2xl font-extrabold text-[#087F78] dark:text-[#14B8A6] font-mono block">
                 {atRiskStats?.lowRisk || 0}
               </span>
-              <span className="text-[10px] text-[#A7F3D0]">Early warning</span>
+              <span className="text-[10px] text-teal-700 dark:text-teal-400">Early warning</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0D1E36] border border-[#23426A] space-y-1 col-span-2 sm:col-span-1">
-              <span className="text-[10px] font-bold text-[#4FD1C5] uppercase tracking-wider block flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-[#4FD1C5]" /> Recovered
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] space-y-1 col-span-2 sm:col-span-1 shadow-xs">
+              <span className="text-[10px] font-bold text-[#087F78] dark:text-[#14B8A6] uppercase tracking-wider block flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-[#087F78] dark:text-[#14B8A6]" /> Recovered
               </span>
-              <span className="text-2xl font-extrabold text-[#4FD1C5] block">
+              <span className="text-2xl font-extrabold text-[#087F78] dark:text-[#14B8A6] font-mono block">
                 {atRiskStats?.recovered || 0}
               </span>
-              <span className="text-[10px] text-[#94A3B8]">Last 30 days</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">Last 30 days</span>
             </div>
           </div>
 
           {/* Search & Filter Controls Bar */}
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl p-4 space-y-3">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-2xl p-4 space-y-3 shadow-xs">
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
               {/* Search */}
               <div className="sm:col-span-4 relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search student by name or email..."
@@ -609,7 +625,7 @@ export const AdminDashboardPage: React.FC = () => {
                     setAtRiskSearch(e.target.value);
                     setAtRiskPage(1);
                   }}
-                  className="w-full pl-9 pr-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                 />
               </div>
 
@@ -621,7 +637,7 @@ export const AdminDashboardPage: React.FC = () => {
                     setAtRiskLevelFilter(e.target.value);
                     setAtRiskPage(1);
                   }}
-                  className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                 >
                   <option value="ALL">All Risk Levels</option>
                   <option value="HIGH">🔴 High Risk Only</option>
@@ -638,7 +654,7 @@ export const AdminDashboardPage: React.FC = () => {
                     setAtRiskReasonFilter(e.target.value);
                     setAtRiskPage(1);
                   }}
-                  className="w-full px-3 py-2 bg-[#0E1D33] border border-[#23426A] rounded-xl text-xs text-white focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78]"
                 >
                   <option value="ALL">All Risk Reasons</option>
                   <option value="INACTIVE_10_DAYS">Inactivity (10+ Days)</option>
@@ -650,7 +666,7 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
 
               {/* Status Tabs */}
-              <div className="sm:col-span-2 flex items-center bg-[#0E1D33] border border-[#23426A] rounded-xl p-1">
+              <div className="sm:col-span-2 flex items-center bg-slate-100 dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] rounded-xl p-1">
                 {[
                   { id: 'ACTIVE', label: 'Active' },
                   { id: 'RESOLVED', label: 'Recovered' },
@@ -664,8 +680,8 @@ export const AdminDashboardPage: React.FC = () => {
                     }}
                     className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all text-center ${
                       atRiskStatusFilter === st.id
-                        ? 'bg-[#1A365D] text-[#4FD1C5]'
-                        : 'text-[#94A3B8] hover:text-white'
+                        ? 'bg-[#087F78] text-white shadow-xs'
+                        : 'text-slate-600 dark:text-[#A9BACB] hover:text-[#0B1F3A]'
                     }`}
                   >
                     {st.label}
@@ -676,28 +692,28 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
 
           {/* At-Risk Table */}
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56]/90 rounded-2xl overflow-hidden shadow-xs">
             {atRiskLoading ? (
-              <div className="p-12 text-center text-xs text-[#94A3B8] flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-3 border-[#4FD1C5] border-t-transparent rounded-full animate-spin" />
+              <div className="p-12 text-center text-xs text-slate-400 flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#087F78] border-t-transparent rounded-full animate-spin" />
                 <span>Loading at-risk analytics...</span>
               </div>
             ) : !atRiskData?.records || atRiskData.records.length === 0 ? (
               <div className="p-16 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#064E3B]/30 border border-[#10B981]/40 text-[#10B981] flex items-center justify-center mx-auto mb-3">
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 text-[#087F78] flex items-center justify-center mx-auto mb-3 shadow-xs">
                   <CheckCircle className="w-7 h-7" />
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">
+                <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white mb-1">
                   🎉 No students are currently at risk!
                 </h3>
-                <p className="text-xs text-[#94A3B8] max-w-md mx-auto">
+                <p className="text-xs text-slate-500 dark:text-[#A9BACB] max-w-md mx-auto">
                   All monitored students are actively logging in, advancing through course lessons, and maintaining positive assessment performance.
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs text-[#CBD5E1]">
-                  <thead className="bg-[#0E1D33] border-b border-[#23426A] text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">
+                <table className="w-full text-left border-collapse text-xs text-slate-600 dark:text-[#A9BACB]">
+                  <thead className="bg-slate-50 dark:bg-[#152F4A] border-b border-slate-200 dark:border-[#1E3A56] text-[10px] font-bold text-slate-500 dark:text-[#A9BACB] uppercase tracking-wider font-mono">
                     <tr>
                       <th className="p-3.5">Student</th>
                       <th className="p-3.5">Risk Level</th>
@@ -708,48 +724,48 @@ export const AdminDashboardPage: React.FC = () => {
                       <th className="p-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#23426A]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
                     {atRiskData.records.map((rec) => (
-                      <tr key={rec.id} className="hover:bg-[#1A365D]/40 transition-colors">
+                      <tr key={rec.id} className="hover:bg-slate-50 dark:hover:bg-[#152F4A] dark:bg-[#152F4A] transition-colors">
                         <td className="p-3.5">
-                          <div className="font-bold text-white text-sm">{rec.user.name}</div>
-                          <div className="text-[11px] text-[#94A3B8]">{rec.user.email}</div>
+                          <div className="font-bold text-[#0B1F3A] dark:text-white text-sm">{rec.user.name}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-[#A9BACB]">{rec.user.email}</div>
                         </td>
 
                         <td className="p-3.5 whitespace-nowrap">
                           {rec.riskLevel === 'HIGH' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EF4444]/20 border border-[#EF4444] text-[#F87171] text-[10px] font-extrabold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-[#EF4444] text-[10px] font-bold">
                               🔴 HIGH
                             </span>
                           ) : rec.riskLevel === 'MEDIUM' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B] text-[#FDE68A] text-[10px] font-extrabold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
                               🟠 MEDIUM
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#10B981]/20 border border-[#10B981] text-[#A7F3D0] text-[10px] font-extrabold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[#087F78] text-[10px] font-bold">
                               🟡 LOW
                             </span>
                           )}
                         </td>
 
                         <td className="p-3.5 max-w-sm">
-                          <div className="font-semibold text-white line-clamp-1">{rec.title}</div>
-                          <div className="text-[11px] text-[#94A3B8] line-clamp-2 mt-0.5">
+                          <div className="font-bold text-[#0B1F3A] dark:text-white line-clamp-1">{rec.title}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-[#A9BACB] line-clamp-2 mt-0.5">
                             {rec.details}
                           </div>
                         </td>
 
                         <td className="p-3.5 whitespace-nowrap">
                           {rec.course ? (
-                            <span className="text-[11px] text-[#4FD1C5] font-semibold">
+                            <span className="text-[11px] text-[#087F78] font-bold">
                               {rec.course.title}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-[#64748B]">Platform-wide</span>
+                            <span className="text-[11px] text-slate-400">Platform-wide</span>
                           )}
                         </td>
 
-                        <td className="p-3.5 whitespace-nowrap text-[11px] text-[#94A3B8]">
+                        <td className="p-3.5 whitespace-nowrap text-[11px] text-slate-500 dark:text-[#A9BACB]">
                           {new Date(rec.detectedAt).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -760,10 +776,10 @@ export const AdminDashboardPage: React.FC = () => {
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                               rec.status === 'ACTIVE'
-                                ? 'bg-[#EF4444]/15 text-[#F87171] border border-[#EF4444]/30'
+                                ? 'bg-red-50 text-[#EF4444] border border-red-200'
                                 : rec.status === 'RESOLVED'
-                                ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
-                                : 'bg-[#334155] text-[#94A3B8]'
+                                ? 'bg-teal-50 text-[#087F78] border border-teal-200'
+                                : 'bg-slate-100 dark:bg-[#0B223D] text-slate-600 dark:text-[#A9BACB]'
                             }`}
                           >
                             {rec.status}
@@ -774,7 +790,7 @@ export const AdminDashboardPage: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleOpenStudentDetails(rec.user.id)}
-                              className="px-3 py-1.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-[11px] font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+                              className="px-3 py-1.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white text-[11px] font-bold transition-colors flex items-center gap-1.5 shadow-xs"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
                               Intervene
@@ -784,7 +800,7 @@ export const AdminDashboardPage: React.FC = () => {
                               <button
                                 onClick={() => setDismissRecordId(rec.id)}
                                 title="Dismiss Risk Alert"
-                                className="p-1.5 rounded-lg bg-[#0E1D33] border border-[#23426A] text-[#94A3B8] hover:text-white transition-colors"
+                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] text-slate-500 dark:text-[#A9BACB] hover:text-[#0B1F3A] hover:bg-slate-100 dark:hover:bg-[#0B223D] dark:bg-[#0B223D] transition-colors shadow-xs"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -800,26 +816,25 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* Tab 3: User Management */}
       {activeTab === 'users' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold text-[#F8FAFC]">Platform User Directory</h2>
-              <p className="text-xs text-[#94A3B8]">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A] dark:text-white">Platform User Directory</h2>
+              <p className="text-xs text-slate-500 dark:text-[#A9BACB]">
                 Manage user role privileges, account suspension, and password resets.
               </p>
             </div>
-            <span className="text-xs text-[#CBD5E1] font-medium font-mono">
+            <span className="text-xs text-slate-500 dark:text-[#A9BACB] font-bold font-mono">
               {users.length} Users Total
             </span>
           </div>
 
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56]/90 rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs text-[#CBD5E1]">
-                <thead className="bg-[#0E1D33] border-b border-[#23426A] text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
+              <table className="w-full text-left border-collapse text-xs text-slate-600 dark:text-[#A9BACB]">
+                <thead className="bg-slate-50 dark:bg-[#152F4A] border-b border-slate-200 dark:border-[#1E3A56] text-[11px] font-bold text-slate-500 dark:text-[#A9BACB] uppercase tracking-wider font-mono">
                   <tr>
                     <th className="p-4">Name & Email</th>
                     <th className="p-4">Role Privileges</th>
@@ -827,17 +842,17 @@ export const AdminDashboardPage: React.FC = () => {
                     <th className="p-4">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#23426A]">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
                   {users.map((u) => {
                     const isSuperAdminAccount = u.role === 'SUPER_ADMIN';
                     const isCurrentSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
                     const cannotModify = isSuperAdminAccount && !isCurrentSuperAdmin;
 
                     return (
-                      <tr key={u.id} className="hover:bg-[#1A365D]/60 transition">
+                      <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-[#152F4A] dark:bg-[#152F4A] transition">
                         <td className="p-4">
-                          <div className="font-bold text-[#F8FAFC]">{u.name}</div>
-                          <div className="text-[11px] text-[#94A3B8]">{u.email}</div>
+                          <div className="font-bold text-[#0B1F3A] dark:text-white">{u.name}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-[#A9BACB]">{u.email}</div>
                         </td>
                         <td className="p-4">
                           <select
@@ -846,7 +861,7 @@ export const AdminDashboardPage: React.FC = () => {
                             onChange={(e) =>
                               handleUpdateRoleOrStatus(u.id, e.target.value as any, undefined)
                             }
-                            className="bg-[#0E1D33] border border-[#23426A] text-xs rounded-xl px-3 py-1.5 text-[#F8FAFC] focus:outline-none focus:border-[#4FD1C5] disabled:opacity-50 font-medium"
+                            className="bg-slate-50 border border-slate-200 dark:border-[#1E3A56] text-xs rounded-xl px-3 py-1.5 text-[#0B1F3A] dark:text-white focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78] disabled:opacity-50 font-bold"
                           >
                             <option value="STUDENT">STUDENT</option>
                             <option value="INSTRUCTOR">INSTRUCTOR</option>
@@ -858,10 +873,10 @@ export const AdminDashboardPage: React.FC = () => {
                         </td>
                         <td className="p-4">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                               u.status === 'ACTIVE'
-                                ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30'
-                                : 'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
+                                ? 'bg-teal-50 text-[#087F78] border border-teal-200'
+                                : 'bg-red-50 text-[#EF4444] border border-red-200'
                             }`}
                           >
                             {u.status}
@@ -879,8 +894,8 @@ export const AdminDashboardPage: React.FC = () => {
                             }
                             className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition ${
                               u.status === 'ACTIVE'
-                                ? 'bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30 hover:bg-[#EF4444]/25'
-                                : 'bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30 hover:bg-[#22C55E]/25'
+                                ? 'bg-red-50 text-[#EF4444] border-red-200 hover:bg-red-100'
+                                : 'bg-teal-50 text-[#087F78] border-teal-200 hover:bg-teal-100'
                             } disabled:opacity-50`}
                           >
                             {u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
@@ -888,7 +903,7 @@ export const AdminDashboardPage: React.FC = () => {
                           <button
                             disabled={cannotModify}
                             onClick={() => setResetModalUser(u)}
-                            className="p-2 rounded-xl bg-[#0E1D33] border border-[#23426A] text-[#CBD5E1] hover:text-white hover:border-[#4FD1C5] disabled:opacity-50 transition"
+                            className="p-2 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] text-slate-600 dark:text-[#A9BACB] hover:text-[#087F78] hover:bg-slate-100 dark:hover:bg-[#0B223D] dark:bg-[#0B223D] hover:border-[#087F78] disabled:opacity-50 transition shadow-xs"
                             title="Reset Password"
                           >
                             <Key className="w-3.5 h-3.5" />
@@ -896,7 +911,7 @@ export const AdminDashboardPage: React.FC = () => {
                           <button
                             disabled={cannotModify || u.id === currentUser?.id}
                             onClick={() => setUserToDelete(u)}
-                            className="p-2 rounded-xl bg-[#0E1D33] border border-[#23426A] hover:bg-[#EF4444]/20 hover:border-[#EF4444]/40 text-[#CBD5E1] hover:text-[#EF4444] disabled:opacity-30 transition"
+                            className="p-2 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] hover:bg-red-50 hover:border-red-200 text-slate-600 dark:text-[#A9BACB] hover:text-[#EF4444] disabled:opacity-30 transition shadow-xs"
                             title="Delete User"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -917,20 +932,20 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold text-[#F8FAFC]">Security Audit Logs</h2>
-              <p className="text-xs text-[#94A3B8]">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A] dark:text-white">Security Audit Logs</h2>
+              <p className="text-xs text-slate-500 dark:text-[#A9BACB]">
                 Immutable record of administrative changes and system events.
               </p>
             </div>
-            <span className="text-xs text-[#CBD5E1] font-medium font-mono">
+            <span className="text-xs text-slate-500 dark:text-[#A9BACB] font-bold font-mono">
               {auditLogs.length} Events
             </span>
           </div>
 
-          <div className="bg-[#132742] border border-[#23426A] rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56]/90 rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs text-[#CBD5E1]">
-                <thead className="bg-[#0E1D33] border-b border-[#23426A] text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
+              <table className="w-full text-left border-collapse text-xs text-slate-600 dark:text-[#A9BACB]">
+                <thead className="bg-slate-50 dark:bg-[#152F4A] border-b border-slate-200 dark:border-[#1E3A56] text-[11px] font-bold text-slate-500 dark:text-[#A9BACB] uppercase tracking-wider font-mono">
                   <tr>
                     <th className="p-4">Action</th>
                     <th className="p-4">Entity</th>
@@ -939,16 +954,16 @@ export const AdminDashboardPage: React.FC = () => {
                     <th className="p-4">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#23426A]">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#1E3A56]">
                   {auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[#1A365D]/60 transition">
-                      <td className="p-4 font-bold text-[#4FD1C5] font-mono">{log.action}</td>
-                      <td className="p-4 text-[#F8FAFC] font-medium">{log.entity}</td>
-                      <td className="p-4 text-[#CBD5E1]">{log.user?.email || 'System'}</td>
-                      <td className="p-4 font-mono text-[11px] text-[#94A3B8]">
+                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#152F4A] dark:bg-[#152F4A] transition">
+                      <td className="p-4 font-bold text-[#087F78] font-mono">{log.action}</td>
+                      <td className="p-4 text-[#0B1F3A] dark:text-white font-bold">{log.entity}</td>
+                      <td className="p-4 text-slate-500 dark:text-[#A9BACB]">{log.user?.email || 'System'}</td>
+                      <td className="p-4 font-mono text-[11px] text-slate-400">
                         {log.ipAddress || '127.0.0.1'}
                       </td>
-                      <td className="p-4 text-[11px] text-[#94A3B8]">
+                      <td className="p-4 text-[11px] text-slate-400">
                         {new Date(log.createdAt).toLocaleString()}
                       </td>
                     </tr>
@@ -960,36 +975,41 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
+      {/* Tab 5: Certificates Registry & Governance */}
+      {activeTab === 'certificates' && (
+        <CertificatesManagementTab />
+      )}
+
       {/* STUDENT INTERVENTION & RISK PROFILE MODAL / DRAWER */}
       {selectedStudentDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#0D1E36] border border-[#23426A] rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl space-y-6">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-[#23426A] pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-[#1E3A56] pb-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#1A365D] border border-[#4FD1C5]/30 text-[#4FD1C5] font-extrabold flex items-center justify-center text-base">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#087F78] font-extrabold flex items-center justify-center text-base shadow-xs">
                   {selectedStudentDetails.student.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
                     <span>{selectedStudentDetails.student.name}</span>
                     {selectedStudentDetails.student.currentRiskLevel === 'HIGH' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-[#EF4444]/20 border border-[#EF4444] text-[#F87171] text-[10px] font-extrabold">
+                      <span className="px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-[#EF4444] text-[10px] font-bold">
                         🔴 HIGH RISK
                       </span>
                     ) : selectedStudentDetails.student.currentRiskLevel === 'MEDIUM' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B] text-[#FDE68A] text-[10px] font-extrabold">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
                         🟠 MEDIUM RISK
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-[#10B981]/20 border border-[#10B981] text-[#A7F3D0] text-[10px] font-extrabold">
+                      <span className="px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[#087F78] text-[10px] font-bold">
                         🟡 LOW RISK
                       </span>
                     )}
                   </h3>
-                  <div className="text-xs text-[#94A3B8]">
+                  <div className="text-xs text-slate-500 dark:text-[#A9BACB]">
                     {selectedStudentDetails.student.email} • Inactive for{' '}
-                    <strong className="text-white">
+                    <strong className="text-[#0B1F3A] dark:text-white">
                       {selectedStudentDetails.student.inactivityDays} days
                     </strong>
                   </div>
@@ -998,28 +1018,28 @@ export const AdminDashboardPage: React.FC = () => {
 
               <button
                 onClick={() => setSelectedStudentDetails(null)}
-                className="text-[#94A3B8] hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-[#0B1F3A] dark:text-white p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {interventionSuccess && (
-              <div className="p-3.5 rounded-xl bg-[#064E3B]/80 border border-[#10B981] text-[#A7F3D0] text-xs flex items-center gap-2 animate-fadeIn">
-                <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
+              <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-[#087F78] text-xs font-bold flex items-center gap-2 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-[#087F78] shrink-0" />
                 <span>{interventionSuccess}</span>
               </div>
             )}
 
             {/* Diagnostic Signals Breakdown */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#4FD1C5] uppercase tracking-wider flex items-center gap-1.5">
+              <h4 className="text-xs font-bold text-[#087F78] uppercase tracking-wider flex items-center gap-1.5 font-mono">
                 <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
                 Active Risk Factors ({selectedStudentDetails.activeRisks.length})
               </h4>
 
               {selectedStudentDetails.activeRisks.length === 0 ? (
-                <div className="p-4 rounded-xl bg-[#064E3B]/20 border border-[#10B981]/30 text-xs text-[#A7F3D0]">
+                <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-[#087F78]">
                   No active risk blockers currently detected for this student.
                 </div>
               ) : (
@@ -1027,17 +1047,17 @@ export const AdminDashboardPage: React.FC = () => {
                   {selectedStudentDetails.activeRisks.map((risk) => (
                     <div
                       key={risk.id}
-                      className="p-3.5 rounded-xl bg-[#071326] border border-[#23426A] space-y-1 text-xs"
+                      className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] space-y-1 text-xs"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-white">{risk.title}</span>
-                        <span className="text-[10px] text-[#94A3B8]">
+                        <span className="font-bold text-[#0B1F3A] dark:text-white">{risk.title}</span>
+                        <span className="text-[10px] text-slate-400">
                           Detected {new Date(risk.detectedAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-[#CBD5E1] text-[11px] leading-relaxed">{risk.details}</p>
+                      <p className="text-slate-600 dark:text-[#A9BACB] text-[11px] leading-relaxed">{risk.details}</p>
                       {risk.recommendedAction && (
-                        <div className="text-[10px] text-[#4FD1C5] font-semibold pt-1 flex items-center gap-1">
+                        <div className="text-[10px] text-[#087F78] font-bold pt-1 flex items-center gap-1">
                           <span>💡 Recommendation:</span> {risk.recommendedAction}
                         </div>
                       )}
@@ -1049,8 +1069,8 @@ export const AdminDashboardPage: React.FC = () => {
 
             {/* Course Enrollments & Progress */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#CBD5E1] uppercase tracking-wider flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-[#4FD1C5]" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                <BookOpen className="w-4 h-4 text-[#087F78]" />
                 Enrolled Courses & Progression
               </h4>
 
@@ -1058,29 +1078,19 @@ export const AdminDashboardPage: React.FC = () => {
                 {selectedStudentDetails.student.enrollments.map((enr) => (
                   <div
                     key={enr.courseId}
-                    className="p-3 rounded-xl bg-[#071326] border border-[#23426A] space-y-2 text-xs"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-[#1E3A56] space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-white line-clamp-1">{enr.courseTitle}</span>
-                      <span className="text-[11px] font-extrabold text-[#4FD1C5]">
+                      <span className="font-bold text-[#0B1F3A] dark:text-white line-clamp-1">{enr.courseTitle}</span>
+                      <span className="text-[11px] font-extrabold text-[#087F78] font-mono">
                         {Math.round(enr.progressPercentage)}%
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-[#132742] rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-200 dark:bg-[#0B223D] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#10B981] rounded-full"
+                        className="h-full bg-[#087F78] rounded-full"
                         style={{ width: `${enr.progressPercentage}%` }}
                       />
-                    </div>
-                    <div className="pt-1 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCourseForAnalytics({ id: enr.courseId, title: enr.courseTitle })}
-                        className="text-[10px] text-[#38BDF8] hover:underline font-bold flex items-center gap-1"
-                      >
-                        <BarChart3 className="w-3 h-3" />
-                        <span>Course Performance & Results →</span>
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -1088,31 +1098,31 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             {/* Supportive Message Intervention Composer */}
-            <div className="p-5 rounded-2xl bg-[#071326] border border-[#4FD1C5]/40 space-y-4">
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#152F4A] border border-teal-200 space-y-4">
               <div>
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#4FD1C5]" />
+                <h4 className="text-sm font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <Send className="w-4 h-4 text-[#087F78]" />
                   Send Supportive Educational Intervention
                 </h4>
-                <p className="text-xs text-[#94A3B8] mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-[#A9BACB] mt-0.5">
                   Sends an in-app encouragement notification and email directly to the student.
                 </p>
               </div>
 
               <form onSubmit={handleSendIntervention} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-white font-semibold mb-1">Subject / Title</label>
+                  <label className="block text-[#0B1F3A] dark:text-white font-bold mb-1">Subject / Title</label>
                   <input
                     type="text"
                     required
                     value={interventionTitle}
                     onChange={(e) => setInterventionTitle(e.target.value)}
-                    className="w-full p-2.5 bg-[#0D1E36] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5]"
+                    className="w-full p-2.5 bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:border-[#087F78]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-1">
+                  <label className="block text-[#0B1F3A] dark:text-white font-bold mb-1">
                     Supportive Message
                   </label>
                   <textarea
@@ -1120,7 +1130,7 @@ export const AdminDashboardPage: React.FC = () => {
                     required
                     value={interventionMessage}
                     onChange={(e) => setInterventionMessage(e.target.value)}
-                    className="w-full p-3 bg-[#0D1E36] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5] resize-none leading-relaxed"
+                    className="w-full p-3 bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:border-[#087F78] resize-none leading-relaxed"
                   />
                 </div>
 
@@ -1128,7 +1138,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={sendingIntervention || !interventionMessage.trim()}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#0284C7] to-[#0EA5E9] hover:from-[#0369A1] hover:to-[#0284C7] text-white font-bold text-xs transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs transition-all shadow-xs flex items-center gap-2 disabled:opacity-50"
                   >
                     <Send className="w-3.5 h-3.5" />
                     {sendingIntervention ? 'Sending Message...' : 'Send Supportive Intervention'}
@@ -1142,13 +1152,13 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* MODAL: DISMISS RISK CONFIRMATION */}
       {dismissRecordId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-xs">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-xs">
+            <h3 className="text-base font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
               Dismiss Risk Alert
             </h3>
-            <p className="text-[#CBD5E1]">
+            <p className="text-slate-600 dark:text-[#A9BACB]">
               Are you sure you want to dismiss this risk flag? Please provide a reason for the record.
             </p>
 
@@ -1157,7 +1167,7 @@ export const AdminDashboardPage: React.FC = () => {
               placeholder="e.g. Student contacted via phone and resolved blocker..."
               value={dismissReason}
               onChange={(e) => setDismissReason(e.target.value)}
-              className="w-full p-2.5 bg-[#0E1D33] border border-[#23426A] rounded-xl text-white focus:outline-none focus:border-[#4FD1C5] resize-none"
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-[#A9BACB] focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78] resize-none"
             />
 
             <div className="flex items-center justify-end gap-2 pt-2">
@@ -1167,7 +1177,7 @@ export const AdminDashboardPage: React.FC = () => {
                   setDismissRecordId(null);
                   setDismissReason('');
                 }}
-                className="px-4 py-2 rounded-xl bg-[#0E1D33] text-white font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] text-slate-700 dark:text-[#A9BACB] font-bold"
               >
                 Cancel
               </button>
@@ -1175,7 +1185,7 @@ export const AdminDashboardPage: React.FC = () => {
                 type="button"
                 onClick={handleDismissRecord}
                 disabled={dismissing}
-                className="px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0A1322] font-bold disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold disabled:opacity-50 shadow-xs"
               >
                 {dismissing ? 'Dismissing...' : 'Confirm Dismiss'}
               </button>
@@ -1186,24 +1196,24 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Modal: Reset Password */}
       {resetModalUser && (
-        <div className="fixed inset-0 z-50 bg-[#0A1322]/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl">
             <div>
-              <h2 className="text-lg font-extrabold text-[#F8FAFC]">Reset User Password</h2>
-              <p className="text-xs text-[#CBD5E1] mt-1">
-                Target Account: <strong className="text-white">{resetModalUser.email}</strong>
+              <h2 className="text-lg font-extrabold text-[#0B1F3A] dark:text-white">Reset User Password</h2>
+              <p className="text-xs text-slate-500 dark:text-[#A9BACB] mt-1">
+                Target Account: <strong className="text-[#0B1F3A] dark:text-white">{resetModalUser.email}</strong>
               </p>
             </div>
 
             <form onSubmit={handleResetUserPassword} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#CBD5E1]">New Temporary Password</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-[#A9BACB] uppercase">New Temporary Password</label>
                 <input
                   type="text"
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-[#0E1D33] border border-[#23426A] rounded-xl p-2.5 text-xs text-[#F8FAFC] font-mono focus:outline-none focus:border-[#4FD1C5]"
+                  className="w-full bg-slate-50 border border-slate-200 dark:border-[#1E3A56] rounded-xl p-2.5 text-xs text-[#0B1F3A] dark:text-white font-mono focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] dark:bg-[#102A43] focus:border-[#087F78]"
                 />
               </div>
 
@@ -1211,14 +1221,14 @@ export const AdminDashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setResetModalUser(null)}
-                  className="px-4 py-2.5 bg-[#0E1D33] border border-[#23426A] text-xs font-bold text-[#CBD5E1] hover:text-white rounded-xl transition"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold text-slate-700 dark:text-[#A9BACB] rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={resetting}
-                  className="px-6 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-xs font-extrabold text-white rounded-xl shadow-lg transition"
+                  className="px-6 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-xs font-bold text-white rounded-xl shadow-xs transition"
                 >
                   {resetting ? 'Resetting...' : 'Confirm Reset'}
                 </button>
@@ -1230,30 +1240,30 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Modal: Delete User Confirmation */}
       {userToDelete && (
-        <div className="fixed inset-0 z-50 bg-[#0A1322]/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#132742] border border-[#23426A] rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-[#EF4444]/15 border border-[#EF4444]/30 text-[#EF4444] flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#102A43] border border-slate-200 dark:border-[#1E3A56] rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-[#EF4444] flex items-center justify-center shadow-xs">
               <AlertTriangle className="w-6 h-6" />
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-lg font-extrabold text-[#F8FAFC]">Delete User Account?</h2>
-              <p className="text-xs text-[#CBD5E1] leading-relaxed">
+              <h2 className="text-lg font-extrabold text-[#0B1F3A] dark:text-white">Delete User Account?</h2>
+              <p className="text-xs text-slate-600 dark:text-[#A9BACB] leading-relaxed">
                 Are you sure you want to permanently delete user{' '}
-                <strong className="text-[#F8FAFC]">"{userToDelete.name}"</strong> (
-                <span className="text-[#4FD1C5]">{userToDelete.email}</span>)?
+                <strong className="text-[#0B1F3A] dark:text-white">"{userToDelete.name}"</strong> (
+                <span className="text-[#087F78] font-semibold">{userToDelete.email}</span>)?
               </p>
-              <p className="text-[11px] text-[#EF4444] font-medium pt-1">
+              <p className="text-[11px] text-[#EF4444] font-semibold pt-1">
                 ⚠️ All enrollments, certificate records, submissions, and course progresses for this user will be removed. This action cannot be undone.
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#23426A]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-[#1E3A56]">
               <button
                 type="button"
                 onClick={() => setUserToDelete(null)}
                 disabled={deletingUser}
-                className="px-4 py-2.5 bg-[#0E1D33] hover:bg-[#1A365D] border border-[#23426A] text-xs font-bold text-[#CBD5E1] hover:text-white rounded-xl transition"
+                className="px-4 py-2.5 bg-slate-100 dark:bg-[#0B223D] hover:bg-slate-200 dark:hover:bg-[#1E3A56] dark:bg-[#0B223D] border border-slate-200 dark:border-[#1E3A56] text-xs font-bold text-slate-700 dark:text-[#A9BACB] rounded-xl transition"
               >
                 Cancel
               </button>
@@ -1261,22 +1271,13 @@ export const AdminDashboardPage: React.FC = () => {
                 type="button"
                 onClick={handleDeleteUser}
                 disabled={deletingUser}
-                className="px-6 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] disabled:opacity-50 text-xs font-extrabold text-white rounded-xl shadow-lg shadow-[#EF4444]/25 transition"
+                className="px-6 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] disabled:opacity-50 text-xs font-bold text-white rounded-xl shadow-xs transition"
               >
                 {deletingUser ? 'Deleting...' : 'Delete User'}
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Course Analytics & Student Performance Modal */}
-      {selectedCourseForAnalytics && (
-        <CourseAnalyticsModal
-          courseId={selectedCourseForAnalytics.id}
-          courseTitle={selectedCourseForAnalytics.title}
-          onClose={() => setSelectedCourseForAnalytics(null)}
-        />
       )}
     </div>
   );

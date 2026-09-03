@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/authSlice';
 import { api } from '../services/api';
-import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -41,13 +41,11 @@ export const LoginPage: React.FC = () => {
           })
         );
 
-        // Priority 1: Redirect query parameter
         if (redirectTarget) {
           navigate(redirectTarget);
           return;
         }
 
-        // Priority 2: Role-based default dashboard
         if (res.data.user.role === 'ADMIN' || res.data.user.role === 'SUPER_ADMIN') {
           navigate('/admin/dashboard');
         } else if (res.data.user.role === 'INSTRUCTOR') {
@@ -92,29 +90,42 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-[#0A1322] font-sans">
-      <div className="w-full max-w-md bg-[#132742] border border-[#23426A] rounded-3xl p-8 shadow-2xl space-y-6">
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 bg-[#F1F5F7] dark:bg-[#07182D] text-[#0B1F3A] dark:text-white font-sans transition-colors">
+      <div className="w-full max-w-md bg-white dark:bg-[#102A43] border border-slate-200/90 dark:border-[#1E3A56] rounded-3xl p-8 shadow-xs space-y-6">
         
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-white/95 p-1.5 border border-[#4FD1C5]/30 flex items-center justify-center mx-auto shadow-lg shadow-[#4FD1C5]/10">
+        <div className="text-center space-y-3">
+          <div className="relative flex items-center justify-center">
             <img
-              src="/logo.png"
+              src="/logo-transparent.png"
               alt="Khalil Academy"
-              className="w-full h-full object-contain"
+              className="w-24 h-auto mx-auto object-contain drop-shadow-sm dark:hidden"
+              onError={(e) => {
+                e.currentTarget.src = '/logo.png';
+              }}
+            />
+            <img
+              src="/logo-dark-mode.png"
+              alt="Khalil Academy"
+              className="w-24 h-auto mx-auto object-contain drop-shadow-md hidden dark:block"
+              onError={(e) => {
+                e.currentTarget.src = '/logo.png';
+              }}
             />
           </div>
-          <h1 className="text-2xl font-extrabold text-[#F8FAFC]">Welcome Back</h1>
-          <p className="text-xs text-[#CBD5E1]">Sign in to your Khalil Academy learning account</p>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white">Welcome Back</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Sign in to your Khalil Academy learning account</p>
+          </div>
         </div>
 
         {/* Unverified Email Warning with Resend Action */}
         {isUnverified && (
-          <div className="p-4 rounded-2xl bg-[#F59E0B]/10 border border-[#F59E0B]/30 space-y-3 shadow-inner">
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/60 space-y-3 shadow-inner">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-5 h-5 text-[#F59E0B] shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <h4 className="text-xs font-bold text-[#F8FAFC]">Email Verification Required</h4>
-                <p className="text-[11px] text-[#CBD5E1] leading-relaxed">
+                <h4 className="text-xs font-bold text-[#0B1F3A] dark:text-white">Email Verification Required</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
                   Your email address has not been verified yet. Please check your inbox and click the verification link before logging in.
                 </p>
               </div>
@@ -124,14 +135,14 @@ export const LoginPage: React.FC = () => {
               type="button"
               onClick={handleResendVerification}
               disabled={resending}
-              className="w-full py-2 bg-[#0E1D33] hover:bg-[#1A365D] text-[#F8FAFC] border border-[#23426A] rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+              className="w-full py-2 bg-white dark:bg-[#152F4A] hover:bg-slate-50 dark:hover:bg-slate-800 text-[#0B1F3A] dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
               <span>{resending ? 'Sending link...' : 'Resend Verification Email'}</span>
             </button>
 
             {resendSuccess && (
-              <div className="flex items-center gap-1.5 text-[11px] text-[#22C55E] font-bold pt-1">
+              <div className="flex items-center gap-1.5 text-[11px] text-[#10B981] font-bold pt-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>{resendSuccess}</span>
               </div>
@@ -140,7 +151,7 @@ export const LoginPage: React.FC = () => {
         )}
 
         {error && !isUnverified && (
-          <div className="p-3.5 rounded-xl bg-[#EF4444]/15 border border-[#EF4444]/30 text-xs text-[#EF4444] flex items-start gap-2">
+          <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-xs text-[#EF4444] flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -148,7 +159,7 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#CBD5E1]">Email Address</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Email Address</label>
             <div className="relative">
               <input
                 type="email"
@@ -156,15 +167,15 @@ export const LoginPage: React.FC = () => {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0E1D33] border border-[#23426A] rounded-xl py-2.5 pl-10 pr-4 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5] transition"
+                className="w-full bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] focus:ring-1 focus:ring-[#087F78]/20 transition"
               />
-              <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-[#CBD5E1]">Password</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Password</label>
             </div>
             <div className="relative">
               <input
@@ -173,24 +184,24 @@ export const LoginPage: React.FC = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0E1D33] border border-[#23426A] rounded-xl py-2.5 pl-10 pr-4 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#4FD1C5] transition"
+                className="w-full bg-slate-50 dark:bg-[#152F4A] border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-xs text-[#0B1F3A] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:bg-white dark:focus:bg-[#0B223D] focus:border-[#087F78] focus:ring-1 focus:ring-[#087F78]/20 transition"
               />
-              <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-[#4FD1C5] hover:bg-[#38B2AC] text-[#0A1322] font-extrabold text-xs shadow-lg shadow-[#4FD1C5]/20 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-[#087F78] hover:bg-[#076E6A] text-white font-bold text-xs shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <p className="text-center text-xs text-[#94A3B8]">
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
           Don't have an account?{' '}
-          <Link to="/register" className="font-extrabold text-[#4FD1C5] hover:underline">
+          <Link to="/register" className="font-bold text-[#087F78] dark:text-[#14B8A6] hover:underline">
             Sign Up Free
           </Link>
         </p>

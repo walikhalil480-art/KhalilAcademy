@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
   Mic,
@@ -451,8 +451,8 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#071326] border border-[#23426A] text-xs text-[#CBD5E1]">
-            <Users className="w-3.5 h-3.5 text-[#4FD1C5]" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#07182D] border border-[#23426A] text-xs text-[#CBD5E1]">
+            <Users className="w-3.5 h-3.5 text-[#14B8A6]" />
             <span className="font-bold text-white">{participants.length}</span>
             <span className="hidden md:inline text-[10px] text-[#94A3B8]">in room</span>
           </div>
@@ -461,7 +461,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
             type="button"
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-            className="p-1.5 rounded-lg bg-[#071326] text-[#94A3B8] hover:text-[#4FD1C5] hover:bg-[#1A365D] transition"
+            className="p-1.5 rounded-lg bg-[#07182D] text-[#94A3B8] hover:text-[#14B8A6] hover:bg-[#1A365D] transition"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
@@ -483,7 +483,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
 
             {isVideoOff && !isScreenSharing && (
               <div className="text-center space-y-3 p-6 animate-fadeIn">
-                <div className="w-20 h-20 rounded-full bg-[#1A365D] border-2 border-[#4FD1C5] flex items-center justify-center text-2xl font-extrabold text-[#4FD1C5] mx-auto shadow-xl">
+                <div className="w-20 h-20 rounded-full bg-[#1A365D] border-2 border-[#14B8A6] flex items-center justify-center text-2xl font-extrabold text-[#14B8A6] mx-auto shadow-xl">
                   {user?.name?.charAt(0) || 'K'}
                 </div>
                 <div className="text-white font-bold text-base">{user?.name} (Instructor)</div>
@@ -495,7 +495,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
             <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white text-xs flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
               <span className="font-bold">You are Broadcasting Live</span>
-              {isScreenSharing && <span className="text-[10px] text-[#4FD1C5] font-extrabold uppercase">(Screen Share)</span>}
+              {isScreenSharing && <span className="text-[10px] text-[#14B8A6] font-extrabold uppercase">(Screen Share)</span>}
             </div>
           </div>
         ) : (
@@ -514,7 +514,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
                 onClick={handleStudentPlayAudio}
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3 text-white cursor-pointer"
               >
-                <div className="w-16 h-16 rounded-full bg-[#4FD1C5] text-[#0A1322] flex items-center justify-center shadow-2xl animate-pulse">
+                <div className="w-16 h-16 rounded-full bg-[#14B8A6] text-[#0B223D] flex items-center justify-center shadow-2xl animate-pulse">
                   <Play className="w-8 h-8 fill-current ml-1" />
                 </div>
                 <span className="font-bold text-sm">Click to Enable Live Audio & Video</span>
@@ -523,7 +523,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
 
             {!remoteStream && (
               <div className="text-center space-y-4 p-8 animate-fadeIn max-w-md">
-                <div className="w-20 h-20 rounded-3xl bg-[#1A365D] border border-[#4FD1C5]/40 flex items-center justify-center text-[#4FD1C5] mx-auto shadow-2xl">
+                <div className="w-20 h-20 rounded-3xl bg-[#1A365D] border border-[#14B8A6]/40 flex items-center justify-center text-[#14B8A6] mx-auto shadow-2xl">
                   <Radio className="w-10 h-10 animate-pulse" />
                 </div>
                 <div>
@@ -539,7 +539,7 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
               <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white text-xs flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
                 <span className="font-bold">{hostParticipant?.name || 'Instructor'}</span>
-                <span className="text-[10px] text-[#4FD1C5] font-bold">(Live Stream)</span>
+                <span className="text-[10px] text-[#14B8A6] font-bold">(Live Stream)</span>
               </div>
             )}
           </div>
@@ -550,14 +550,14 @@ export const NativeClassroomStage: React.FC<NativeClassroomStageProps> = ({
       <div className="bg-[#0A192F] border-t border-[#23426A] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         {/* Left: User Identity */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#1A365D] border border-[#4FD1C5] flex items-center justify-center text-xs font-bold text-[#4FD1C5]">
+          <div className="w-8 h-8 rounded-xl bg-[#1A365D] border border-[#14B8A6] flex items-center justify-center text-xs font-bold text-[#14B8A6]">
             {user?.name?.charAt(0) || 'U'}
           </div>
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-1.5">
               <span>{user?.name}</span>
               {isInstructor && (
-                <span className="px-1.5 py-0.2 rounded bg-[#4FD1C5]/20 text-[#4FD1C5] text-[9px] font-extrabold uppercase">
+                <span className="px-1.5 py-0.2 rounded bg-[#14B8A6]/20 text-[#14B8A6] text-[9px] font-extrabold uppercase">
                   HOST
                 </span>
               )}

@@ -7,6 +7,7 @@ const router = Router();
 
 router.get('/:id', authenticate, quizController.getQuiz);
 router.post('/:id/attempt', authenticate, quizController.submitAttempt);
+router.post('/:id/disqualify', authenticate, quizController.disqualifyQuiz);
 router.get('/:id/results', authenticate, quizController.getHistory);
 router.get('/:id/submissions', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.getInstructorSubmissions);
 router.post('/:id/reset-attempts', authenticate, authorize('INSTRUCTOR', 'ADMIN', 'SUPER_ADMIN'), quizController.resetAttempts);

@@ -192,6 +192,16 @@ export const verifyPaystackCheckout = async (req: AuthenticatedRequest, res: Res
         courseTitle: payment.order.course.title,
         courseSlug: payment.order.course.slug,
         enrollmentId: enrollment?.id,
+        payment: {
+          id: payment.id,
+          reference: cleanRef,
+          amount: payment.amount,
+          currency: payment.currency,
+          status: payment.status,
+          courseTitle: payment.order.course.title,
+          courseSlug: payment.order.course.slug,
+          enrollmentId: enrollment?.id,
+        },
       });
     }
 
@@ -230,6 +240,7 @@ export const verifyPaystackCheckout = async (req: AuthenticatedRequest, res: Res
         where: { id: payment.id },
         data: {
           status: PaymentStatus.COMPLETED,
+          providerTransactionId: verification.reference,
           paidAt: verification.paidAt ? new Date(verification.paidAt) : new Date(),
           metadata: JSON.stringify(verification.metadata || {}),
         },
@@ -281,6 +292,16 @@ export const verifyPaystackCheckout = async (req: AuthenticatedRequest, res: Res
       courseTitle: payment.order.course.title,
       courseSlug: payment.order.course.slug,
       enrollmentId: enrollment.id,
+      payment: {
+        id: updatedPayment.id,
+        reference: cleanRef,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        status: updatedPayment.status,
+        courseTitle: payment.order.course.title,
+        courseSlug: payment.order.course.slug,
+        enrollmentId: enrollment.id,
+      },
     });
   } catch (error) {
     next(error);

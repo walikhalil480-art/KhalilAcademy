@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { GamificationProfile } from '../../services/gamificationApi';
 import {
   Flame,
@@ -121,7 +121,7 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({ profile, onUpdateGoa
           <div className="space-y-1">
             <div className="w-full bg-[#1A365D] h-2.5 rounded-full overflow-hidden p-0.5">
               <div
-                className="bg-gradient-to-r from-[#0284c7] via-[#38BDF8] to-[#4FD1C5] h-full rounded-full transition-all duration-500 shadow-sm shadow-[#38BDF8]/40"
+                className="bg-gradient-to-r from-[#0284c7] via-[#38BDF8] to-[#14B8A6] h-full rounded-full transition-all duration-500 shadow-sm shadow-[#38BDF8]/40"
                 style={{ width: `${profile.tierProgressPercentage}%` }}
               />
             </div>
@@ -227,7 +227,7 @@ export const StreakWidget: React.FC<StreakWidgetProps> = ({ profile, onUpdateGoa
               </div>
 
               {/* Hover Tooltip */}
-              <div className="absolute bottom-10 hidden group-hover:flex flex-col items-center z-30 pointer-events-none min-w-28 text-center bg-[#071326] border border-[#23426A] p-2 rounded-xl text-[10px] text-white shadow-xl">
+              <div className="absolute bottom-10 hidden group-hover:flex flex-col items-center z-30 pointer-events-none min-w-28 text-center bg-[#07182D] border border-[#23426A] p-2 rounded-xl text-[10px] text-white shadow-xl">
                 <span className="font-bold text-[#38BDF8]">{day.date}</span>
                 <span>{day.minutesLearned} mins learned</span>
                 <span>+{day.xpEarned} XP</span>

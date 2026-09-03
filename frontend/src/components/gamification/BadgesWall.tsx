@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { BadgeItem } from '../../services/gamificationApi';
 import { Award, Lock, CheckCircle2, Sparkles } from 'lucide-react';
 
@@ -41,7 +41,7 @@ export const BadgesWall: React.FC<BadgesWallProps> = ({ badges }) => {
             {unlockedCount} / {badges.length} Unlocked
           </div>
 
-          <div className="flex items-center bg-[#071326] p-1 rounded-xl border border-[#23426A]">
+          <div className="flex items-center bg-[#07182D] p-1 rounded-xl border border-[#23426A]">
             <button
               onClick={() => setActiveFilter('ALL')}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
@@ -84,7 +84,7 @@ export const BadgesWall: React.FC<BadgesWallProps> = ({ badges }) => {
             className={`p-4 rounded-2xl border transition-all flex flex-col items-center text-center space-y-2.5 relative group ${
               badge.isUnlocked
                 ? 'bg-gradient-to-b from-[#0D223F] to-[#08152A] border-[#EAB308]/40 hover:border-[#EAB308] hover:shadow-lg hover:shadow-[#EAB308]/10'
-                : 'bg-[#071326]/60 border-[#23426A]/40 opacity-60 hover:opacity-90'
+                : 'bg-[#07182D]/60 border-[#23426A]/40 opacity-60 hover:opacity-90'
             }`}
           >
             {/* Badge Icon Shield */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, AlertCircle, RefreshCw, RotateCcw, RotateCw, ExternalLink, VideoOff } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -312,7 +312,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             href={`https://www.youtube.com/watch?v=${ytId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute top-3 right-3 z-10 px-3 py-1.5 rounded-xl bg-[#071326]/85 hover:bg-[#4F46E5] text-[#F8FAFC] border border-[#20395D] hover:border-[#4F46E5] text-[11px] font-bold backdrop-blur-md flex items-center gap-1.5 transition opacity-0 group-hover:opacity-100 shadow-lg"
+            className="absolute top-3 right-3 z-10 px-3 py-1.5 rounded-xl bg-[#07182D]/85 hover:bg-[#4F46E5] text-[#F8FAFC] border border-[#20395D] hover:border-[#4F46E5] text-[11px] font-bold backdrop-blur-md flex items-center gap-1.5 transition opacity-0 group-hover:opacity-100 shadow-lg"
           >
             <span>Open in YouTube</span>
             <ExternalLink className="w-3 h-3" />
@@ -402,7 +402,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 className="h-full bg-gradient-to-r from-[#4F46E5] to-[#06B6D4] rounded-full relative"
                 style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
               >
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md" />
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-[#102A43] rounded-full shadow-md" />
               </div>
             </div>
 
